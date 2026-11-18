@@ -52,6 +52,7 @@ internal sealed record Options(string Mode, int Tabs, int Objects, int Switches,
 internal sealed class BenchmarkForm : Form
 {
     private const string HostName = "engine.winvector";
+    private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
     private readonly Options _options;
     private readonly List<WebView2> _views = [];
     private TaskCompletionSource<string>? _frame;
@@ -72,7 +73,7 @@ internal sealed class BenchmarkForm : Form
         try
         {
             var result = await MeasureAsync();
-            File.WriteAllText(_options.Output, JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+            File.WriteAllText(_options.Output, JsonSerializer.Serialize(result, IndentedJson));
             ExitCode = 0;
         }
         catch (Exception ex)
