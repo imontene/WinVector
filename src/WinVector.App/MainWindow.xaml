@@ -316,6 +316,8 @@
                     Grid.Column="0"
                     VerticalAlignment="Center"
                     AutomationProperties.AutomationId="EngineStatus"
+                    AutomationProperties.LiveSetting="Polite"
+                    AutomationProperties.Name="{x:Bind EngineStatusText(ViewModel.EngineStatus), Mode=OneWay}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Text="{x:Bind EngineStatusText(ViewModel.EngineStatus), Mode=OneWay}" />
                 <TextBlock
@@ -329,6 +331,8 @@
                     Grid.Column="2"
                     VerticalAlignment="Center"
                     AutomationProperties.AutomationId="SelectionStatus"
+                    AutomationProperties.LiveSetting="Polite"
+                    AutomationProperties.Name="{x:Bind ViewModel.SelectionSummary, Mode=OneWay}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Text="{x:Bind ViewModel.SelectionSummary, Mode=OneWay}" />
                 <TextBlock

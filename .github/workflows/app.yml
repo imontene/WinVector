@@ -117,7 +117,8 @@ jobs:
 
       - name: Prueba de humo (instalar, arrancar y seleccionar)
         if: matrix.platform == 'x64'
-        # Windows PowerShell 5.1: trae UI Automation y System.Drawing sin instalar nada.
+        # Windows PowerShell 5.1: trae UI Automation y System.Drawing sin instalar nada. Lee el
+        # script como ANSI, por eso los textos de este paso van sin tildes.
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
@@ -125,14 +126,14 @@ jobs:
           Add-AppxPackage -Path (Get-ChildItem "$out/*.msix").FullName `
             -DependencyPath (Get-ChildItem "$out/Dependencies/*.msix").FullName -AllowUnsigned
           $app = Get-AppxPackage -Name WinVector
-          if (-not $app) { throw 'El paquete no quedó instalado.' }
+          if (-not $app) { throw 'El paquete no quedo instalado.' }
           Write-Host "Instalado: $($app.PackageFullName)"
 
           Start-Process "shell:AppsFolder\$($app.PackageFamilyName)!App"
           Start-Sleep -Seconds 15
           $process = Get-Process -Name WinVector -ErrorAction SilentlyContinue
-          if (-not $process) { throw 'WinVector no está en ejecución 15 s después de arrancar.' }
-          Write-Host "En ejecución: PID $($process.Id), ventana '$($process.MainWindowTitle)'"
+          if (-not $process) { throw 'WinVector no esta en ejecucion 15 s despues de arrancar.' }
+          Write-Host "En ejecucion: PID $($process.Id), ventana '$($process.MainWindowTitle)'"
 
           Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Windows.Forms, System.Drawing
           Add-Type -Namespace Smoke -Name Mouse -MemberDefinition @'
@@ -153,13 +154,13 @@ jobs:
           $r = $canvas.Current.BoundingRectangle
           Write-Host "Lienzo: $($r.X),$($r.Y) $($r.Width)x$($r.Height)"
 
-          # Posición del círculo #sol (300, 96) en el SVG de ejemplo (viewBox 400 x 300), que el motor
+          # Posicion del circulo #sol (300, 96) en el SVG de ejemplo (viewBox 400 x 300), que el motor
           # dibuja centrado con ancho min(90 % del ancho, 90 % del alto x 4/3).
           $w = [math]::Min($r.Width * 0.9, $r.Height * 0.9 * 4 / 3)
           $h = $w * 3 / 4
           $x = [int]($r.X + ($r.Width - $w) / 2 + $w * 300 / 400)
           $y = [int]($r.Y + ($r.Height - $h) / 2 + $h * 96 / 300)
-          Write-Host "Clic en el círculo: $x,$y"
+          Write-Host "Clic en el circulo: $x,$y"
           [Smoke.Mouse]::SetCursorPos($x, $y) | Out-Null
           [Smoke.Mouse]::mouse_event(0x0002, 0, 0, 0, [System.UIntPtr]::Zero)
           [Smoke.Mouse]::mouse_event(0x0004, 0, 0, 0, [System.UIntPtr]::Zero)
@@ -169,7 +170,7 @@ jobs:
             Start-Sleep -Milliseconds 250
             $selection = (Find-ById 'SelectionStatus').Current.Name
           }
-          Write-Host "Barra de estado, selección: '$selection'"
+          Write-Host "Barra de estado, seleccion: '$selection'"
           Write-Host "Barra de estado, motor: '$((Find-ById 'EngineStatus').Current.Name)'"
 
           $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
