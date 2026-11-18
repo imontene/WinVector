@@ -204,9 +204,6 @@
   <data name="PropertiesEmpty.Text" xml:space="preserve">
     <value>Select an object to view and change its properties.</value>
   </data>
-  <data name="StatusReady.Text" xml:space="preserve">
-    <value>Ready</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>About WinVector</value>
   </data>
@@ -235,5 +232,17 @@ Licensed under the Apache License 2.0.</value>
   </data>
   <data name="CanvasRuntimeDownload.Content" xml:space="preserve">
     <value>Download the WebView2 Runtime</value>
+  </data>
+  <data name="SelectionMultiple" xml:space="preserve">
+    <value>{0} objects</value>
+  </data>
+  <data name="EngineProtocolMismatch" xml:space="preserve">
+    <value>The engine isn't compatible: it uses protocol {0} and the app uses {1}. Reinstall WinVector.</value>
+  </data>
+  <data name="StatusBridgeLatency" xml:space="preserve">
+    <value>Bridge: {0} ms</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>Ready</value>
   </data>
 </root>

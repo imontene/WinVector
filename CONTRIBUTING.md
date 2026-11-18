@@ -93,7 +93,7 @@ Los paquetes no están firmados: el editor del manifiesto lleva el identificador
 
 Para desinstalarlo: `Get-AppxPackage WinVector | Remove-AppxPackage`.
 
-La CI ejecuta esta misma instalación en Windows en cada cambio, arranca la aplicación y guarda una captura de pantalla en el artefacto `captura-prueba-de-humo`.
+La CI ejecuta esta misma instalación en Windows en cada cambio. Después arranca la aplicación, hace clic en el círculo del SVG de ejemplo, comprueba con UI Automation que la barra de estado muestra `circle#sol` y guarda una captura de pantalla en el artefacto `captura-prueba-de-humo`. El registro del paso anota también la latencia del puente.
 
 ## Flujo de trabajo
 

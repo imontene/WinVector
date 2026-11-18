@@ -5,7 +5,12 @@ namespace WinVector.Core.Tests.Shell;
 [TestClass]
 public sealed class MainViewModelTests
 {
-    private static MainViewModel Create() => new(n => $"Sin título {n}");
+    internal static readonly ShellTexts Texts = new(
+        n => $"Sin título {n}",
+        n => $"{n} objetos",
+        (engine, app) => $"Protocolo {engine}, se esperaba {app}");
+
+    private static MainViewModel Create() => new(Texts);
 
     [TestMethod]
     public void EmpiezaConUnDocumentoNuevoActivo()

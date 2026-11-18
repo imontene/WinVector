@@ -205,9 +205,6 @@
   <data name="PropertiesEmpty.Text" xml:space="preserve">
     <value>Selecciona un objeto para ver y cambiar sus propiedades.</value>
   </data>
-  <data name="StatusReady.Text" xml:space="preserve">
-    <value>Listo</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Acerca de WinVector</value>
   </data>
@@ -237,5 +234,17 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="CanvasRuntimeDownload.Content" xml:space="preserve">
     <value>Descargar WebView2 Runtime</value>
+  </data>
+  <data name="SelectionMultiple" xml:space="preserve">
+    <value>{0} objetos</value>
+  </data>
+  <data name="EngineProtocolMismatch" xml:space="preserve">
+    <value>El motor no es compatible: usa el protocolo {0} y la aplicación el {1}. Vuelve a instalar WinVector.</value>
+  </data>
+  <data name="StatusBridgeLatency" xml:space="preserve">
+    <value>Puente: {0} ms</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>Listo</value>
   </data>
 </root>
