@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BridgeErrorCode",
+  "description": "Categoría del error del puente.",
+  "type": "string",
+  "enum": ["invalid-message", "unknown-message", "protocol-mismatch", "timeout", "internal"]
+}

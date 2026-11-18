@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EngineReady",
+  "description": "Datos que el motor envía al terminar de cargar.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["engineVersion", "protocolVersion"],
+  "properties": {
+    "engineVersion": {
+      "type": "string",
+      "description": "Versión del motor de edición."
+    },
+    "protocolVersion": {
+      "type": "integer",
+      "description": "Versión del protocolo con la que se compiló el motor."
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BridgeEnvelope",
+  "description": "Sobre común de todos los mensajes del puente. El contenido de payload depende de name y se define en catalog.json.",
+  "type": "object",
+  "required": ["kind", "id", "name", "protocolVersion"],
+  "properties": {
+    "kind": { "enum": ["command", "event", "response"] },
+    "id": {
+      "type": "string",
+      "description": "Identificador único del mensaje. En una respuesta, el id del comando al que responde."
+    },
+    "name": { "type": "string", "description": "Nombre del mensaje según catalog.json." },
+    "protocolVersion": { "type": "integer", "minimum": 1 },
+    "payload": { "description": "Datos del mensaje. Ausente en una respuesta fallida." },
+    "ok": { "type": "boolean", "description": "Solo en respuestas: true si el comando se completó." },
+    "error": {
+      "$ref": "./types/bridge-error.schema.json",
+      "description": "Solo en respuestas fallidas."
+    }
+  },
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "properties": { "kind": { "enum": ["command", "event"] } },
+      "required": ["payload"],
+      "not": { "anyOf": [{ "required": ["ok"] }, { "required": ["error"] }] }
+    },
+    {
+      "properties": { "kind": { "const": "response" }, "ok": { "const": true } },
+      "required": ["ok", "payload"],
+      "not": { "required": ["error"] }
+    },
+    {
+      "properties": { "kind": { "const": "response" }, "ok": { "const": false } },
+      "required": ["ok", "error"],
+      "not": { "required": ["payload"] }
+    }
+  ]
+}

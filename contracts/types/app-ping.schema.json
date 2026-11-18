@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AppPing",
+  "description": "Comando de comprobación enviado por la aplicación.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sentAt"],
+  "properties": {
+    "sentAt": {
+      "type": "number",
+      "description": "Momento del envío en milisegundos desde el epoch Unix, según el reloj de la aplicación."
+    }
+  }
+}

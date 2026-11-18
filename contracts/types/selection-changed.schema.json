@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SelectionChanged",
+  "description": "Estado completo de la selección tras un cambio.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["items"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "description": "Elementos seleccionados, en orden de documento. Vacío si no hay selección.",
+      "items": { "$ref": "./selected-element.schema.json" }
+    }
+  }
+}

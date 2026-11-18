@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AppPong",
+  "description": "Respuesta del motor a app.ping.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sentAt", "receivedAt"],
+  "properties": {
+    "sentAt": {
+      "type": "number",
+      "description": "El mismo valor de sentAt que llegó en el comando."
+    },
+    "receivedAt": {
+      "type": "number",
+      "description": "Momento en que el motor recibió el comando, en milisegundos desde el epoch Unix."
+    }
+  }
+}
