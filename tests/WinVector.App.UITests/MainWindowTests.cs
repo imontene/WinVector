@@ -63,7 +63,7 @@ public sealed class MainWindowTests
     public void ElMotorCargaYMideLaLatenciaDelPuente()
     {
         var latency = Retry.WhileNull(
-            () => NullIfEmpty(Session.FindById("EngineStatus")?.HelpText),
+            () => NullIfEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault),
             EngineTimeout,
             TimeSpan.FromMilliseconds(250)).Result;
 
@@ -123,7 +123,7 @@ public sealed class MainWindowTests
 
     private void WaitForEngine() =>
         Assert.IsTrue(
-            Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.HelpText), EngineTimeout).Result,
+            Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineTimeout).Result,
             "El motor no terminó de cargar.");
 
     private void ClickSample(double svgX, double svgY)
