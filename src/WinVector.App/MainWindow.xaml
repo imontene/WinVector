@@ -182,7 +182,7 @@
                     HorizontalAlignment="Left"
                     Background="Transparent"
                     DefaultLabelPosition="Right"
-                    OverflowButtonVisibility="Collapsed">
+                    OverflowButtonVisibility="Auto">
                     <AppBarButton
                         x:Uid="CommandUndo"
                         Icon="Undo"
