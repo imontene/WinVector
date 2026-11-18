@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 400 300">
+  <title>Ilustración de ejemplo</title>
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eaf3ff"/>
+      <stop offset="1" stop-color="#fbfcfe"/>
+    </linearGradient>
+  </defs>
+  <g id="fondo">
+    <rect id="cielo-fondo" width="400" height="300" fill="url(#cielo)"/>
+    <circle id="sol" cx="300" cy="96" r="52" fill="#ffb547"/>
+    <path id="ola-1" d="M0 230 C80 170 140 200 210 180 S330 140 400 170 V300 H0Z" fill="#3a7bd5"/>
+    <path id="ola-2" d="M0 260 C90 220 170 250 250 232 S360 215 400 230 V300 H0Z" fill="#1f4f99"/>
+  </g>
+  <g id="contenido">
+    <rect id="tarjeta" x="48" y="58" width="150" height="88" rx="14" fill="#ffffff" stroke="#1f4f99" stroke-width="3"/>
+    <text id="titulo" x="66" y="92" font-family="Segoe UI, sans-serif" font-size="16" font-weight="600" fill="#1f4f99">WinVector</text>
+    <rect id="linea-1" x="66" y="104" width="114" height="8" rx="4" fill="#9db7e0"/>
+    <rect id="linea-2" x="66" y="120" width="70" height="8" rx="4" fill="#9db7e0"/>
+  </g>
+</svg>
