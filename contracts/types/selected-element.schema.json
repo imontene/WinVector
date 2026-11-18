@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SelectedElement",
+  "description": "Un elemento SVG seleccionado.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "tagName"],
+  "properties": {
+    "id": {
+      "type": ["string", "null"],
+      "description": "Valor del atributo id, o null si el elemento no tiene."
+    },
+    "tagName": {
+      "type": "string",
+      "description": "Nombre local del elemento, por ejemplo circle o path."
+    }
+  }
+}

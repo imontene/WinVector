@@ -1,0 +1,30 @@
+{
+  "protocolVersion": 1,
+  "messages": [
+    {
+      "name": "engine.ready",
+      "kind": "event",
+      "description": "El motor ha cargado y puede recibir comandos.",
+      "payload": "EngineReady"
+    },
+    {
+      "name": "app.ping",
+      "kind": "command",
+      "description": "Comprueba que el motor responde y mide la latencia del puente.",
+      "payload": "AppPing",
+      "response": "AppPong"
+    },
+    {
+      "name": "selection.changed",
+      "kind": "event",
+      "description": "La selección del documento ha cambiado.",
+      "payload": "SelectionChanged"
+    },
+    {
+      "name": "error",
+      "kind": "event",
+      "description": "El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno.",
+      "payload": "BridgeError"
+    }
+  ]
+}

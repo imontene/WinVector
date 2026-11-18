@@ -1,0 +1,70 @@
+name: Contrato
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "contracts/**"
+      - "src/engine/src/bridge/generated/**"
+      - "src/WinVector.Core/Bridge/Generated/**"
+      - ".github/workflows/contracts.yml"
+  pull_request:
+    paths:
+      - "contracts/**"
+      - "src/engine/src/bridge/generated/**"
+      - "src/WinVector.Core/Bridge/Generated/**"
+      - ".github/workflows/contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Generador y tipos al día
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: src/engine/.nvmrc
+          cache: npm
+          cache-dependency-path: src/engine/package-lock.json
+
+      - name: Instalar dependencias del motor
+        working-directory: src/engine
+        run: npm ci
+
+      - name: Pruebas del generador
+        working-directory: src/engine
+        run: npm run contracts:test
+
+      - name: Regenerar los tipos
+        working-directory: src/engine
+        run: npm run contracts:generate
+
+      - name: Comprobar que los tipos generados están al día
+        run: |
+          changes=$(git status --porcelain -- src/engine/src/bridge/generated src/WinVector.Core/Bridge/Generated)
+          if [ -n "$changes" ]; then
+            echo "::error::Los tipos generados no coinciden con los esquemas. Ejecuta 'npm run contracts:generate' en src/engine y añade los cambios al commit."
+            echo "$changes"
+            git diff -- src/engine/src/bridge/generated src/WinVector.Core/Bridge/Generated
+            exit 1
+          fi
+
+      - name: Instalar .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Compilar y comprobar el C# generado
+        run: dotnet run --project contracts/tools/csharp-check

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BridgeError",
+  "description": "Error del puente, enviado como evento error o dentro de una respuesta fallida.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["code", "message", "relatedId"],
+  "properties": {
+    "code": { "$ref": "./bridge-error-code.schema.json" },
+    "message": {
+      "type": "string",
+      "description": "Descripción para registros y diagnóstico. No se muestra tal cual al usuario."
+    },
+    "relatedId": {
+      "type": ["string", "null"],
+      "description": "Identificador del mensaje que causó el error, si se conoce."
+    }
+  }
+}

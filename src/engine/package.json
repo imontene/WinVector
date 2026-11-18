@@ -17,7 +17,9 @@
     "test:e2e": "playwright test",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "contracts:generate": "node ../../contracts/tools/generate.mjs && prettier --write --log-level warn src/bridge/generated",
+    "contracts:test": "node --test ../../contracts/tools/generate.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
