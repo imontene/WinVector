@@ -21,7 +21,9 @@ Node.js en la versión de [`.nvmrc`](.nvmrc).
 | `npm run contracts:generate` | Regenera los tipos del contrato del puente (ver [`contracts/`](../../contracts)) |
 | `npm run contracts:test`     | Pruebas del generador del contrato                                               |
 
-Antes de la primera ejecución de `test:e2e`, instala el navegador:
+Las pruebas unitarias que necesitan el DOM real (`*.browser.test.ts`, como las del módulo `document`) se ejecutan en Chromium con el modo navegador de Vitest, para que el análisis y la serialización XML sean los de WebView2. Las demás se ejecutan en Node.
+
+Antes de la primera ejecución de `npm test` o `test:e2e`, instala el navegador:
 
 ```bash
 npx playwright install chromium
@@ -44,6 +46,16 @@ Para usar un Chromium ya instalado en el sistema, indica su ruta en `PLAYWRIGHT_
 | `e2e`           | Pruebas de integración                                                                                                                        |
 
 El bundle de `dist/` no puede cargar nada de fuera de la aplicación: la prueba `e2e/lienzo.spec.ts` falla si aparece una petición externa.
+
+## Documento
+
+`SvgDocument.load(texto, contenedor)` analiza el SVG con `DOMParser` y lo muestra dentro de un _shadow root_ del contenedor. Así sus estilos e identificadores no afectan a la página del motor, y nada de la interfaz de edición entra en el documento.
+
+- **Guardar sin dañar.** Un escáner (`scanner.ts`) localiza cada nodo en el texto original y un `MutationObserver` registra qué cambia. `serialize()` copia exactamente lo que no se ha modificado, incluidos comentarios, entidades, comillas y espacios. Solo regenera las etiquetas y los nodos modificados, y mantiene el orden y el texto de los atributos que no cambian. Sin cambios, devuelve el texto original byte a byte.
+- **Contenido activo.** Los `<script>` se muestran como un marcador inerte y se guardan intactos. Los atributos `on*` se conservan y la política de seguridad impide que se ejecuten.
+- **Errores.** Un XML no válido lanza `SvgParseError` con la línea y la columna.
+- **Sin mapeo exacto.** Si el texto no cuadra con el DOM, por ejemplo con entidades que se expanden en elementos, `hasExactMapping` es `false` y se guarda sin perder contenido, con el formato del editor.
+- **Utilidades.** `createId`, `getOrCreateDefs` y `findUnusedDefinitions` gestionan identificadores y definiciones.
 
 ## Seguridad
 

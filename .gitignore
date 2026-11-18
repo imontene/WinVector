@@ -17,6 +17,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
+.vitest/
 
 # Sistema
 Thumbs.db

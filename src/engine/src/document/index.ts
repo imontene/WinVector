@@ -1,8 +1,7 @@
 /**
  * Módulo `document`.
  *
- * Carga y serialización SVG, preservación del contenido desconocido, gestión de defs e identificadores.
- *
- * Pendiente de implementar; ver docs/PLAN.md, sección 3.2.
+ * Carga y serialización SVG, preservación del contenido desconocido, gestión de `defs` e
+ * identificadores. Ver `SvgDocument`.
  */
-export {};
+export { SvgDocument, SvgParseError, SVG_NS } from "./svgDocument";

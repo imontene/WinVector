@@ -31,7 +31,7 @@ test.beforeEach(async ({ page }) => {
     };
   });
   await page.goto("/");
-  await expect(page.locator("#workspace > svg")).toBeVisible();
+  await expect(page.locator("#workspace svg").first()).toBeVisible();
 });
 
 const sent = (page: Page) =>

@@ -1,5 +1,9 @@
+import { playwright } from "@vitest/browser-playwright";
 import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
+
+// Permite usar un Chromium ya instalado en el sistema en lugar del que descarga Playwright.
+const chromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
 /**
  * Política de seguridad del bundle. El lienzo mostrará SVG de terceros: los scripts que traigan no
@@ -52,7 +56,33 @@ export default defineConfig({
     strictPort: true,
   },
   test: {
-    include: ["src/**/*.test.ts"],
-    environment: "node",
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "node",
+          include: ["src/**/*.test.ts"],
+          exclude: ["src/**/*.browser.test.ts"],
+          environment: "node",
+        },
+      },
+      {
+        // Pruebas que necesitan el DOM real: se ejecutan en Chromium, el motor de WebView2, para
+        // que el análisis y la serialización XML sean los mismos que en la aplicación.
+        extends: true,
+        test: {
+          name: "chromium",
+          include: ["src/**/*.browser.test.ts"],
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(
+              chromiumExecutable ? { launchOptions: { executablePath: chromiumExecutable } } : {},
+            ),
+            instances: [{ browser: "chromium" }],
+          },
+        },
+      },
+    ],
   },
 });
