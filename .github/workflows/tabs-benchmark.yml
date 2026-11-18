@@ -1,0 +1,86 @@
+name: Medición de pestañas
+
+# Mediciones del ADR 0004. Se lanza a mano o al cambiar la herramienta de medición.
+on:
+  workflow_dispatch:
+    inputs:
+      objects:
+        description: "Objetos por documento"
+        default: "2000"
+  pull_request:
+    paths:
+      - "tools/TabsBenchmark/**"
+      - ".github/workflows/tabs-benchmark.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    name: Medir los dos modelos de pestañas
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      DOTNET_NOLOGO: "true"
+      OBJECTS: ${{ inputs.objects || '2000' }}
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: src/engine/.nvmrc
+          cache: npm
+          cache-dependency-path: src/engine/package-lock.json
+
+      - name: Compilar el motor
+        working-directory: src/engine
+        run: |
+          npm ci
+          npm run build
+
+      - name: Instalar .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Compilar la herramienta de medición
+        run: dotnet build tools/TabsBenchmark -c Release -o artifacts/bench
+
+      - name: Medir
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/results | Out-Null
+          $rows = @()
+          foreach ($mode in 'per-tab', 'shared') {
+            foreach ($tabs in 1, 5, 10) {
+              $out = "artifacts/results/$mode-$tabs.json"
+              $p = Start-Process artifacts/bench/TabsBenchmark.exe -PassThru -Wait `
+                -ArgumentList '--mode', $mode, '--tabs', $tabs, '--objects', $env:OBJECTS, '--output', (Resolve-Path artifacts/results).Path + "/$mode-$tabs.json"
+              if ($p.ExitCode -ne 0) {
+                Get-Content "$out.error.txt" -ErrorAction SilentlyContinue | Write-Host
+                throw "Falló la medición $mode x$tabs"
+              }
+              $r = Get-Content $out -Raw | ConvertFrom-Json
+              Write-Host "$mode x$tabs :: $(Get-Content $out -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 5 -Compress)"
+              $rows += [pscustomobject]@{
+                Modelo = $mode; Pestañas = $tabs
+                'Memoria WebView2 (MB)' = $r.memory.webView2PrivateMB
+                'Memoria app (MB)' = $r.memory.hostPrivateMB
+                'Renderizadores' = $r.memory.processes.Renderer.count
+                'Carga (ms)' = $r.loadMs
+                'Cambio mediana (ms)' = $r.switchMsMedian
+                'Cambio máx. (ms)' = $r.switchMsMax
+              }
+            }
+          }
+          $rows | Format-Table -AutoSize | Out-String -Width 200 | Write-Host
+
+      - name: Publicar los resultados
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: medicion-pestanas
+          path: artifacts/results
+          retention-days: 30
