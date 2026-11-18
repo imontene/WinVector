@@ -1,0 +1,43 @@
+/* Zona de trabajo del lienzo. Los colores siguen el tema de Windows a través de prefers-color-scheme,
+   que WebView2 recibe de la aplicación. */
+:root {
+  --workspace: #e4e7ec;
+  --workspace-dot: rgb(97 97 97 / 28%);
+  --artboard-shadow: rgb(0 0 0 / 18%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --workspace: #1a1c21;
+    --workspace-dot: rgb(168 173 182 / 22%);
+    --artboard-shadow: rgb(0 0 0 / 55%);
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background-color: var(--workspace);
+  background-image: radial-gradient(var(--workspace-dot) 1px, transparent 1px);
+  background-size: 16px 16px;
+  user-select: none;
+}
+
+#workspace {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+
+#workspace > svg {
+  width: min(90vw, calc(90vh * var(--artboard-ratio, 1)));
+  height: auto;
+  max-height: 90vh;
+  background: #fff;
+  box-shadow: 0 1px 4px var(--artboard-shadow);
+}
