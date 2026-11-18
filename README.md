@@ -1,5 +1,7 @@
 # WinVector
 
+[![Motor](https://github.com/imontene/winvector/actions/workflows/engine.yml/badge.svg)](https://github.com/imontene/winvector/actions/workflows/engine.yml)
+
 Editor gráfico de SVG para Windows 11, nativo y moderno.
 
 > **Estado:** en planificación. Todavía no hay versión descargable.
