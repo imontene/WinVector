@@ -1,0 +1,24 @@
+WinVector - paquete de prueba
+=============================
+
+Este paquete se genera automáticamente en cada cambio y NO está firmado.
+Sirve solo para probar la aplicación. No lo distribuyas.
+
+Requisitos: Windows 11 (x64 o ARM64, según el paquete descargado).
+
+Instalación
+-----------
+1. Descomprime el artefacto en una carpeta.
+2. Abre PowerShell como administrador en esa carpeta.
+3. Ejecuta:
+
+   Add-AppxPackage -Path (Get-ChildItem .\*.msix).FullName -DependencyPath (Get-ChildItem .\Dependencies\*.msix).FullName -AllowUnsigned
+
+4. Abre WinVector desde el menú Inicio.
+
+Desinstalación
+--------------
+   Get-AppxPackage WinVector | Remove-AppxPackage
+
+Si ya tienes instalada una versión anterior de prueba y la instalación falla,
+desinstálala primero con el comando anterior.

@@ -103,14 +103,59 @@ jobs:
           /p:AppxPackageDir=${{ github.workspace }}\artifacts\msix\
           /verbosity:minimal
 
-      - name: Listar el paquete generado
+      - name: Preparar el artefacto
         shell: pwsh
-        run: Get-ChildItem -Recurse artifacts/msix | Select-Object FullName, Length | Format-Table -AutoSize
+        run: |
+          $arch = '${{ matrix.platform }}'.ToLowerInvariant()
+          $package = Get-ChildItem artifacts/msix -Directory | Select-Object -First 1
+          $out = New-Item -ItemType Directory -Force artifacts/upload
+          New-Item -ItemType Directory -Force (Join-Path $out Dependencies) | Out-Null
+          Copy-Item (Join-Path $package.FullName '*.msix') $out
+          Copy-Item (Join-Path $package.FullName "Dependencies/$arch/*.msix") (Join-Path $out Dependencies)
+          Copy-Item build/LEEME-paquete-de-prueba.txt $out
+          Get-ChildItem -Recurse $out | Select-Object FullName, @{ n = 'MB'; e = { [math]::Round($_.Length / 1MB, 1) } } | Format-Table -AutoSize
+
+      - name: Prueba de humo (instalar y arrancar)
+        if: matrix.platform == 'x64'
+        shell: pwsh
+        run: |
+          $out = Resolve-Path artifacts/upload
+          Add-AppxPackage -Path (Get-ChildItem "$out/*.msix").FullName `
+            -DependencyPath (Get-ChildItem "$out/Dependencies/*.msix").FullName -AllowUnsigned
+          $app = Get-AppxPackage -Name WinVector
+          if (-not $app) { throw 'El paquete no quedó instalado.' }
+          Write-Host "Instalado: $($app.PackageFullName)"
+
+          Start-Process "shell:AppsFolder\$($app.PackageFamilyName)!App"
+          Start-Sleep -Seconds 15
+          $process = Get-Process -Name WinVector -ErrorAction SilentlyContinue
+          if (-not $process) { throw 'WinVector no está en ejecución 15 s después de arrancar.' }
+          Write-Host "En ejecución: PID $($process.Id), ventana '$($process.MainWindowTitle)'"
+
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+          $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+          $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+          New-Item -ItemType Directory -Force artifacts/smoke | Out-Null
+          $bitmap.Save((Join-Path (Resolve-Path artifacts/smoke) 'captura.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+
+          $process | Stop-Process
+          Remove-AppxPackage $app.PackageFullName
+
+      - name: Publicar la captura de la prueba de humo
+        if: always() && matrix.platform == 'x64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: captura-prueba-de-humo
+          path: artifacts/smoke
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Publicar el MSIX
         uses: actions/upload-artifact@v7
         with:
           name: winvector-msix-${{ matrix.platform }}
-          path: artifacts/msix
+          path: artifacts/upload
           if-no-files-found: error
           retention-days: 14
