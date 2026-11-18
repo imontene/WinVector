@@ -1,0 +1,23 @@
+# .NET / Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.rsuser
+AppPackages/
+BundleArtifacts/
+*.msix
+*.appx
+*.pfx
+
+# Node / motor
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Sistema
+Thumbs.db
+.DS_Store
