@@ -51,13 +51,14 @@ jobs:
       - name: Medir
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force artifacts/results | Out-Null
+          $results = (New-Item -ItemType Directory -Force artifacts/results).FullName
+          $exe = (Resolve-Path artifacts/bench/TabsBenchmark.exe).Path
           $rows = @()
           foreach ($mode in 'per-tab', 'shared') {
             foreach ($tabs in 1, 5, 10) {
-              $out = "artifacts/results/$mode-$tabs.json"
-              $p = Start-Process artifacts/bench/TabsBenchmark.exe -PassThru -Wait `
-                -ArgumentList '--mode', $mode, '--tabs', $tabs, '--objects', $env:OBJECTS, '--output', (Resolve-Path artifacts/results).Path + "/$mode-$tabs.json"
+              $out = Join-Path $results "$mode-$tabs.json"
+              $arguments = @('--mode', $mode, '--tabs', "$tabs", '--objects', $env:OBJECTS, '--output', "`"$out`"")
+              $p = Start-Process -FilePath $exe -ArgumentList $arguments -PassThru -Wait
               if ($p.ExitCode -ne 0) {
                 Get-Content "$out.error.txt" -ErrorAction SilentlyContinue | Write-Host
                 throw "Falló la medición $mode x$tabs"
