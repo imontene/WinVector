@@ -36,6 +36,17 @@ Ejemplo de evento:
 { "kind": "event", "id": "e7", "name": "selection.changed", "protocolVersion": 1, "payload": { "items": [{ "id": "sol", "tagName": "circle" }] } }
 ```
 
+## Implementación
+
+| Lado | Código | Qué hace |
+|---|---|---|
+| Motor | `src/engine/src/bridge/bridge.ts` | `EngineBridge`: valida el sobre de los comandos, responde con el mismo `id` y emite eventos. Ante un mensaje mal formado emite el evento `error` |
+| Motor | `src/engine/src/bridge/transport.ts` | Transporte sobre `window.chrome.webview` y un sustituto que escribe en la consola en `npm run dev` |
+| Aplicación | `src/WinVector.Core/Bridge/BridgeClient.cs` | `BridgeClient`: envía comandos y espera la respuesta (5 s como máximo), reparte los eventos y solo acepta mensajes de la página del motor |
+| Aplicación | `src/WinVector.App/Controls/WebViewBridgeTransport.cs` | Transporte sobre `PostWebMessageAsJson` y `WebMessageReceived` |
+
+Al cargar, el motor envía `engine.ready` y la aplicación comprueba que la versión del protocolo coincide; si no, lo indica en la barra de estado. Después mide la latencia del puente con `app.ping`.
+
 ## Añadir un mensaje
 
 1. Si el mensaje necesita tipos nuevos, crea un archivo por tipo en `types/`. El nombre del archivo es el `title` en kebab-case: el tipo `SelectionChanged` va en `selection-changed.schema.json`.

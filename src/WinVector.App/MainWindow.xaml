@@ -316,6 +316,7 @@
                     Grid.Column="0"
                     VerticalAlignment="Center"
                     AutomationProperties.AutomationId="EngineStatus"
+                    AutomationProperties.HelpText="{x:Bind LatencyText(ViewModel.BridgeLatency), Mode=OneWay}"
                     AutomationProperties.LiveSetting="Polite"
                     AutomationProperties.Name="{x:Bind EngineStatusText(ViewModel.EngineStatus), Mode=OneWay}"
                     Style="{StaticResource CaptionTextBlockStyle}"
