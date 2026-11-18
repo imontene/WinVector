@@ -17,5 +17,8 @@
     <Project Path="tests/WinVector.Core.Tests/WinVector.Core.Tests.csproj">
       <Platform Project="Any CPU" />
     </Project>
+    <Project Path="tests/WinVector.App.UITests/WinVector.App.UITests.csproj">
+      <Platform Project="Any CPU" />
+    </Project>
   </Folder>
 </Solution>

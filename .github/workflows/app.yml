@@ -206,6 +206,54 @@ jobs:
             Remove-AppxPackage $app.PackageFullName
           }
 
+      - name: Instalar el paquete para las pruebas de interfaz
+        if: matrix.platform == 'x64'
+        shell: pwsh
+        run: |
+          $out = Resolve-Path artifacts/upload
+          Add-AppxPackage -Path (Get-ChildItem "$out/*.msix").FullName `
+            -DependencyPath (Get-ChildItem "$out/Dependencies/*.msix").FullName -AllowUnsigned
+          $app = Get-AppxPackage -Name WinVector
+          "WINVECTOR_AUMID=$($app.PackageFamilyName)!App" >> $env:GITHUB_ENV
+          "WINVECTOR_PACKAGE=$($app.PackageFullName)" >> $env:GITHUB_ENV
+
+      - name: Pruebas de interfaz (FlaUI)
+        if: matrix.platform == 'x64'
+        shell: pwsh
+        env:
+          # TEMPORAL (#9): 10 ejecuciones seguidas para medir la estabilidad.
+          UI_TEST_RUNS: "10"
+        run: |
+          dotnet build tests/WinVector.App.UITests -c Release
+          $runs = [int]$env:UI_TEST_RUNS
+          $results = @()
+          for ($i = 1; $i -le $runs; $i++) {
+            $watch = [Diagnostics.Stopwatch]::StartNew()
+            $verbosity = if ($i -eq 1) { 'detailed' } else { 'minimal' }
+            dotnet test tests/WinVector.App.UITests -c Release --no-build `
+              --logger "trx;LogFileName=ui-$i.trx" --logger "console;verbosity=$verbosity" `
+              --results-directory artifacts/ui-tests
+            $results += [pscustomobject]@{ Ejecucion = $i; Correcta = ($LASTEXITCODE -eq 0); Segundos = [math]::Round($watch.Elapsed.TotalSeconds, 1) }
+          }
+          $results | Format-Table -AutoSize | Out-String | Write-Host
+          $failed = @($results | Where-Object { -not $_.Correcta }).Count
+          Write-Host "Ejecuciones: $runs. Fallidas: $failed."
+          if ($failed -gt 0) { exit 1 }
+
+      - name: Desinstalar el paquete
+        if: always() && matrix.platform == 'x64' && env.WINVECTOR_PACKAGE != ''
+        shell: pwsh
+        run: Remove-AppxPackage $env:WINVECTOR_PACKAGE
+
+      - name: Publicar los resultados de las pruebas de interfaz
+        if: always() && matrix.platform == 'x64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pruebas-de-interfaz
+          path: artifacts/ui-tests
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Publicar la captura de la prueba de humo
         if: always() && matrix.platform == 'x64'
         uses: actions/upload-artifact@v7
