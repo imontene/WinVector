@@ -144,9 +144,20 @@ jobs:
           $window = $A::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Children,
             (New-Object System.Windows.Automation.PropertyCondition($A::ProcessIdProperty, $process.Id)))
           if (-not $window) { throw 'No se encuentra la ventana de WinVector con UI Automation.' }
+          # Recorre la vista completa (raw view): la busqueda por defecto solo ve la vista de controles.
+          function Get-Elements {
+            $walker = [System.Windows.Automation.TreeWalker]::RawViewWalker
+            $queue = New-Object System.Collections.Queue
+            $queue.Enqueue($window)
+            while ($queue.Count -gt 0) {
+              $node = $queue.Dequeue()
+              $node
+              $child = $walker.GetFirstChild($node)
+              while ($child) { $queue.Enqueue($child); $child = $walker.GetNextSibling($child) }
+            }
+          }
           function Find-ById($id) {
-            $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants,
-              (New-Object System.Windows.Automation.PropertyCondition($A::AutomationIdProperty, $id)))
+            Get-Elements | Where-Object { $_.Current.AutomationId -eq $id } | Select-Object -First 1
           }
 
           $canvas = Find-ById 'EngineCanvas'
@@ -186,9 +197,18 @@ jobs:
           $small.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
           [Convert]::ToBase64String($stream.ToArray()) -split '(.{4000})' | Where-Object { $_ } | ForEach-Object { Write-Host "CAPTURA:$_" }
 
-          $process | Stop-Process
-          Remove-AppxPackage $app.PackageFullName
-          if ($selection -ne 'circle#sol') { throw "Se esperaba 'circle#sol' en la barra de estado y hay '$selection'." }
+          try {
+          if ($selection -ne 'circle#sol') {
+            Write-Host 'Elementos con AutomationId:'
+            Get-Elements | Where-Object { $_.Current.AutomationId } | ForEach-Object {
+              Write-Host "  $($_.Current.ControlType.ProgrammaticName) id='$($_.Current.AutomationId)' name='$($_.Current.Name)'"
+            }
+            throw "Se esperaba 'circle#sol' en la barra de estado y hay '$selection'."
+          }
+          } finally {
+            $process | Stop-Process
+            Remove-AppxPackage $app.PackageFullName
+          }
 
       - name: Publicar la captura de la prueba de humo
         if: always() && matrix.platform == 'x64'
