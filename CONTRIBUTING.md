@@ -29,9 +29,11 @@ Al participar aceptas el [código de conducta](CODE_OF_CONDUCT.md).
 
 **Para la aplicación completa** (solo Windows 11):
 
-- Visual Studio 2022 o posterior con las cargas de trabajo **Desarrollo de escritorio de .NET** y **Desarrollo de aplicaciones de Windows** (incluye Windows App SDK).
-- El SDK de .NET indicado en `global.json` (se añadirá con el proyecto de la aplicación).
+- Visual Studio 2026 o posterior con las cargas de trabajo **Desarrollo de escritorio de .NET** y **Desarrollo de aplicaciones de Windows** (incluye Windows App SDK). Hace falta esta versión para .NET 10 y para el formato de solución `.slnx`.
+- El SDK de .NET indicado en [`global.json`](global.json) (.NET 10).
 - Node.js, como arriba, porque la compilación de la aplicación incluye el motor.
+
+`WinVector.Core` y sus pruebas no dependen de Windows: se compilan y prueban en cualquier sistema con el SDK de .NET.
 
 ## Compilar y probar
 
@@ -52,7 +54,46 @@ La primera vez que ejecutes las pruebas de integración instala el navegador con
 
 ### Aplicación
 
-Las instrucciones se añadirán con el proyecto WinUI 3 ([#2](https://github.com/imontene/winvector/issues/2)).
+La solución es [`WinVector.slnx`](WinVector.slnx):
+
+| Proyecto | Contenido |
+|---|---|
+| `src/WinVector.App` | Aplicación WinUI 3 empaquetada como MSIX |
+| `src/WinVector.Core` | Modelos de vista y lógica sin interfaz |
+| `tests/WinVector.Core.Tests` | Pruebas de `WinVector.Core` con MSTest |
+
+**Con Visual Studio:** abre `WinVector.slnx`, elige la plataforma `x64` o `ARM64` según tu equipo y pulsa F5. El perfil "WinVector (Package)" instala y depura el paquete MSIX.
+
+**Desde la línea de comandos** (en la raíz del repositorio):
+
+```bash
+dotnet test tests/WinVector.Core.Tests
+dotnet build WinVector.slnx -c Debug -p:Platform=x64
+```
+
+Las pruebas de `WinVector.Core` también funcionan en macOS y Linux.
+
+Los textos de la interfaz están en `src/WinVector.App/Strings/<idioma>/Resources.resw` (español `es-ES` e inglés `en-US`). Cada control del XAML los recibe a través de su `x:Uid`. Un texto nuevo debe añadirse en los dos idiomas.
+
+### Probar un paquete de la CI
+
+Cada pull request que toca la aplicación genera paquetes MSIX de prueba para x64 y ARM64. Están en la ejecución del workflow **Aplicación**, en la sección *Artifacts* (`winvector-msix-x64` o `winvector-msix-ARM64`).
+
+Los paquetes no están firmados: el editor del manifiesto lleva el identificador especial que Windows reserva para paquetes sin firmar. Para instalarlos en Windows 11:
+
+1. Descarga el artefacto de tu arquitectura y descomprímelo.
+2. Abre PowerShell **como administrador** en esa carpeta.
+3. Ejecuta:
+
+   ```powershell
+   Add-AppxPackage -Path (Get-ChildItem .\*.msix).FullName -DependencyPath (Get-ChildItem .\Dependencies\*.msix).FullName -AllowUnsigned
+   ```
+
+4. Abre WinVector desde el menú Inicio.
+
+Para desinstalarlo: `Get-AppxPackage WinVector | Remove-AppxPackage`.
+
+La CI ejecuta esta misma instalación en Windows en cada cambio, arranca la aplicación y guarda una captura de pantalla en el artefacto `captura-prueba-de-humo`.
 
 ## Flujo de trabajo
 
@@ -102,7 +143,7 @@ El proyecto sigue el [versionado semántico](https://semver.org/lang/es/). Mient
 
 - La configuración de formato básica está en `.editorconfig`; la mayoría de los editores la aplican automáticamente.
 - **TypeScript:** ESLint y Prettier. Ejecuta `npm run lint` antes de enviar cambios.
-- **C#:** las reglas de análisis se configurarán con el proyecto de la aplicación; las advertencias se tratan como errores.
+- **C#:** la configuración común está en `Directory.Build.props`: nulabilidad activada, analizadores de .NET en el nivel recomendado y advertencias tratadas como errores. Las versiones de los paquetes NuGet se fijan en `Directory.Packages.props`.
 - Comentarios y documentación en español. Los nombres en el código (variables, funciones, tipos) en inglés.
 
 ## Pruebas

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="UntitledDocument" xml:space="preserve">
+    <value>Untitled {0}</value>
+  </data>
+  <data name="MenuFile.Title" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="MenuFileNew.Text" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="MenuFileOpen.Text" xml:space="preserve">
+    <value>Open…</value>
+  </data>
+  <data name="MenuFileSave.Text" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="MenuFileSaveAs.Text" xml:space="preserve">
+    <value>Save as…</value>
+  </data>
+  <data name="MenuFileCloseTab.Text" xml:space="preserve">
+    <value>Close tab</value>
+  </data>
+  <data name="MenuFileExit.Text" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="MenuEdit.Title" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="MenuEditUndo.Text" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="MenuEditRedo.Text" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="MenuEditCut.Text" xml:space="preserve">
+    <value>Cut</value>
+  </data>
+  <data name="MenuEditCopy.Text" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="MenuEditPaste.Text" xml:space="preserve">
+    <value>Paste</value>
+  </data>
+  <data name="MenuEditDelete.Text" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="MenuEditSelectAll.Text" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="MenuObject.Title" xml:space="preserve">
+    <value>Object</value>
+  </data>
+  <data name="MenuObjectGroup.Text" xml:space="preserve">
+    <value>Group</value>
+  </data>
+  <data name="MenuObjectUngroup.Text" xml:space="preserve">
+    <value>Ungroup</value>
+  </data>
+  <data name="MenuObjectBringToFront.Text" xml:space="preserve">
+    <value>Bring to front</value>
+  </data>
+  <data name="MenuObjectSendToBack.Text" xml:space="preserve">
+    <value>Send to back</value>
+  </data>
+  <data name="MenuPath.Title" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="MenuPathObjectToPath.Text" xml:space="preserve">
+    <value>Object to path</value>
+  </data>
+  <data name="MenuText.Title" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="MenuTextFont.Text" xml:space="preserve">
+    <value>Font…</value>
+  </data>
+  <data name="MenuView.Title" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="MenuViewZoomIn.Text" xml:space="preserve">
+    <value>Zoom in</value>
+  </data>
+  <data name="MenuViewZoomOut.Text" xml:space="preserve">
+    <value>Zoom out</value>
+  </data>
+  <data name="MenuViewFit.Text" xml:space="preserve">
+    <value>Fit to window</value>
+  </data>
+  <data name="MenuHelp.Title" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="MenuHelpAbout.Text" xml:space="preserve">
+    <value>About WinVector</value>
+  </data>
+  <data name="CommandUndo.Label" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="CommandRedo.Label" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="CommandAlign.Label" xml:space="preserve">
+    <value>Align</value>
+  </data>
+  <data name="CommandExport.Label" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="CommandSearch.PlaceholderText" xml:space="preserve">
+    <value>Search for a command</value>
+  </data>
+  <data name="CommandSearch.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Search for a command</value>
+  </data>
+  <data name="ToolSelect.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Select (V)</value>
+  </data>
+  <data name="ToolSelect.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="ToolNode.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Nodes (A)</value>
+  </data>
+  <data name="ToolNode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Nodes</value>
+  </data>
+  <data name="ToolPen.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Pen (P)</value>
+  </data>
+  <data name="ToolPen.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Pen</value>
+  </data>
+  <data name="ToolRectangle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Rectangle (R)</value>
+  </data>
+  <data name="ToolRectangle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Rectangle</value>
+  </data>
+  <data name="ToolEllipse.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ellipse (E)</value>
+  </data>
+  <data name="ToolEllipse.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Ellipse</value>
+  </data>
+  <data name="ToolText.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Text (T)</value>
+  </data>
+  <data name="ToolText.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="ToolGradient.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Gradient (G)</value>
+  </data>
+  <data name="ToolGradient.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Gradient</value>
+  </data>
+  <data name="ToolZoom.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Zoom (Z)</value>
+  </data>
+  <data name="ToolZoom.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Zoom</value>
+  </data>
+  <data name="CanvasPlaceholderTitle.Text" xml:space="preserve">
+    <value>Canvas</value>
+  </data>
+  <data name="CanvasPlaceholderBody.Text" xml:space="preserve">
+    <value>The SVG document will appear here.</value>
+  </data>
+  <data name="PropertiesTitle.Text" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="PropertiesEmpty.Text" xml:space="preserve">
+    <value>Select an object to view and change its properties.</value>
+  </data>
+  <data name="StatusReady.Text" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>About WinVector</value>
+  </data>
+  <data name="AboutBody" xml:space="preserve">
+    <value>SVG graphics editor for Windows 11.
+Version {0}.
+Licensed under the Apache License 2.0.</value>
+  </data>
+  <data name="AboutClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+</root>

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Lógica de la aplicación sin dependencias de interfaz: modelos de vista, archivos, ajustes y
+    cliente del puente. Compila y se prueba en cualquier sistema operativo.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>WinVector.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WinVector.Core.Tests" />
+  </ItemGroup>
+
+</Project>

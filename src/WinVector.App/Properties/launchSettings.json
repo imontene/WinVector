@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "WinVector (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "WinVector (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

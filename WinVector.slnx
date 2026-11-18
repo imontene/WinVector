@@ -1,0 +1,21 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="ARM64" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/WinVector.App/WinVector.App.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Deploy />
+    </Project>
+    <Project Path="src/WinVector.Core/WinVector.Core.csproj">
+      <Platform Project="Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WinVector.Core.Tests/WinVector.Core.Tests.csproj">
+      <Platform Project="Any CPU" />
+    </Project>
+  </Folder>
+</Solution>

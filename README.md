@@ -1,6 +1,8 @@
 # WinVector
 
+[![Aplicación](https://github.com/imontene/winvector/actions/workflows/app.yml/badge.svg)](https://github.com/imontene/winvector/actions/workflows/app.yml)
 [![Motor](https://github.com/imontene/winvector/actions/workflows/engine.yml/badge.svg)](https://github.com/imontene/winvector/actions/workflows/engine.yml)
+[![Contrato](https://github.com/imontene/winvector/actions/workflows/contracts.yml/badge.svg)](https://github.com/imontene/winvector/actions/workflows/contracts.yml)
 
 Editor gráfico de SVG para Windows 11, nativo y moderno.
 
@@ -36,7 +38,7 @@ Motivos de la decisión: [ADR 0001](docs/adr/0001-arquitectura-winui3-webview2.m
 El proyecto tiene dos partes que se compilan por separado:
 
 - **Motor de edición** (`src/engine`): TypeScript. Se desarrolla y prueba en cualquier sistema operativo con [Node.js](https://nodejs.org/).
-- **Aplicación** (`src/WinVector.App`): C# y WinUI 3. Necesita Windows 11, Visual Studio 2022 o posterior con las cargas de trabajo de escritorio de .NET y de aplicaciones de Windows, y el SDK de .NET.
+- **Aplicación** (`src/WinVector.App`): C# y WinUI 3. Necesita Windows 11, Visual Studio 2026 o posterior con las cargas de trabajo de escritorio de .NET y de aplicaciones de Windows, y el SDK de .NET.
 
 Las instrucciones paso a paso, las convenciones de commits y el flujo de pull requests están en la [guía de contribución](CONTRIBUTING.md).
 
