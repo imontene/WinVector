@@ -305,14 +305,19 @@
             <Grid Padding="12,0" ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock
-                    x:Uid="StatusReady"
+                    x:Name="EngineStatusTextBlock"
                     Grid.Column="0"
                     VerticalAlignment="Center"
-                    Style="{StaticResource CaptionTextBlockStyle}" />
+                    AutomationProperties.AutomationId="EngineStatus"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind EngineStatusText(ViewModel.EngineStatus), Mode=OneWay}" />
                 <TextBlock
                     x:Name="ToolStatusText"
                     Grid.Column="1"
@@ -320,7 +325,22 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}" />
                 <TextBlock
+                    x:Name="SelectionStatusText"
                     Grid.Column="2"
+                    VerticalAlignment="Center"
+                    AutomationProperties.AutomationId="SelectionStatus"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind ViewModel.SelectionSummary, Mode=OneWay}" />
+                <TextBlock
+                    x:Name="LatencyStatusText"
+                    Grid.Column="4"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind LatencyText(ViewModel.BridgeLatency), Mode=OneWay}"
+                    Visibility="Collapsed" />
+                <TextBlock
+                    Grid.Column="5"
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"

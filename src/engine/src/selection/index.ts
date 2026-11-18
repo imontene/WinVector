@@ -2,7 +2,6 @@
  * Módulo `selection`.
  *
  * Selección simple, múltiple y por marco; entrada y salida de grupos.
- *
- * Pendiente de implementar; ver docs/PLAN.md, sección 3.2.
+ * Por ahora solo la selección simple con un clic (Fase 0).
  */
-export {};
+export * from "./hitTest";

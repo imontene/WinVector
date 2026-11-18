@@ -11,6 +11,7 @@
     <Grid>
         <WebView2
             x:Name="CanvasWebView"
+            AutomationProperties.AutomationId="EngineCanvas"
             IsHitTestVisible="False"
             IsTabStop="False"
             Opacity="0" />

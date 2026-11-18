@@ -1,4 +1,7 @@
+import { version as engineVersion } from "../package.json";
+import { EngineBridge, detectTransport } from "./bridge";
 import sampleSvg from "./sample.svg?raw";
+import { describeElement, selectableElementAt } from "./selection";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -29,4 +32,17 @@ function showDocument(source: string): SVGSVGElement {
   return svg;
 }
 
-showDocument(sampleSvg);
+const bridge = new EngineBridge(detectTransport(), { engineVersion });
+
+bridge.handle("app.ping", ({ sentAt }) => ({ sentAt, receivedAt: Date.now() }));
+
+const svg = showDocument(sampleSvg);
+
+// Fase 0: un clic selecciona un elemento; un clic en el fondo vacía la selección.
+document.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) return;
+  const element = selectableElementAt(event.target, svg);
+  bridge.emit("selection.changed", { items: element ? [describeElement(element)] : [] });
+});
+
+bridge.start();

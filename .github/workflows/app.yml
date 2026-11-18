@@ -115,10 +115,12 @@ jobs:
           Copy-Item build/LEEME-paquete-de-prueba.txt $out
           Get-ChildItem -Recurse $out | Select-Object FullName, @{ n = 'MB'; e = { [math]::Round($_.Length / 1MB, 1) } } | Format-Table -AutoSize
 
-      - name: Prueba de humo (instalar y arrancar)
+      - name: Prueba de humo (instalar, arrancar y seleccionar)
         if: matrix.platform == 'x64'
-        shell: pwsh
+        # Windows PowerShell 5.1: trae UI Automation y System.Drawing sin instalar nada.
+        shell: powershell
         run: |
+          $ErrorActionPreference = 'Stop'
           $out = Resolve-Path artifacts/upload
           Add-AppxPackage -Path (Get-ChildItem "$out/*.msix").FullName `
             -DependencyPath (Get-ChildItem "$out/Dependencies/*.msix").FullName -AllowUnsigned
@@ -132,7 +134,44 @@ jobs:
           if (-not $process) { throw 'WinVector no está en ejecución 15 s después de arrancar.' }
           Write-Host "En ejecución: PID $($process.Id), ventana '$($process.MainWindowTitle)'"
 
-          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Windows.Forms, System.Drawing
+          Add-Type -Namespace Smoke -Name Mouse -MemberDefinition @'
+          [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+          [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, System.UIntPtr extra);
+          '@
+          $A = [System.Windows.Automation.AutomationElement]
+          $window = $A::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Children,
+            (New-Object System.Windows.Automation.PropertyCondition($A::ProcessIdProperty, $process.Id)))
+          if (-not $window) { throw 'No se encuentra la ventana de WinVector con UI Automation.' }
+          function Find-ById($id) {
+            $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants,
+              (New-Object System.Windows.Automation.PropertyCondition($A::AutomationIdProperty, $id)))
+          }
+
+          $canvas = Find-ById 'EngineCanvas'
+          if (-not $canvas) { throw 'No se encuentra el lienzo (AutomationId EngineCanvas).' }
+          $r = $canvas.Current.BoundingRectangle
+          Write-Host "Lienzo: $($r.X),$($r.Y) $($r.Width)x$($r.Height)"
+
+          # Posición del círculo #sol (300, 96) en el SVG de ejemplo (viewBox 400 x 300), que el motor
+          # dibuja centrado con ancho min(90 % del ancho, 90 % del alto x 4/3).
+          $w = [math]::Min($r.Width * 0.9, $r.Height * 0.9 * 4 / 3)
+          $h = $w * 3 / 4
+          $x = [int]($r.X + ($r.Width - $w) / 2 + $w * 300 / 400)
+          $y = [int]($r.Y + ($r.Height - $h) / 2 + $h * 96 / 300)
+          Write-Host "Clic en el círculo: $x,$y"
+          [Smoke.Mouse]::SetCursorPos($x, $y) | Out-Null
+          [Smoke.Mouse]::mouse_event(0x0002, 0, 0, 0, [System.UIntPtr]::Zero)
+          [Smoke.Mouse]::mouse_event(0x0004, 0, 0, 0, [System.UIntPtr]::Zero)
+
+          $selection = ''
+          for ($i = 0; $i -lt 20 -and $selection -ne 'circle#sol'; $i++) {
+            Start-Sleep -Milliseconds 250
+            $selection = (Find-ById 'SelectionStatus').Current.Name
+          }
+          Write-Host "Barra de estado, selección: '$selection'"
+          Write-Host "Barra de estado, motor: '$((Find-ById 'EngineStatus').Current.Name)'"
+
           $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
           $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
@@ -140,8 +179,15 @@ jobs:
           New-Item -ItemType Directory -Force artifacts/smoke | Out-Null
           $bitmap.Save((Join-Path (Resolve-Path artifacts/smoke) 'captura.png'), [System.Drawing.Imaging.ImageFormat]::Png)
 
+          # TEMPORAL: imprime la captura reducida en el registro para revisarla sin descargar artefactos.
+          $small = New-Object System.Drawing.Bitmap $bitmap, ([int]($bounds.Width * 0.75)), ([int]($bounds.Height * 0.75))
+          $stream = New-Object System.IO.MemoryStream
+          $small.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
+          [Convert]::ToBase64String($stream.ToArray()) -split '(.{4000})' | Where-Object { $_ } | ForEach-Object { Write-Host "CAPTURA:$_" }
+
           $process | Stop-Process
           Remove-AppxPackage $app.PackageFullName
+          if ($selection -ne 'circle#sol') { throw "Se esperaba 'circle#sol' en la barra de estado y hay '$selection'." }
 
       - name: Publicar la captura de la prueba de humo
         if: always() && matrix.platform == 'x64'

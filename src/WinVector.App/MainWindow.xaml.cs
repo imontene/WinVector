@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -24,11 +25,16 @@ public sealed partial class MainWindow : Window
     private const double DragRegionExtraWidth = 48;
 
     private readonly ResourceLoader _resources = new();
+    private IDisposable? _bridgeAttachment;
 
     public MainWindow()
     {
-        ViewModel = new MainViewModel(number =>
-            string.Format(CultureInfo.CurrentCulture, _resources.GetString("UntitledDocument"), number));
+        ViewModel = new MainViewModel(
+            new ShellTexts(
+                UntitledDocument: number => Format("UntitledDocument", number),
+                MultipleSelection: count => Format("SelectionMultiple", count),
+                ProtocolMismatch: (engine, app) => Format("EngineProtocolMismatch", engine, app)),
+            App.Logging.CreateLogger<MainViewModel>());
 
         InitializeComponent();
 
@@ -42,12 +48,34 @@ public sealed partial class MainWindow : Window
             presenter.PreferredMinimumHeight = MinimumHeight;
         }
 
+        EngineCanvas.BridgeCreated += (_, bridge) =>
+        {
+            _bridgeAttachment?.Dispose();
+            _bridgeAttachment = ViewModel.AttachBridge(bridge);
+        };
+        Closed += (_, _) => _bridgeAttachment?.Dispose();
+
+#if DEBUG
+        // La latencia del puente solo interesa durante el desarrollo.
+        LatencyStatusText.Visibility = Visibility.Visible;
+#endif
+
         RootGrid.Loaded += (_, _) => UpdateTitleBarInsets();
         RootGrid.SizeChanged += (_, _) => UpdateTitleBarInsets();
         UpdateToolStatus(ToolRail.Children.OfType<ToggleButton>().FirstOrDefault(b => b.IsChecked == true));
     }
 
     public MainViewModel ViewModel { get; }
+
+    private string Format(string resource, params object[] values) =>
+        string.Format(CultureInfo.CurrentCulture, _resources.GetString(resource), values);
+
+    /// <summary>Texto de la primera columna de la barra de estado: el aviso del motor o "Listo".</summary>
+    private string EngineStatusText(string engineStatus) =>
+        string.IsNullOrEmpty(engineStatus) ? _resources.GetString("StatusReady") : engineStatus;
+
+    private string LatencyText(TimeSpan? latency) =>
+        latency is { } value ? Format("StatusBridgeLatency", value.TotalMilliseconds.ToString("0.0", CultureInfo.CurrentCulture)) : string.Empty;
 
     /// <summary>Tamaño inicial sin superar el 90 % del área de trabajo de la pantalla, y centrada.</summary>
     private void PlaceWindow()

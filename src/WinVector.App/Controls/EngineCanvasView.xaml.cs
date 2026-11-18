@@ -2,8 +2,10 @@ using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
+using Microsoft.Extensions.Logging;
 using Microsoft.Windows.ApplicationModel.Resources;
 using Windows.System;
+using WinVector.Core.Bridge;
 using WinVector.Core.Canvas;
 
 namespace WinVector.App.Controls;
@@ -22,8 +24,20 @@ public sealed partial class EngineCanvasView : UserControl
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += (_, _) => DisposeBridge();
         ActualThemeChanged += (_, _) => ApplyColorScheme();
     }
+
+    /// <summary>Puente con el motor. Existe desde que el WebView2 está listo, antes de cargar el motor.</summary>
+    public BridgeClient? Bridge { get; private set; }
+
+    /// <summary>
+    /// Se produce cuando se crea <see cref="Bridge"/>, antes de cargar el motor, para que nadie se
+    /// pierda el evento engine.ready.
+    /// </summary>
+    public event EventHandler<BridgeClient>? BridgeCreated;
+
+    private WebViewBridgeTransport? _transport;
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -87,6 +101,10 @@ public sealed partial class EngineCanvasView : UserControl
             EngineLocation.HostName,
             engineFolder,
             CoreWebView2HostResourceAccessKind.Deny);
+
+        _transport = new WebViewBridgeTransport(core);
+        Bridge = new BridgeClient(_transport, App.Logging.CreateLogger<BridgeClient>());
+        BridgeCreated?.Invoke(this, Bridge);
 
         core.NavigationStarting += OnNavigationStarting;
         core.NewWindowRequested += OnNewWindowRequested;
@@ -164,6 +182,14 @@ public sealed partial class EngineCanvasView : UserControl
         {
             ShowError(_resources.GetString("CanvasErrorTitle"), args.WebErrorStatus.ToString());
         }
+    }
+
+    private void DisposeBridge()
+    {
+        Bridge?.Dispose();
+        Bridge = null;
+        _transport?.Dispose();
+        _transport = null;
     }
 
     private void ShowError(string title, string message)
