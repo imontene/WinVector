@@ -17,6 +17,7 @@ internal sealed class AppSession : IDisposable
     public const string AumidVariable = "WINVECTOR_AUMID";
 
     private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan UiaTimeout = TimeSpan.FromSeconds(15);
 
     private AppSession(Application application, UIA3Automation automation, Window window)
     {
@@ -26,6 +27,28 @@ internal sealed class AppSession : IDisposable
     }
 
     public Application Application { get; }
+
+    /// <summary>
+    /// Obtiene la ventana principal y reintenta si UI Automation agota el tiempo al conectarse,
+    /// hasta <see cref="StartTimeout"/>.
+    /// </summary>
+    private static Window GetMainWindowWithRetry(Application application, UIA3Automation automation)
+    {
+        var deadline = DateTime.UtcNow + StartTimeout;
+        while (true)
+        {
+            try
+            {
+                var remaining = deadline - DateTime.UtcNow;
+                return application.GetMainWindow(automation, remaining > TimeSpan.Zero ? remaining : TimeSpan.FromSeconds(1))
+                    ?? throw new InvalidOperationException("WinVector no abrió su ventana principal.");
+            }
+            catch (TimeoutException) when (DateTime.UtcNow < deadline)
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+            }
+        }
+    }
 
     public UIA3Automation Automation { get; }
 
@@ -41,11 +64,17 @@ internal sealed class AppSession : IDisposable
         }
 
         var application = Application.LaunchStoreApp(aumid);
-        var automation = new UIA3Automation();
+
+        // En un arranque en frío (el primero tras instalar el paquete) la ventana tarda en responder a
+        // UI Automation más que los tiempos predeterminados, y la primera conexión agota el tiempo.
+        var automation = new UIA3Automation
+        {
+            ConnectionTimeout = UiaTimeout,
+            TransactionTimeout = UiaTimeout,
+        };
         try
         {
-            var window = application.GetMainWindow(automation, StartTimeout)
-                ?? throw new InvalidOperationException("WinVector no abrió su ventana principal.");
+            var window = GetMainWindowWithRetry(application, automation);
             window.SetForeground();
             return new AppSession(application, automation, window);
         }

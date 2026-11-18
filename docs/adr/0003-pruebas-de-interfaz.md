@@ -42,6 +42,7 @@ Cada prueba arranca la aplicación desde cero y la cierra al terminar.
 
 - Algunos elementos de WinUI, como los `TextBlock` de la barra de estado, no aparecen en la vista de controles con la búsqueda predeterminada de `System.Windows.Automation`. Hay que recorrer la vista completa (*raw view*). `AppSession.FindById` prueba primero la búsqueda normal y, si no encuentra el elemento, recorre la vista completa.
 - FlaUI lanza `PropertyNotSupportedException` al leer una propiedad sin valor, como un `HelpText` vacío. Hay que leer con `element.Properties.<Propiedad>.ValueOrDefault`.
+- **Arranque en frío.** La primera vez que se abre la aplicación tras instalar el paquete, la ventana puede tardar en responder a UI Automation más que los tiempos predeterminados de FlaUI, y la conexión falla con `TimeoutException`. Ocurrió en la primera ejecución en `main` después de fusionar, aunque las 10 repeticiones de la evaluación habían pasado: solo la primera de ellas arrancaba en frío. `AppSession` amplía los tiempos de conexión y de operación de UI Automation a 15 s y reintenta la obtención de la ventana hasta 30 s.
 - WinUI usa el `x:Name` como AutomationId cuando no se indica otro. Los textos que cambian deben llevar además `AutomationProperties.Name` enlazado a su contenido, que también mejora la accesibilidad.
 
 **Comparación:**
