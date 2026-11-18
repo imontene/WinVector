@@ -1,0 +1,80 @@
+name: Motor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/engine/**"
+      - "contracts/**"
+      - ".github/workflows/engine.yml"
+  pull_request:
+    paths:
+      - "src/engine/**"
+      - "contracts/**"
+      - ".github/workflows/engine.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: engine-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: src/engine
+
+jobs:
+  engine:
+    name: Lint, pruebas y compilación
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: src/engine/.nvmrc
+          cache: npm
+          cache-dependency-path: src/engine/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint y formato
+        run: npm run lint
+
+      - name: Comprobar tipos
+        run: npm run typecheck
+
+      - name: Pruebas unitarias
+        run: npm test
+
+      - name: Instalar Chromium para Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Pruebas de integración
+        run: npm run test:e2e
+
+      - name: Compilar
+        run: npm run build
+
+      - name: Publicar el bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: engine-dist
+          path: src/engine/dist
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publicar el informe de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: src/engine/playwright-report
+          if-no-files-found: ignore
+          retention-days: 14
