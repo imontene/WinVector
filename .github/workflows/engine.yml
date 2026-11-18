@@ -50,11 +50,12 @@ jobs:
       - name: Comprobar tipos
         run: npm run typecheck
 
-      - name: Pruebas unitarias
-        run: npm test
-
+      # Las pruebas unitarias del documento también se ejecutan en Chromium (*.browser.test.ts).
       - name: Instalar Chromium para Playwright
         run: npx playwright install --with-deps chromium
+
+      - name: Pruebas unitarias
+        run: npm test
 
       - name: Pruebas de integración
         run: npm run test:e2e

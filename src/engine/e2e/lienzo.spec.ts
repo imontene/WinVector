@@ -9,7 +9,7 @@ test("muestra el SVG de ejemplo en el lienzo", async ({ page }) => {
 
   await page.goto("/");
 
-  const svg = page.locator("#workspace > svg");
+  const svg = page.locator("#workspace svg").first();
   await expect(svg).toBeVisible();
   await expect(svg.locator("#sol")).toBeVisible();
   await expect(svg.locator("#titulo")).toHaveText("WinVector");
