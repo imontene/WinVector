@@ -1,0 +1,38 @@
+name: Proponer una función
+description: Una idea para mejorar WinVector.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Consulta antes la [hoja de ruta](https://github.com/imontene/winvector/blob/main/docs/PLAN.md#6-mvp-futuros): puede que la función ya esté prevista para una versión futura.
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qué necesitas hacer
+      description: Describe la tarea o el problema, no la solución. Por ejemplo, "necesito exportar iconos en varios tamaños a la vez".
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Cómo te imaginas la solución
+      description: Opcional. Cómo funcionaría desde el punto de vista del usuario.
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Qué haces ahora
+      description: Opcional. Cómo lo resuelves hoy, con WinVector u otra herramienta.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Formas y trazados
+        - Texto
+        - Colores y degradados
+        - Capas y organización
+        - Vista de código
+        - Abrir, guardar y exportar
+        - Interfaz y atajos
+        - Otra

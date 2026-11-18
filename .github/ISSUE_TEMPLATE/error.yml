@@ -1,0 +1,60 @@
+name: Informar de un error
+description: Algo no funciona como debería.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por tomarte el tiempo de informar. Antes de enviarlo, busca si ya existe un issue sobre el mismo error.
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Qué ocurre
+      description: Describe el error en pocas frases.
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. Abre un documento nuevo
+        2. Dibuja un rectángulo
+        3. Pulsa Ctrl+Z
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Qué esperabas que ocurriera
+    validations:
+      required: true
+  - type: textarea
+    id: archivo
+    attributes:
+      label: Archivo SVG o capturas
+      description: Si el error depende de un archivo, adjúntalo (arrastra el .svg aquí). Revisa antes que no contenga información privada.
+  - type: input
+    id: version-app
+    attributes:
+      label: Versión de WinVector
+      description: Menú Ayuda → Acerca de, o el nombre del paquete instalado.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: version-windows
+    attributes:
+      label: Versión de Windows
+      description: Ejecuta `winver` para verla.
+      placeholder: "Windows 11 24H2 (compilación 26100)"
+    validations:
+      required: true
+  - type: dropdown
+    id: arquitectura
+    attributes:
+      label: Arquitectura del equipo
+      options:
+        - x64
+        - ARM64
+        - No lo sé

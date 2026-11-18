@@ -29,6 +29,21 @@ Motivos de la decisión: [ADR 0001](docs/adr/0001-arquitectura-winui3-webview2.m
 
 - Windows 11 (x64 o ARM64).
 
+## Desarrollo
+
+El proyecto tiene dos partes que se compilan por separado:
+
+- **Motor de edición** (`src/engine`): TypeScript. Se desarrolla y prueba en cualquier sistema operativo con [Node.js](https://nodejs.org/).
+- **Aplicación** (`src/WinVector.App`): C# y WinUI 3. Necesita Windows 11, Visual Studio 2022 o posterior con las cargas de trabajo de escritorio de .NET y de aplicaciones de Windows, y el SDK de .NET.
+
+Las instrucciones paso a paso, las convenciones de commits y el flujo de pull requests están en la [guía de contribución](CONTRIBUTING.md).
+
+## Comunidad
+
+- [Guía de contribución](CONTRIBUTING.md)
+- [Código de conducta](CODE_OF_CONDUCT.md)
+- [Política de seguridad](SECURITY.md)
+
 ## Licencia
 
 Distribuido bajo la [licencia Apache 2.0](LICENSE).
