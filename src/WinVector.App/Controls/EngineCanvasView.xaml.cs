@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -14,6 +15,10 @@ namespace WinVector.App.Controls;
 /// Lienzo de edición: aloja el motor (src/engine) en un WebView2 servido desde la carpeta de la
 /// aplicación, sin red, y le impide salir de esa página.
 /// </summary>
+[SuppressMessage(
+    "Design",
+    "CA1001:Types that own disposable fields should be disposable",
+    Justification = "Los controles XAML no se desechan: el puente y su transporte se liberan en Unloaded.")]
 public sealed partial class EngineCanvasView : UserControl
 {
     private readonly ResourceLoader _resources = new();
