@@ -1,0 +1,15 @@
+<Project>
+
+  <!-- Versiones de paquetes NuGet, centralizadas para todos los proyectos. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.9457" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.7.0" />
+    <PackageVersion Include="MSTest" Version="4.5.3" />
+  </ItemGroup>
+
+</Project>

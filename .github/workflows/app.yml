@@ -1,0 +1,116 @@
+name: Aplicación
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "contracts/**"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "WinVector.slnx"
+      - ".github/workflows/app.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "contracts/**"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "WinVector.slnx"
+      - ".github/workflows/app.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  NUGET_PACKAGES: ${{ github.workspace }}\.nuget\packages
+
+jobs:
+  build:
+    name: Compilar y empaquetar (${{ matrix.platform }})
+    runs-on: windows-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: x64
+            rid: win-x64
+          - platform: ARM64
+            rid: win-arm64
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: src/engine/.nvmrc
+          cache: npm
+          cache-dependency-path: src/engine/package-lock.json
+
+      - name: Compilar el motor
+        working-directory: src/engine
+        run: |
+          npm ci
+          npm run build
+
+      - name: Instalar .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Caché de NuGet
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Pruebas de WinVector.Core
+        if: matrix.platform == 'x64'
+        run: dotnet test tests/WinVector.Core.Tests -c Release
+
+      - name: Compilar la solución
+        run: dotnet build WinVector.slnx -c Release -p:Platform=${{ matrix.platform }}
+
+      - name: Instalar MSBuild de Visual Studio
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Empaquetar MSIX de prueba
+        run: >
+          msbuild src/WinVector.App/WinVector.App.csproj
+          /restore
+          /p:Configuration=Release
+          /p:Platform=${{ matrix.platform }}
+          /p:RuntimeIdentifier=${{ matrix.rid }}
+          /p:SelfContained=true
+          /p:GenerateAppxPackageOnBuild=true
+          /p:AppxPackageSigningEnabled=false
+          /p:UapAppxPackageBuildMode=SideloadOnly
+          /p:AppxBundle=Never
+          /p:AppxPackageDir=${{ github.workspace }}\artifacts\msix\
+          /verbosity:minimal
+
+      - name: Listar el paquete generado
+        shell: pwsh
+        run: Get-ChildItem -Recurse artifacts/msix | Select-Object FullName, Length | Format-Table -AutoSize
+
+      - name: Publicar el MSIX
+        uses: actions/upload-artifact@v7
+        with:
+          name: winvector-msix-${{ matrix.platform }}
+          path: artifacts/msix
+          if-no-files-found: error
+          retention-days: 14

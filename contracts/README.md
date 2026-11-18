@@ -11,7 +11,6 @@ Mensajes que intercambian la aplicación (C#) y el motor de edición (TypeScript
 | `types/*.schema.json` | Un JSON Schema por cada tipo de datos |
 | `tools/generate.mjs` | Generador de tipos |
 | `tools/generate.test.mjs` | Pruebas del generador |
-| `tools/csharp-check/` | Comprobación provisional del C# generado, hasta que exista `WinVector.Core.Tests` |
 
 Archivos generados (no se editan a mano):
 
@@ -101,10 +100,10 @@ Desde `src/engine`:
 | `npm run contracts:generate` | Regenera los tipos de TypeScript y C# y les da formato |
 | `npm run contracts:test` | Ejecuta las pruebas del generador |
 
-Desde la raíz del repositorio, con el SDK de .NET instalado:
+Las pruebas del C# generado están en `tests/WinVector.Core.Tests/Bridge`. Desde la raíz del repositorio, con el SDK de .NET instalado:
 
 ```bash
-dotnet run --project contracts/tools/csharp-check
+dotnet test tests/WinVector.Core.Tests
 ```
 
 La decisión de usar un generador propio está en [ADR 0002](../docs/adr/0002-generador-propio-del-contrato.md).
