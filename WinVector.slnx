@@ -5,6 +5,8 @@
   </Configurations>
   <Folder Name="/src/">
     <Project Path="src/WinVector.App/WinVector.App.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|ARM64" Project="ARM64" />
       <Deploy />
     </Project>
     <Project Path="src/WinVector.Core/WinVector.Core.csproj">
