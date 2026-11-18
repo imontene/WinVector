@@ -219,7 +219,7 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - Contrato del puente con generación de tipos y un mensaje de prueba en ambos sentidos.
 - CI en GitHub Actions: compilación y pruebas del motor (Linux), compilación del shell y empaquetado MSIX sin firmar (Windows).
 - **Resultado:** la app abre, muestra un SVG fijo y el shell recibe eventos del motor.
-- **Conseguido:** al hacer clic en un elemento del SVG de ejemplo, la barra de estado muestra cuál es. Las pruebas de interfaz lo comprueban en cada cambio sobre el paquete instalado. Primera medición del puente: 20–30 ms de ida y vuelta para el primer `app.ping` en el runner de la CI.
+- **Conseguido:** al hacer clic en un elemento del SVG de ejemplo, la barra de estado muestra cuál es. Las pruebas de interfaz lo comprueban en cada cambio sobre el paquete instalado. Primera medición del puente: entre 20 y 40 ms de ida y vuelta para el primer `app.ping` en el runner de la CI, según la ejecución.
 
 ### Fase 1 · Documento y lienzo (L)
 - Carga y serialización con preservación de contenido desconocido; corpus de referencia y pruebas de ida y vuelta.
