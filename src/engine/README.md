@@ -44,3 +44,9 @@ Para usar un Chromium ya instalado en el sistema, indica su ruta en `PLAYWRIGHT_
 | `e2e`           | Pruebas de integración                                                                                                                        |
 
 El bundle de `dist/` no puede cargar nada de fuera de la aplicación: la prueba `e2e/lienzo.spec.ts` falla si aparece una petición externa.
+
+## Seguridad
+
+La compilación añade a `index.html` una política de seguridad de contenido (CSP, definida en `vite.config.ts`). Impide ejecutar scripts que no sean los del propio bundle, incluidos los que traiga un SVG abierto, y cargar imágenes, fuentes o datos desde fuera de la aplicación. Los estilos en línea se permiten porque los SVG los usan de forma habitual. `e2e/seguridad.spec.ts` comprueba estas restricciones. En `npm run dev` la política no se aplica, para no romper la recarga en caliente.
+
+La aplicación sirve `dist/` dentro del lienzo en `https://engine.winvector/` y bloquea cualquier navegación fuera de esa dirección.

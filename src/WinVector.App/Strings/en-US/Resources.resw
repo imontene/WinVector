@@ -198,12 +198,6 @@
   <data name="ToolZoom.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Zoom</value>
   </data>
-  <data name="CanvasPlaceholderTitle.Text" xml:space="preserve">
-    <value>Canvas</value>
-  </data>
-  <data name="CanvasPlaceholderBody.Text" xml:space="preserve">
-    <value>The SVG document will appear here.</value>
-  </data>
   <data name="PropertiesTitle.Text" xml:space="preserve">
     <value>Properties</value>
   </data>
@@ -223,5 +217,23 @@ Licensed under the Apache License 2.0.</value>
   </data>
   <data name="AboutClose" xml:space="preserve">
     <value>Close</value>
+  </data>
+  <data name="CanvasLoading.Text" xml:space="preserve">
+    <value>Loading the canvas…</value>
+  </data>
+  <data name="CanvasErrorTitle" xml:space="preserve">
+    <value>The canvas couldn't load</value>
+  </data>
+  <data name="CanvasEngineMissing" xml:space="preserve">
+    <value>The editing engine is missing from the installation. Reinstall WinVector.</value>
+  </data>
+  <data name="CanvasRuntimeMissingTitle" xml:space="preserve">
+    <value>Microsoft Edge WebView2 is missing</value>
+  </data>
+  <data name="CanvasRuntimeMissingBody" xml:space="preserve">
+    <value>WinVector uses the WebView2 Runtime to show the canvas. Install it and open the app again.</value>
+  </data>
+  <data name="CanvasRuntimeDownload.Content" xml:space="preserve">
+    <value>Download the WebView2 Runtime</value>
   </data>
 </root>

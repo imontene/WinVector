@@ -32,6 +32,8 @@
     <ProjectReference Include="..\WinVector.Core\WinVector.Core.csproj" />
   </ItemGroup>
 
+  <Import Project="Engine.targets" />
+
   <!-- Habilita el empaquetado MSIX y el menú "Empaquetar y publicar" en Visual Studio. -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)' != 'true' and '$(EnableMsixTooling)' == 'true'">
     <ProjectCapability Include="Msix" />

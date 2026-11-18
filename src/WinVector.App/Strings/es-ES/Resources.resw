@@ -199,12 +199,6 @@
   <data name="ToolZoom.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Zoom</value>
   </data>
-  <data name="CanvasPlaceholderTitle.Text" xml:space="preserve">
-    <value>Lienzo</value>
-  </data>
-  <data name="CanvasPlaceholderBody.Text" xml:space="preserve">
-    <value>Aquí se mostrará el documento SVG.</value>
-  </data>
   <data name="PropertiesTitle.Text" xml:space="preserve">
     <value>Propiedades</value>
   </data>
@@ -225,5 +219,23 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="AboutClose" xml:space="preserve">
     <value>Cerrar</value>
+  </data>
+  <data name="CanvasLoading.Text" xml:space="preserve">
+    <value>Cargando el lienzo…</value>
+  </data>
+  <data name="CanvasErrorTitle" xml:space="preserve">
+    <value>No se pudo cargar el lienzo</value>
+  </data>
+  <data name="CanvasEngineMissing" xml:space="preserve">
+    <value>Falta el motor de edición en la instalación. Vuelve a instalar WinVector.</value>
+  </data>
+  <data name="CanvasRuntimeMissingTitle" xml:space="preserve">
+    <value>Falta Microsoft Edge WebView2</value>
+  </data>
+  <data name="CanvasRuntimeMissingBody" xml:space="preserve">
+    <value>WinVector usa WebView2 Runtime para mostrar el lienzo. Instálalo y vuelve a abrir la aplicación.</value>
+  </data>
+  <data name="CanvasRuntimeDownload.Content" xml:space="preserve">
+    <value>Descargar WebView2 Runtime</value>
   </data>
 </root>

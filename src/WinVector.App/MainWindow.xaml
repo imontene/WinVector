@@ -3,6 +3,7 @@
     x:Class="WinVector.App.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:WinVector.App.Controls"
     xmlns:shell="using:WinVector.Core.Shell"
     Title="WinVector">
 
@@ -181,7 +182,7 @@
                     HorizontalAlignment="Left"
                     Background="Transparent"
                     DefaultLabelPosition="Right"
-                    OverflowButtonVisibility="Collapsed">
+                    OverflowButtonVisibility="Auto">
                     <AppBarButton
                         x:Uid="CommandUndo"
                         Icon="Undo"
@@ -280,22 +281,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- El lienzo (WebView2 con el motor) se integra en el issue #4. -->
-            <Grid x:Name="CanvasHost" Grid.Column="1">
-                <StackPanel
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="4">
-                    <TextBlock
-                        x:Uid="CanvasPlaceholderTitle"
-                        HorizontalAlignment="Center"
-                        Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <TextBlock
-                        x:Uid="CanvasPlaceholderBody"
-                        HorizontalAlignment="Center"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-            </Grid>
+            <controls:EngineCanvasView x:Name="EngineCanvas" Grid.Column="1" />
 
             <Border
                 Grid.Column="2"

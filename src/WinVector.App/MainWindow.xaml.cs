@@ -35,7 +35,7 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(TitleBarDragRegion);
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
-        AppWindow.Resize(new SizeInt32(InitialWidth, InitialHeight));
+        PlaceWindow();
         if (AppWindow.Presenter is OverlappedPresenter presenter)
         {
             presenter.PreferredMinimumWidth = MinimumWidth;
@@ -48,6 +48,19 @@ public sealed partial class MainWindow : Window
     }
 
     public MainViewModel ViewModel { get; }
+
+    /// <summary>Tamaño inicial sin superar el 90 % del área de trabajo de la pantalla, y centrada.</summary>
+    private void PlaceWindow()
+    {
+        var workArea = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary).WorkArea;
+        var width = Math.Min(InitialWidth, (int)(workArea.Width * 0.9));
+        var height = Math.Min(InitialHeight, (int)(workArea.Height * 0.9));
+        AppWindow.MoveAndResize(new RectInt32(
+            workArea.X + ((workArea.Width - width) / 2),
+            workArea.Y + ((workArea.Height - height) / 2),
+            width,
+            height));
+    }
 
     /// <summary>
     /// Deja sitio a los botones de la barra de título (minimizar, maximizar, cerrar), que Windows

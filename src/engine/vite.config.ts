@@ -1,9 +1,43 @@
+import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
+
+/**
+ * Política de seguridad del bundle. El lienzo mostrará SVG de terceros: los scripts que traigan no
+ * deben ejecutarse y nada debe cargarse desde fuera de la aplicación. Los estilos en línea se
+ * permiten porque los SVG los usan de forma habitual (atributo style).
+ */
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'none'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "object-src 'none'",
+].join("; ");
+
+/** Añade la política al index.html solo en la compilación; en desarrollo rompería la recarga en caliente. */
+function contentSecurityPolicy(): Plugin {
+  return {
+    name: "winvector-content-security-policy",
+    apply: "build",
+    transformIndexHtml: () => [
+      {
+        tag: "meta",
+        attrs: { "http-equiv": "Content-Security-Policy", content: CONTENT_SECURITY_POLICY },
+        injectTo: "head-prepend",
+      },
+    ],
+  };
+}
 
 // El bundle se sirve desde la carpeta de la aplicación mediante un host virtual de
 // WebView2, así que todas las rutas deben ser relativas y no puede haber recursos externos.
 export default defineConfig({
   base: "./",
+  plugins: [contentSecurityPolicy()],
   build: {
     outDir: "dist",
     emptyOutDir: true,

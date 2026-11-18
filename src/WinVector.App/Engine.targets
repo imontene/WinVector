@@ -1,0 +1,44 @@
+<Project>
+
+  <!--
+    Incluye el motor de edición (src/engine/dist) en la aplicación, en la carpeta Engine.
+    Si el motor no está compilado o su código es más reciente que dist, lo compila con npm.
+    Para usar un dist ya compilado sin invocar npm: -p:BuildEngine=false.
+  -->
+  <PropertyGroup>
+    <EngineProjectDir>$([MSBuild]::NormalizeDirectory($(MSBuildThisFileDirectory), '..', 'engine'))</EngineProjectDir>
+    <EngineDistDir>$(EngineProjectDir)dist\</EngineDistDir>
+    <BuildEngine Condition="'$(BuildEngine)' == ''">true</BuildEngine>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EngineSource Include="$(EngineProjectDir)src\**\*" />
+    <EngineSource Include="$(EngineProjectDir)index.html;$(EngineProjectDir)package.json;$(EngineProjectDir)package-lock.json;$(EngineProjectDir)vite.config.ts;$(EngineProjectDir)tsconfig.json" />
+  </ItemGroup>
+
+  <Target
+    Name="BuildEngine"
+    Condition="'$(BuildEngine)' == 'true'"
+    Inputs="@(EngineSource)"
+    Outputs="$(EngineDistDir)index.html">
+    <Message Importance="high" Text="Compilando el motor de edición en $(EngineProjectDir)" />
+    <Exec Command="npm ci" WorkingDirectory="$(EngineProjectDir)" Condition="!Exists('$(EngineProjectDir)node_modules')" />
+    <Exec Command="npm run build" WorkingDirectory="$(EngineProjectDir)" />
+  </Target>
+
+  <Target Name="IncludeEngine" BeforeTargets="AssignTargetPaths" DependsOnTargets="BuildEngine">
+    <Error
+      Condition="!Exists('$(EngineDistDir)index.html')"
+      Text="No se encuentra el motor compilado en $(EngineDistDir). Ejecuta 'npm ci' y 'npm run build' en src/engine, o compila con BuildEngine=true." />
+    <ItemGroup>
+      <_EngineFile Include="$(EngineDistDir)**\*" />
+      <!-- Los mapas de código solo sirven para depurar. -->
+      <_EngineFile Remove="$(EngineDistDir)**\*.map" Condition="'$(Configuration)' != 'Debug'" />
+      <Content Include="@(_EngineFile)">
+        <Link>Engine\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+  </Target>
+
+</Project>
