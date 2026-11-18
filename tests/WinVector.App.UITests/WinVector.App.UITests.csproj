@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Pruebas de la interfaz nativa con FlaUI (UI Automation). Necesitan Windows y WinVector
+    instalado: se indica con la variable WINVECTOR_AUMID (identificador del modelo de usuario de
+    la aplicación, por ejemplo WinVector_xxxxxxxxxxxxx!App). Sin ella, las pruebas no se ejecutan.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FlaUI.UIA3" />
+    <PackageReference Include="MSTest" />
+  </ItemGroup>
+
+</Project>

@@ -93,7 +93,7 @@ Los paquetes no están firmados: el editor del manifiesto lleva el identificador
 
 Para desinstalarlo: `Get-AppxPackage WinVector | Remove-AppxPackage`.
 
-La CI ejecuta esta misma instalación en Windows en cada cambio. Después arranca la aplicación, hace clic en el círculo del SVG de ejemplo, comprueba con UI Automation que la barra de estado muestra `circle#sol` y guarda una captura de pantalla en el artefacto `captura-prueba-de-humo`. El registro del paso anota también la latencia del puente.
+La CI ejecuta esta misma instalación en Windows en cada cambio y después lanza las pruebas de interfaz sobre el paquete instalado (ver la sección siguiente).
 
 ## Flujo de trabajo
 
@@ -152,7 +152,31 @@ Todo cambio de comportamiento necesita pruebas:
 
 - Lógica del motor: pruebas unitarias con Vitest junto al código.
 - Interacción en el lienzo: pruebas de integración con Playwright en `src/engine/e2e`.
+- Lógica de la aplicación sin interfaz: pruebas con MSTest en `tests/WinVector.Core.Tests`.
+- Flujos completos en la aplicación instalada: pruebas de interfaz con FlaUI en `tests/WinVector.App.UITests` (ver más abajo).
 - Archivos SVG que el editor debe abrir y guardar sin dañarlos: añádelos a `tests/corpus` (lee antes su README).
+
+### Pruebas de interfaz
+
+`tests/WinVector.App.UITests` controla la aplicación instalada con [FlaUI](https://github.com/FlaUI/FlaUI) (UI Automation). Pulsa teclas, hace clic en el lienzo y lee la barra de estado. Cada prueba arranca la aplicación desde cero. La decisión y lo aprendido al evaluarlas están en el [ADR 0003](docs/adr/0003-pruebas-de-interfaz.md).
+
+Para ejecutarlas en tu equipo, instala WinVector (con F5 en Visual Studio o con un paquete de la CI) y, en PowerShell desde la raíz del repositorio:
+
+```powershell
+$env:WINVECTOR_AUMID = (Get-AppxPackage WinVector).PackageFamilyName + '!App'
+dotnet test tests/WinVector.App.UITests
+```
+
+Mientras se ejecutan no uses el ratón ni el teclado: las pruebas los controlan. Sin `WINVECTOR_AUMID`, las pruebas se marcan como no concluyentes.
+
+Al escribir una prueba nueva:
+
+- Busca los elementos por AutomationId con `AppSession.FindById`. En WinUI es el `x:Name`, o `AutomationProperties.AutomationId` si se indica.
+- Un texto que cambia debe llevar `AutomationProperties.Name` enlazado a su contenido. Así lo leen las pruebas y los lectores de pantalla.
+- Lee las propiedades opcionales con `Properties.<Propiedad>.ValueOrDefault`: FlaUI lanza una excepción si la propiedad no tiene valor.
+- Prueba flujos de usuario. La lógica detallada va en `WinVector.Core.Tests` o en el motor.
+
+En la CI se ejecutan en x64 tras instalar el paquete. Si alguna falla, el artefacto `pruebas-de-interfaz` incluye una captura de pantalla. Para medir su estabilidad, lanza el workflow **Aplicación** a mano con el número de repeticiones en `ui_test_runs`.
 
 ## Informar de errores y proponer funciones
 

@@ -4,7 +4,7 @@ Editor gráfico de SVG para Windows 11, nativo y moderno.
 
 | | |
 |---|---|
-| Estado | Planificación aprobada, pendiente de iniciar la Fase 0 |
+| Estado | Fase 0 terminada. Siguiente: Fase 1 (documento y lienzo) |
 | Versión objetivo | MVP 1 → `v0.1.0` |
 | Licencia | Apache 2.0 |
 | Repositorio | Público en GitHub |
@@ -212,13 +212,14 @@ Los valores de rendimiento son objetivos iniciales; se ajustarán tras las prime
 
 Las fases son secuenciales; cada una termina con algo funcionando y probado. El tamaño es relativo (S, M, L), sin fechas hasta conocer la dedicación del equipo.
 
-### Fase 0 · Fundaciones (M)
+### Fase 0 · Fundaciones (M) ✅ Terminada
 - Estructura del repositorio, `.editorconfig`, plantillas de issues y pull requests, `CONTRIBUTING.md`.
 - Proyecto WinUI 3 vacío con Mica, pestañas y un WebView2 que carga el motor desde la carpeta local.
 - Proyecto del motor con Vite, Vitest y Playwright.
 - Contrato del puente con generación de tipos y un mensaje de prueba en ambos sentidos.
 - CI en GitHub Actions: compilación y pruebas del motor (Linux), compilación del shell y empaquetado MSIX sin firmar (Windows).
 - **Resultado:** la app abre, muestra un SVG fijo y el shell recibe eventos del motor.
+- **Conseguido:** al hacer clic en un elemento del SVG de ejemplo, la barra de estado muestra cuál es. Las pruebas de interfaz lo comprueban en cada cambio sobre el paquete instalado. Primera medición del puente: entre 20 y 40 ms de ida y vuelta para el primer `app.ping` en el runner de la CI, según la ejecución.
 
 ### Fase 1 · Documento y lienzo (L)
 - Carga y serialización con preservación de contenido desconocido; corpus de referencia y pruebas de ida y vuelta.
@@ -296,7 +297,7 @@ Tras el MVP 1 se podrán abordar las siguientes funciones. El orden es una propu
 | Motor, integración | Playwright (Chromium) | Herramientas con eventos de puntero reales, capturas de referencia |
 | Fidelidad | Corpus `tests/corpus` | Ida y vuelta y comparación visual con Edge |
 | Shell | MSTest | Lógica de `WinVector.Core` y cliente del puente |
-| Interfaz nativa | FlaUI (evaluar en Fase 0) | Flujos principales: abrir, editar, guardar |
+| Interfaz nativa | FlaUI ([ADR 0003](adr/0003-pruebas-de-interfaz.md)) | Flujos principales sobre la aplicación instalada: abrir, editar, guardar |
 
 - Toda pull request ejecuta CI completa; `main` siempre compila.
 - Convenciones: [Conventional Commits](https://www.conventionalcommits.org/es/) y versionado semántico.
@@ -327,6 +328,5 @@ Tras el MVP 1 se podrán abordar las siguientes funciones. El orden es una propu
 
 ## 10. Próximos pasos
 
-1. Crear el repositorio público `WinVector` en GitHub y subir este plan.
-2. Crear en GitHub los hitos (MVP 1 a MVP 5) y los issues de la Fase 0.
-3. Iniciar la Fase 0.
+1. Crear en GitHub los issues de la Fase 1 a partir de la sección 5.
+2. Iniciar la Fase 1.

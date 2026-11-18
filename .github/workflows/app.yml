@@ -23,6 +23,10 @@ on:
       - "WinVector.slnx"
       - ".github/workflows/app.yml"
   workflow_dispatch:
+    inputs:
+      ui_test_runs:
+        description: "Veces que se repiten las pruebas de interfaz (para medir su estabilidad)"
+        default: "1"
 
 permissions:
   contents: read
@@ -115,103 +119,50 @@ jobs:
           Copy-Item build/LEEME-paquete-de-prueba.txt $out
           Get-ChildItem -Recurse $out | Select-Object FullName, @{ n = 'MB'; e = { [math]::Round($_.Length / 1MB, 1) } } | Format-Table -AutoSize
 
-      - name: Prueba de humo (instalar, arrancar y seleccionar)
+      - name: Instalar el paquete para las pruebas de interfaz
         if: matrix.platform == 'x64'
-        # Windows PowerShell 5.1: trae UI Automation y System.Drawing sin instalar nada. Lee el
-        # script como ANSI, por eso los textos de este paso van sin tildes.
-        shell: powershell
+        shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
           $out = Resolve-Path artifacts/upload
           Add-AppxPackage -Path (Get-ChildItem "$out/*.msix").FullName `
             -DependencyPath (Get-ChildItem "$out/Dependencies/*.msix").FullName -AllowUnsigned
           $app = Get-AppxPackage -Name WinVector
-          if (-not $app) { throw 'El paquete no quedo instalado.' }
-          Write-Host "Instalado: $($app.PackageFullName)"
+          "WINVECTOR_AUMID=$($app.PackageFamilyName)!App" >> $env:GITHUB_ENV
+          "WINVECTOR_PACKAGE=$($app.PackageFullName)" >> $env:GITHUB_ENV
 
-          Start-Process "shell:AppsFolder\$($app.PackageFamilyName)!App"
-          Start-Sleep -Seconds 15
-          $process = Get-Process -Name WinVector -ErrorAction SilentlyContinue
-          if (-not $process) { throw 'WinVector no esta en ejecucion 15 s despues de arrancar.' }
-          Write-Host "En ejecucion: PID $($process.Id), ventana '$($process.MainWindowTitle)'"
-
-          Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Windows.Forms, System.Drawing
-          Add-Type -Namespace Smoke -Name Mouse -MemberDefinition @'
-          [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
-          [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, System.UIntPtr extra);
-          '@
-          $A = [System.Windows.Automation.AutomationElement]
-          $window = $A::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Children,
-            (New-Object System.Windows.Automation.PropertyCondition($A::ProcessIdProperty, $process.Id)))
-          if (-not $window) { throw 'No se encuentra la ventana de WinVector con UI Automation.' }
-          # Recorre la vista completa (raw view): la busqueda por defecto solo ve la vista de controles.
-          function Get-Elements {
-            $walker = [System.Windows.Automation.TreeWalker]::RawViewWalker
-            $queue = New-Object System.Collections.Queue
-            $queue.Enqueue($window)
-            while ($queue.Count -gt 0) {
-              $node = $queue.Dequeue()
-              $node
-              $child = $walker.GetFirstChild($node)
-              while ($child) { $queue.Enqueue($child); $child = $walker.GetNextSibling($child) }
-            }
+      - name: Pruebas de interfaz (FlaUI)
+        if: matrix.platform == 'x64'
+        shell: pwsh
+        env:
+          UI_TEST_RUNS: ${{ inputs.ui_test_runs || '1' }}
+        run: |
+          dotnet build tests/WinVector.App.UITests -c Release
+          $runs = [int]$env:UI_TEST_RUNS
+          $results = @()
+          for ($i = 1; $i -le $runs; $i++) {
+            $watch = [Diagnostics.Stopwatch]::StartNew()
+            $verbosity = if ($i -eq 1) { 'detailed' } else { 'minimal' }
+            dotnet test tests/WinVector.App.UITests -c Release --no-build `
+              --logger "trx;LogFileName=ui-$i.trx" --logger "console;verbosity=$verbosity" `
+              --results-directory artifacts/ui-tests
+            $results += [pscustomobject]@{ Ejecucion = $i; Correcta = ($LASTEXITCODE -eq 0); Segundos = [math]::Round($watch.Elapsed.TotalSeconds, 1) }
           }
-          function Find-ById($id) {
-            Get-Elements | Where-Object { $_.Current.AutomationId -eq $id } | Select-Object -First 1
-          }
+          $results | Format-Table -AutoSize | Out-String | Write-Host
+          $failed = @($results | Where-Object { -not $_.Correcta }).Count
+          Write-Host "Ejecuciones: $runs. Fallidas: $failed."
+          if ($failed -gt 0) { exit 1 }
 
-          $canvas = Find-ById 'EngineCanvas'
-          if (-not $canvas) { throw 'No se encuentra el lienzo (AutomationId EngineCanvas).' }
-          $r = $canvas.Current.BoundingRectangle
-          Write-Host "Lienzo: $($r.X),$($r.Y) $($r.Width)x$($r.Height)"
+      - name: Desinstalar el paquete
+        if: always() && matrix.platform == 'x64' && env.WINVECTOR_PACKAGE != ''
+        shell: pwsh
+        run: Remove-AppxPackage $env:WINVECTOR_PACKAGE
 
-          # Posicion del circulo #sol (300, 96) en el SVG de ejemplo (viewBox 400 x 300), que el motor
-          # dibuja centrado con ancho min(90 % del ancho, 90 % del alto x 4/3).
-          $w = [math]::Min($r.Width * 0.9, $r.Height * 0.9 * 4 / 3)
-          $h = $w * 3 / 4
-          $x = [int]($r.X + ($r.Width - $w) / 2 + $w * 300 / 400)
-          $y = [int]($r.Y + ($r.Height - $h) / 2 + $h * 96 / 300)
-          Write-Host "Clic en el circulo: $x,$y"
-          [Smoke.Mouse]::SetCursorPos($x, $y) | Out-Null
-          [Smoke.Mouse]::mouse_event(0x0002, 0, 0, 0, [System.UIntPtr]::Zero)
-          [Smoke.Mouse]::mouse_event(0x0004, 0, 0, 0, [System.UIntPtr]::Zero)
-
-          $selection = ''
-          for ($i = 0; $i -lt 20 -and $selection -ne 'circle#sol'; $i++) {
-            Start-Sleep -Milliseconds 250
-            $selection = (Find-ById 'SelectionStatus').Current.Name
-          }
-          Write-Host "Barra de estado, seleccion: '$selection'"
-          $engineStatus = Find-ById 'EngineStatus'
-          Write-Host "Barra de estado, motor: '$($engineStatus.Current.Name)'"
-          Write-Host "Latencia del puente (app.ping, ida y vuelta): '$($engineStatus.Current.HelpText)'"
-
-          $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
-          $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-          $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
-          New-Item -ItemType Directory -Force artifacts/smoke | Out-Null
-          $bitmap.Save((Join-Path (Resolve-Path artifacts/smoke) 'captura.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-
-          try {
-          if ($selection -ne 'circle#sol') {
-            Write-Host 'Elementos con AutomationId:'
-            Get-Elements | Where-Object { $_.Current.AutomationId } | ForEach-Object {
-              Write-Host "  $($_.Current.ControlType.ProgrammaticName) id='$($_.Current.AutomationId)' name='$($_.Current.Name)'"
-            }
-            throw "Se esperaba 'circle#sol' en la barra de estado y hay '$selection'."
-          }
-          } finally {
-            $process | Stop-Process
-            Remove-AppxPackage $app.PackageFullName
-          }
-
-      - name: Publicar la captura de la prueba de humo
+      - name: Publicar los resultados de las pruebas de interfaz
         if: always() && matrix.platform == 'x64'
         uses: actions/upload-artifact@v7
         with:
-          name: captura-prueba-de-humo
-          path: artifacts/smoke
+          name: pruebas-de-interfaz
+          path: artifacts/ui-tests
           if-no-files-found: ignore
           retention-days: 14
 
