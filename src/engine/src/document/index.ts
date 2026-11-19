@@ -11,3 +11,11 @@ export {
   type DocumentManagerOptions,
   type OpenDocument,
 } from "./documentManager";
+export {
+  applyArtboard,
+  formatViewBox,
+  parseViewBox,
+  readArtboard,
+  sameArtboard,
+  type ArtboardSettings,
+} from "./artboard";

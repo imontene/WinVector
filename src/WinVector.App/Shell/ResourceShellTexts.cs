@@ -27,6 +27,8 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string EngineUnavailable(string fileName) => Format("FileErrorEngineUnavailable", fileName);
 
+    public string ZoomPercent(double zoom) => Format("ZoomPercent", Math.Round(zoom * 100, zoom < 0.1 ? 1 : 0));
+
     public string UndoCommand(string? action) => HistoryCommand("UndoCommand", action);
 
     public string RedoCommand(string? action) => HistoryCommand("RedoCommand", action);

@@ -29,6 +29,17 @@ public sealed record AppPong(
     [property: JsonPropertyName("sentAt")] double SentAt,
     [property: JsonPropertyName("receivedAt")] double ReceivedAt);
 
+/// <summary>Tamaño de la mesa de trabajo: los atributos width, height y viewBox del elemento raíz.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Width">Atributo width tal cual, con sus unidades ("210mm"). Null si no lo tiene.</param>
+/// <param name="Height">Atributo height tal cual. Null si no lo tiene.</param>
+/// <param name="ViewBox">viewBox. Null si no lo tiene o no es válido.</param>
+public sealed record Artboard(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("width")] string? Width,
+    [property: JsonPropertyName("height")] string? Height,
+    [property: JsonPropertyName("viewBox")] Rect? ViewBox);
+
 /// <summary>Error del puente, enviado como evento error o dentro de una respuesta fallida.</summary>
 /// <param name="Message">Descripción para registros y diagnóstico. No se muestra tal cual al usuario.</param>
 /// <param name="RelatedId">Identificador del mensaje que causó el error, si se conoce.</param>
@@ -132,6 +143,17 @@ public sealed record HistoryState(
     [property: JsonPropertyName("undoAction")] string? UndoAction,
     [property: JsonPropertyName("redoAction")] string? RedoAction);
 
+/// <summary>Atajo de teclado pulsado con el lienzo enfocado que el motor no atiende.</summary>
+/// <param name="Key">Tecla, como KeyboardEvent.key en minúsculas ("s", "n", "f4").</param>
+/// <param name="CtrlKey">Ctrl pulsado.</param>
+/// <param name="ShiftKey">Mayús pulsado.</param>
+/// <param name="AltKey">Alt pulsado.</param>
+public sealed record KeyboardShortcut(
+    [property: JsonPropertyName("key")] string Key,
+    [property: JsonPropertyName("ctrlKey")] bool CtrlKey,
+    [property: JsonPropertyName("shiftKey")] bool ShiftKey,
+    [property: JsonPropertyName("altKey")] bool AltKey);
+
 /// <summary>Rectángulo alineado con los ejes.</summary>
 /// <param name="X">Borde izquierdo.</param>
 /// <param name="Y">Borde superior.</param>
@@ -160,6 +182,60 @@ public sealed record SelectionChanged(
     [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items,
     [property: JsonPropertyName("bounds")] Rect? Bounds,
     [property: JsonPropertyName("scope")] SelectedElement? Scope);
+
+/// <summary>Herramienta del lienzo que ya implementa el motor.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ToolName>))]
+public enum ToolName
+{
+    [JsonStringEnumMemberName("select")]
+    Select,
+    [JsonStringEnumMemberName("hand")]
+    Hand,
+    [JsonStringEnumMemberName("zoom")]
+    Zoom,
+}
+
+/// <summary>Herramienta activa del lienzo.</summary>
+/// <param name="Tool">Herramienta.</param>
+public sealed record ToolState(
+    [property: JsonPropertyName("tool")] ToolName Tool);
+
+/// <summary>Guías del lienzo; valen para todos los documentos.</summary>
+/// <param name="ShowRulers">Muestra las reglas en las unidades del documento.</param>
+/// <param name="ShowGrid">Muestra la cuadrícula sobre la mesa de trabajo.</param>
+/// <param name="SnapToGrid">Ajusta a la cuadrícula visible al dibujar y mover.</param>
+public sealed record ViewOptions(
+    [property: JsonPropertyName("showRulers")] bool ShowRulers,
+    [property: JsonPropertyName("showGrid")] bool ShowGrid,
+    [property: JsonPropertyName("snapToGrid")] bool SnapToGrid);
+
+/// <summary>Zoom de un documento.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Zoom">1 es el 100 %: una unidad de tamaño del documento ocupa un píxel.</param>
+public sealed record ViewportChanged(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("zoom")] double Zoom);
+
+/// <summary>Cambia el zoom de un documento.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Action">Acercar, alejar, ajustar a la ventana o tamaño real.</param>
+public sealed record ViewZoom(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("action")] ZoomAction Action);
+
+/// <summary>Orden de zoom del menú Ver.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ZoomAction>))]
+public enum ZoomAction
+{
+    [JsonStringEnumMemberName("in")]
+    In,
+    [JsonStringEnumMemberName("out")]
+    Out,
+    [JsonStringEnumMemberName("fit")]
+    Fit,
+    [JsonStringEnumMemberName("actual")]
+    Actual,
+}
 
 /// <summary>Tipo de mensaje del puente.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<BridgeMessageKind>))]
@@ -221,6 +297,18 @@ public static class BridgeCommands
 
     /// <summary>Rehace el último paso deshecho de un documento. Si no hay nada que rehacer, no cambia nada.</summary>
     public static readonly BridgeCommand<DocumentRef, HistoryState> HistoryRedo = new("history.redo");
+
+    /// <summary>Acerca, aleja, ajusta a la ventana o muestra a tamaño real un documento. Responde con el zoom resultante.</summary>
+    public static readonly BridgeCommand<ViewZoom, ViewportChanged> ViewZoom = new("view.zoom");
+
+    /// <summary>Muestra u oculta las reglas y la cuadrícula y activa el ajuste a la cuadrícula.</summary>
+    public static readonly BridgeCommand<ViewOptions, ViewOptions> ViewSetOptions = new("view.setOptions");
+
+    /// <summary>Cambia la herramienta activa del lienzo.</summary>
+    public static readonly BridgeCommand<ToolState, ToolState> ToolSelect = new("tool.select");
+
+    /// <summary>Cambia el tamaño de la mesa de trabajo de un documento. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<Artboard, Artboard> ArtboardSet = new("artboard.set");
 }
 
 /// <summary>Eventos que el motor envía a la aplicación.</summary>
@@ -243,6 +331,18 @@ public static class BridgeEvents
 
     /// <summary>Ha cambiado el historial de deshacer de un documento.</summary>
     public static readonly BridgeEvent<HistoryState> HistoryChanged = new("history.changed");
+
+    /// <summary>Ha cambiado el zoom de un documento.</summary>
+    public static readonly BridgeEvent<ViewportChanged> ViewportChanged = new("viewport.changed");
+
+    /// <summary>La herramienta activa ha cambiado desde el lienzo (por ejemplo, con su atajo de teclado).</summary>
+    public static readonly BridgeEvent<ToolState> ToolChanged = new("tool.changed");
+
+    /// <summary>El tamaño de la mesa de trabajo de un documento es nuevo o ha cambiado (también al cargarlo).</summary>
+    public static readonly BridgeEvent<Artboard> ArtboardChanged = new("artboard.changed");
+
+    /// <summary>Con el lienzo enfocado, WebView2 entrega el teclado a la página y los atajos de la ventana no se disparan: el motor atiende los suyos (deshacer, zoom, seleccionar todo) y envía los demás a la aplicación.</summary>
+    public static readonly BridgeEvent<KeyboardShortcut> KeyboardShortcut = new("keyboard.shortcut");
 }
 
 /// <summary>
@@ -255,6 +355,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(BridgeEnvelope))]
 [JsonSerializable(typeof(AppPing))]
 [JsonSerializable(typeof(AppPong))]
+[JsonSerializable(typeof(Artboard))]
 [JsonSerializable(typeof(BridgeError))]
 [JsonSerializable(typeof(DocumentContent))]
 [JsonSerializable(typeof(DocumentLoad))]
@@ -265,9 +366,14 @@ public static class BridgeEvents
 [JsonSerializable(typeof(EngineReady))]
 [JsonSerializable(typeof(FilesDropped))]
 [JsonSerializable(typeof(HistoryState))]
+[JsonSerializable(typeof(KeyboardShortcut))]
 [JsonSerializable(typeof(Rect))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]
+[JsonSerializable(typeof(ToolState))]
+[JsonSerializable(typeof(ViewOptions))]
+[JsonSerializable(typeof(ViewportChanged))]
+[JsonSerializable(typeof(ViewZoom))]
 public sealed partial class BridgeJsonContext : JsonSerializerContext
 {
 }

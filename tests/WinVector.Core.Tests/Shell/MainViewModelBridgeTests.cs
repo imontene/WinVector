@@ -41,7 +41,7 @@ public sealed class MainViewModelBridgeTests : IDisposable
     {
         await ReadyAsync();
 
-        Assert.AreEqual("document.load d1 | document.activate d1 | app.ping", string.Join(" | ", _engine.Commands));
+        Assert.AreEqual("view.setOptions | document.load d1 | document.activate d1 | app.ping", string.Join(" | ", _engine.Commands));
         Assert.IsTrue(_viewModel.Documents[0].IsLoaded);
         Assert.AreEqual("d1", _engine.ActiveDocument);
         Assert.IsTrue(_viewModel.IsEngineReady);
@@ -56,7 +56,7 @@ public sealed class MainViewModelBridgeTests : IDisposable
 
         // El ping se envía en paralelo; su posición depende de cuándo responde el motor.
         Assert.AreEqual(
-            "document.load d1 | document.load d2 | document.activate d2",
+            "view.setOptions | document.load d1 | document.load d2 | document.activate d2",
             string.Join(" | ", _engine.Commands.Where(c => c != "app.ping")));
         Assert.AreEqual("d2", _engine.ActiveDocument);
     }
@@ -244,6 +244,88 @@ public sealed class MainViewModelBridgeTests : IDisposable
         await _viewModel.SelectAllAsync();
 
         Assert.AreEqual("selection.selectAll d1", string.Join(" | ", _engine.Commands));
+    }
+
+    [TestMethod]
+    public async Task ElZoomDelDocumentoActivoSeMuestraEnLaBarraDeEstado()
+    {
+        await ReadyAsync();
+        _transport.SendEvent("viewport.changed", """{"documentId":"d1","zoom":1.5}""");
+        Assert.AreEqual("150 %", _viewModel.ZoomText);
+
+        await _viewModel.ZoomActualAsync();
+        Assert.AreEqual("100 %", _viewModel.ZoomText);
+        Assert.IsTrue(_engine.Commands.Contains("view.zoom d1"));
+
+        _viewModel.NewDocument();
+        await _viewModel.EngineWork;
+        Assert.AreEqual("100 %", _viewModel.ZoomText, "Cada pestaña tiene su zoom.");
+        _transport.SendEvent("viewport.changed", """{"documentId":"d1","zoom":3}""");
+        Assert.AreEqual("100 %", _viewModel.ZoomText);
+        _viewModel.SelectedDocument = _viewModel.Documents[0];
+        Assert.AreEqual("300 %", _viewModel.ZoomText);
+    }
+
+    [TestMethod]
+    public async Task LasOpcionesDeVistaSeEnvianAlMotor()
+    {
+        await ReadyAsync();
+        _engine.Commands.Clear();
+
+        _viewModel.ShowGrid = true;
+        _viewModel.ShowRulers = false;
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual("view.setOptions | view.setOptions", string.Join(" | ", _engine.Commands));
+    }
+
+    [TestMethod]
+    public async Task LaHerramientaSigueAlLienzoYALaAplicacion()
+    {
+        await ReadyAsync();
+        _transport.SendEvent("tool.changed", """{"tool":"hand"}""");
+        Assert.AreEqual(ToolName.Hand, _viewModel.ActiveTool);
+
+        _engine.Commands.Clear();
+        await _viewModel.SelectToolAsync(ToolName.Zoom);
+        Assert.AreEqual(ToolName.Zoom, _viewModel.ActiveTool);
+        Assert.AreEqual("tool.select", string.Join(" | ", _engine.Commands));
+    }
+
+    [TestMethod]
+    public async Task LaMesaDeTrabajoSeEditaConValoresValidos()
+    {
+        await ReadyAsync();
+        _transport.SendEvent("artboard.changed", """{"documentId":"d1","width":"800","height":"600","viewBox":{"x":0,"y":0,"width":400,"height":300}}""");
+        Assert.AreEqual("800", _viewModel.CurrentArtboard?.Width);
+
+        Assert.IsFalse(_viewModel.ApplyArtboard("ancho", "600", "0 0 400 300"));
+        Assert.IsFalse(_viewModel.ApplyArtboard("800", "600", "0 0 400"));
+        Assert.IsTrue(_viewModel.ApplyArtboard("800", "600", "0 0 400 300"), "Sin cambios no hace falta enviar nada.");
+        await _viewModel.EngineWork;
+        Assert.IsEmpty(_engine.ArtboardsSet);
+
+        Assert.IsTrue(_viewModel.ApplyArtboard(" 210MM ", "", "0,0,210,297"));
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual("""{"documentId":"d1","width":"210mm","height":null,"viewBox":{"x":0,"y":0,"width":210,"height":297}}""", _engine.ArtboardsSet.Single());
+        Assert.AreEqual("210mm", _viewModel.CurrentArtboard?.Width);
+    }
+
+    [TestMethod]
+    public async Task LosAtajosQueEnviaElLienzoEjecutanLasOrdenesDeLaVentana()
+    {
+        await ReadyAsync();
+
+        _transport.SendEvent("keyboard.shortcut", """{"key":"n","ctrlKey":true,"shiftKey":false,"altKey":false}""");
+        Assert.HasCount(2, _viewModel.Documents);
+
+        _transport.SendEvent("keyboard.shortcut", """{"key":"r","ctrlKey":true,"shiftKey":false,"altKey":false}""");
+        Assert.IsFalse(_viewModel.ShowRulers);
+
+        Assert.IsFalse(await _viewModel.HandleShortcutAsync(new KeyboardShortcut("q", true, false, false)));
+        Assert.IsFalse(await _viewModel.HandleShortcutAsync(new KeyboardShortcut("n", false, false, false)));
+        Assert.HasCount(2, _viewModel.Documents);
     }
 
     [TestMethod]

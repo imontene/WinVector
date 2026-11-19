@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ViewZoom",
+  "description": "Cambia el zoom de un documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "action"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "action": {
+      "$ref": "./zoom-action.schema.json",
+      "description": "Acercar, alejar, ajustar a la ventana o tamaño real."
+    }
+  }
+}

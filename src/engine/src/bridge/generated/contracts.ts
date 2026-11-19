@@ -18,6 +18,18 @@ export interface AppPong {
   readonly receivedAt: number;
 }
 
+/** Tamaño de la mesa de trabajo: los atributos width, height y viewBox del elemento raíz. */
+export interface Artboard {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Atributo width tal cual, con sus unidades ("210mm"). Null si no lo tiene. */
+  readonly width: string | null;
+  /** Atributo height tal cual. Null si no lo tiene. */
+  readonly height: string | null;
+  /** viewBox. Null si no lo tiene o no es válido. */
+  readonly viewBox: Rect | null;
+}
+
 /** Error del puente, enviado como evento error o dentro de una respuesta fallida. */
 export interface BridgeError {
   readonly code: BridgeErrorCode;
@@ -122,6 +134,18 @@ export interface HistoryState {
   readonly redoAction: string | null;
 }
 
+/** Atajo de teclado pulsado con el lienzo enfocado que el motor no atiende. */
+export interface KeyboardShortcut {
+  /** Tecla, como KeyboardEvent.key en minúsculas ("s", "n", "f4"). */
+  readonly key: string;
+  /** Ctrl pulsado. */
+  readonly ctrlKey: boolean;
+  /** Mayús pulsado. */
+  readonly shiftKey: boolean;
+  /** Alt pulsado. */
+  readonly altKey: boolean;
+}
+
 /** Rectángulo alineado con los ejes. */
 export interface Rect {
   /** Borde izquierdo. */
@@ -154,6 +178,44 @@ export interface SelectionChanged {
   readonly scope: SelectedElement | null;
 }
 
+/** Herramienta del lienzo que ya implementa el motor. */
+export type ToolName = "select" | "hand" | "zoom";
+
+/** Herramienta activa del lienzo. */
+export interface ToolState {
+  /** Herramienta. */
+  readonly tool: ToolName;
+}
+
+/** Guías del lienzo; valen para todos los documentos. */
+export interface ViewOptions {
+  /** Muestra las reglas en las unidades del documento. */
+  readonly showRulers: boolean;
+  /** Muestra la cuadrícula sobre la mesa de trabajo. */
+  readonly showGrid: boolean;
+  /** Ajusta a la cuadrícula visible al dibujar y mover. */
+  readonly snapToGrid: boolean;
+}
+
+/** Zoom de un documento. */
+export interface ViewportChanged {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** 1 es el 100 %: una unidad de tamaño del documento ocupa un píxel. */
+  readonly zoom: number;
+}
+
+/** Cambia el zoom de un documento. */
+export interface ViewZoom {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Acercar, alejar, ajustar a la ventana o tamaño real. */
+  readonly action: ZoomAction;
+}
+
+/** Orden de zoom del menú Ver. */
+export type ZoomAction = "in" | "out" | "fit" | "actual";
+
 /** Comandos que la aplicación envía al motor, con el tipo de su payload y de su respuesta. */
 export interface BridgeCommands {
   /** Comprueba que el motor responde y mide la latencia del puente. */
@@ -178,6 +240,14 @@ export interface BridgeCommands {
   readonly "history.undo": { readonly payload: DocumentRef; readonly response: HistoryState };
   /** Rehace el último paso deshecho de un documento. Si no hay nada que rehacer, no cambia nada. */
   readonly "history.redo": { readonly payload: DocumentRef; readonly response: HistoryState };
+  /** Acerca, aleja, ajusta a la ventana o muestra a tamaño real un documento. Responde con el zoom resultante. */
+  readonly "view.zoom": { readonly payload: ViewZoom; readonly response: ViewportChanged };
+  /** Muestra u oculta las reglas y la cuadrícula y activa el ajuste a la cuadrícula. */
+  readonly "view.setOptions": { readonly payload: ViewOptions; readonly response: ViewOptions };
+  /** Cambia la herramienta activa del lienzo. */
+  readonly "tool.select": { readonly payload: ToolState; readonly response: ToolState };
+  /** Cambia el tamaño de la mesa de trabajo de un documento. Se puede deshacer. */
+  readonly "artboard.set": { readonly payload: Artboard; readonly response: Artboard };
 }
 
 /** Eventos que el motor envía a la aplicación, con el tipo de su payload. */
@@ -194,6 +264,14 @@ export interface BridgeEvents {
   readonly "files.dropped": FilesDropped;
   /** Ha cambiado el historial de deshacer de un documento. */
   readonly "history.changed": HistoryState;
+  /** Ha cambiado el zoom de un documento. */
+  readonly "viewport.changed": ViewportChanged;
+  /** La herramienta activa ha cambiado desde el lienzo (por ejemplo, con su atajo de teclado). */
+  readonly "tool.changed": ToolState;
+  /** El tamaño de la mesa de trabajo de un documento es nuevo o ha cambiado (también al cargarlo). */
+  readonly "artboard.changed": Artboard;
+  /** Con el lienzo enfocado, WebView2 entrega el teclado a la página y los atajos de la ventana no se disparan: el motor atiende los suyos (deshacer, zoom, seleccionar todo) y envía los demás a la aplicación. */
+  readonly "keyboard.shortcut": KeyboardShortcut;
 }
 
 export type BridgeCommandName = keyof BridgeCommands;
@@ -208,6 +286,10 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "document.close",
   "history.undo",
   "history.redo",
+  "view.zoom",
+  "view.setOptions",
+  "tool.select",
+  "artboard.set",
 ];
 export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "engine.ready",
@@ -216,6 +298,10 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "document.changed",
   "files.dropped",
   "history.changed",
+  "viewport.changed",
+  "tool.changed",
+  "artboard.changed",
+  "keyboard.shortcut",
 ];
 
 /** Campos comunes a todos los mensajes. */

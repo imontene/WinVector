@@ -164,6 +164,75 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c9",
+    name: "view.zoom",
+    payload: { documentId: "d1", action: "fit" },
+  },
+  {
+    ...base,
+    kind: "response",
+    id: "c9",
+    name: "view.zoom",
+    ok: true,
+    payload: { documentId: "d1", zoom: 1.5 },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c10",
+    name: "view.setOptions",
+    payload: { showRulers: true, showGrid: false, snapToGrid: false },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c11",
+    name: "tool.select",
+    payload: { tool: "hand" },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c12",
+    name: "artboard.set",
+    payload: {
+      documentId: "d1",
+      width: "210mm",
+      height: null,
+      viewBox: { x: 0, y: 0, width: 210, height: 297 },
+    },
+  },
+  {
+    ...base,
+    kind: "event",
+    id: "e7",
+    name: "viewport.changed",
+    payload: { documentId: "d1", zoom: 2 },
+  },
+  {
+    ...base,
+    kind: "event",
+    id: "e8",
+    name: "tool.changed",
+    payload: { tool: "zoom" },
+  },
+  {
+    ...base,
+    kind: "event",
+    id: "e9",
+    name: "artboard.changed",
+    payload: { documentId: "d1", width: null, height: "100", viewBox: null },
+  },
+  {
+    ...base,
+    kind: "event",
+    id: "e10",
+    name: "keyboard.shortcut",
+    payload: { key: "s", ctrlKey: true, shiftKey: false, altKey: false },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e4",
     name: "error",
@@ -190,6 +259,14 @@ function summarize(message: BridgeMessage): string {
       case "history.undo":
       case "history.redo":
         return `deshacer: ${String(message.payload.undoAction)}`;
+      case "view.zoom":
+        return `zoom ${String(message.payload.zoom)}`;
+      case "view.setOptions":
+        return `reglas: ${String(message.payload.showRulers)}`;
+      case "tool.select":
+        return `herramienta ${message.payload.tool}`;
+      case "artboard.set":
+        return `ancho ${String(message.payload.width)}`;
     }
   }
   if (message.kind === "command") {
@@ -205,6 +282,14 @@ function summarize(message: BridgeMessage): string {
       case "history.undo":
       case "history.redo":
         return `${message.name} ${message.payload.documentId}`;
+      case "view.zoom":
+        return `zoom ${message.payload.action}`;
+      case "view.setOptions":
+        return `cuadrícula: ${String(message.payload.showGrid)}`;
+      case "tool.select":
+        return `elegir ${message.payload.tool}`;
+      case "artboard.set":
+        return `viewBox ${String(message.payload.viewBox?.width)}`;
     }
   }
   switch (message.name) {
@@ -218,6 +303,14 @@ function summarize(message: BridgeMessage): string {
       return `${String(message.payload.count)} archivos soltados`;
     case "history.changed":
       return `se puede deshacer: ${String(message.payload.canUndo)}`;
+    case "viewport.changed":
+      return `zoom ${String(message.payload.zoom)}`;
+    case "tool.changed":
+      return `herramienta ${message.payload.tool}`;
+    case "artboard.changed":
+      return `alto ${String(message.payload.height)}`;
+    case "keyboard.shortcut":
+      return `atajo ${message.payload.ctrlKey ? "Ctrl+" : ""}${message.payload.key}`;
     case "error":
       return `error ${message.payload.code}`;
   }
@@ -251,6 +344,15 @@ describe("contrato del puente", () => {
       "history.undo d1",
       "deshacer: move",
       "se puede deshacer: false",
+      "zoom fit",
+      "zoom 1.5",
+      "cuadrícula: false",
+      "elegir hand",
+      "viewBox 210",
+      "zoom 2",
+      "herramienta zoom",
+      "alto 100",
+      "atajo Ctrl+s",
       "error unknown-message",
     ]);
   });

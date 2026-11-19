@@ -73,6 +73,14 @@ public sealed partial class DocumentTabViewModel : ObservableObject
     /// <summary>Estado del historial de deshacer del documento, según el motor.</summary>
     [ObservableProperty]
     private DocumentHistory _history = DocumentHistory.Empty;
+
+    /// <summary>Zoom del documento en el lienzo: 1 es el 100 %.</summary>
+    [ObservableProperty]
+    private double _zoom = 1;
+
+    /// <summary>Tamaño de la mesa de trabajo según el motor, o null hasta que el motor lo anuncia.</summary>
+    [ObservableProperty]
+    private Artboard? _artboard;
 }
 
 /// <summary>Estado del historial de deshacer de un documento.</summary>

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ZoomAction",
+  "description": "Orden de zoom del menú Ver.",
+  "type": "string",
+  "enum": [
+    "in",
+    "out",
+    "fit",
+    "actual"
+  ]
+}

@@ -158,6 +158,79 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ElMenuVerCambiaElZoomDeLaBarraDeEstado()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var fitted = Session.WaitForName("ZoomStatus", name => name.Length > 0, EngineTimeout);
+        Assert.IsGreaterThan(0, fitted.Length, "La barra de estado no muestra el zoom.");
+
+        InvokeViewMenu("MenuViewActualSize");
+        var actual = Session.WaitForName("ZoomStatus", name => name.StartsWith("100", StringComparison.Ordinal), EngineTimeout);
+        StringAssert.StartsWith(actual, "100");
+
+        InvokeViewMenu("MenuViewZoomIn");
+        var zoomedIn = Session.WaitForName("ZoomStatus", name => name.StartsWith("150", StringComparison.Ordinal), EngineTimeout);
+        StringAssert.StartsWith(zoomedIn, "150");
+
+        InvokeViewMenu("MenuViewFit");
+        Assert.AreEqual(fitted, Session.WaitForName("ZoomStatus", name => name == fitted, EngineTimeout));
+    }
+
+    [TestMethod]
+    public void CtrlUnoYCtrlCeroConElLienzoEnfocado()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var fitted = Session.WaitForName("ZoomStatus", name => name.Length > 0, EngineTimeout);
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
+        Thread.Sleep(300);
+
+        // Con el lienzo enfocado, los atajos de zoom los atiende el motor.
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_1);
+        var actual = Session.WaitForName("ZoomStatus", name => name.StartsWith("100", StringComparison.Ordinal), EngineTimeout);
+        StringAssert.StartsWith(actual, "100", "Ctrl+1 con el lienzo enfocado no cambió el zoom.");
+
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_0);
+        Assert.AreEqual(fitted, Session.WaitForName("ZoomStatus", name => name == fitted, EngineTimeout));
+    }
+
+    [TestMethod]
+    public void CtrlNConElLienzoEnfocadoAbreOtraPestaña()
+    {
+        // Con el lienzo enfocado, el teclado va a la página: el motor reenvía Ctrl+N a la aplicación.
+        WaitForEngine();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
+        Thread.Sleep(300);
+
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_N);
+
+        Assert.IsTrue(Retry.WhileFalse(() => Tabs().Length == 2, TimeSpan.FromSeconds(5)).Result, "Ctrl+N con el lienzo enfocado no abrió otra pestaña.");
+    }
+
+    [TestMethod]
+    public void LaHerramientaManoDesplazaSinSeleccionar()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var sun = AppSession.SamplePoint(canvas, 300, 96);
+        Session.GetById("ToolHand").Click();
+
+        Mouse.Drag(sun, new System.Drawing.Point(sun.X - 120, sun.Y));
+
+        // El sol se ha movido con el lienzo: ahora está 120 px a la izquierda, y nada se ha seleccionado.
+        Assert.IsTrue(
+            Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(new System.Drawing.Point(sun.X - 120, sun.Y)), System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47)), EngineTimeout).Result,
+            "El lienzo no se desplazó con la herramienta Mano.");
+        Assert.AreEqual(string.Empty, Session.FindById("SelectionStatus")?.Properties.Name.ValueOrDefault ?? string.Empty);
+
+        Session.GetById("ToolSelect").Click();
+    }
+
+    [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);
@@ -248,6 +321,14 @@ public sealed class MainWindowTests
         Assert.IsTrue(
             Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineTimeout).Result,
             "El motor no terminó de cargar.");
+
+    private void InvokeViewMenu(string automationId)
+    {
+        Session.GetById("ViewMenu").Patterns.ExpandCollapse.Pattern.Expand();
+        var item = Retry.WhileNull(() => Session.FindInApp(automationId), TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException($"No aparece {automationId} en el menú Ver.");
+        item.Patterns.Invoke.Pattern.Invoke();
+    }
 
     private void ClickSample(double svgX, double svgY)
     {

@@ -75,6 +75,32 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private TimeSpan? _bridgeLatency;
 
+    /// <summary>True si hay algo seleccionado en el documento activo.</summary>
+    [ObservableProperty]
+    private bool _hasSelection;
+
+    /// <summary>Muestra las reglas del lienzo.</summary>
+    [ObservableProperty]
+    private bool _showRulers = true;
+
+    /// <summary>Muestra la cuadrícula sobre la mesa de trabajo.</summary>
+    [ObservableProperty]
+    private bool _showGrid;
+
+    /// <summary>Ajusta a la cuadrícula al dibujar y mover.</summary>
+    [ObservableProperty]
+    private bool _snapToGrid;
+
+    /// <summary>Herramienta activa del lienzo.</summary>
+    [ObservableProperty]
+    private ToolName _activeTool = ToolName.Select;
+
+    /// <summary>Zoom del documento activo para la barra de estado ("150 %").</summary>
+    public string ZoomText => SelectedDocument is { IsLoaded: true } document ? _texts.ZoomPercent(document.Zoom) : string.Empty;
+
+    /// <summary>Mesa de trabajo del documento activo, o null si aún no se conoce.</summary>
+    public Artboard? CurrentArtboard => SelectedDocument?.Artboard;
+
     /// <summary>True si el documento activo tiene algún paso que deshacer.</summary>
     public bool CanUndo => SelectedDocument is { IsLoaded: true, History.CanUndo: true };
 
@@ -408,6 +434,137 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>True si el documento activo está cargado en el motor.</summary>
     public bool CanSelectAll => SelectedDocument is { IsLoaded: true };
 
+    [RelayCommand(CanExecute = nameof(CanSelectAll), AllowConcurrentExecutions = true)]
+    public Task ZoomInAsync() => ZoomAsync(ZoomAction.In);
+
+    [RelayCommand(CanExecute = nameof(CanSelectAll), AllowConcurrentExecutions = true)]
+    public Task ZoomOutAsync() => ZoomAsync(ZoomAction.Out);
+
+    [RelayCommand(CanExecute = nameof(CanSelectAll), AllowConcurrentExecutions = true)]
+    public Task ZoomFitAsync() => ZoomAsync(ZoomAction.Fit);
+
+    [RelayCommand(CanExecute = nameof(CanSelectAll), AllowConcurrentExecutions = true)]
+    public Task ZoomActualAsync() => ZoomAsync(ZoomAction.Actual);
+
+    private Task ZoomAsync(ZoomAction action)
+    {
+        if (SelectedDocument is not { IsLoaded: true } document)
+        {
+            return Task.CompletedTask;
+        }
+
+        Enqueue(async () =>
+        {
+            if (await SendAsync(BridgeCommands.ViewZoom, new ViewZoom(document.DocumentId, action)) is { } state)
+            {
+                OnViewportChanged(state);
+            }
+        });
+        return _engineWork;
+    }
+
+    /// <summary>Cambia la herramienta activa del lienzo.</summary>
+    public Task SelectToolAsync(ToolName tool)
+    {
+        ActiveTool = tool;
+        if (!IsEngineReady)
+        {
+            return Task.CompletedTask;
+        }
+
+        Enqueue(() => SendAsync(BridgeCommands.ToolSelect, new ToolState(tool)));
+        return _engineWork;
+    }
+
+    /// <summary>
+    /// Cambia la mesa de trabajo del documento activo con lo escrito en el editor. Se puede deshacer.
+    /// </summary>
+    /// <returns>False si algún valor no es válido; entonces no se cambia nada.</returns>
+    public bool ApplyArtboard(string? width, string? height, string? viewBox)
+    {
+        if (SelectedDocument is not { IsLoaded: true } document
+            || !ArtboardInput.TryParse(document.DocumentId, width, height, viewBox, out var artboard)
+            || artboard is null)
+        {
+            // El editor vuelve a mostrar los valores actuales.
+            OnPropertyChanged(nameof(CurrentArtboard));
+            return false;
+        }
+
+        if (artboard == document.Artboard)
+        {
+            return true;
+        }
+
+        Enqueue(async () =>
+        {
+            if (await SendAsync(BridgeCommands.ArtboardSet, artboard) is { } applied)
+            {
+                OnArtboardChanged(applied);
+            }
+        });
+        return true;
+    }
+
+    /// <summary>
+    /// Ejecuta un atajo de teclado que el motor ha recibido con el lienzo enfocado. Con el lienzo
+    /// enfocado, los aceleradores de los menús no se disparan; el motor atiende los suyos (deshacer,
+    /// zoom, seleccionar todo) y envía aquí los de la ventana.
+    /// </summary>
+    /// <returns>False si el atajo no corresponde a ninguna orden.</returns>
+    public async Task<bool> HandleShortcutAsync(KeyboardShortcut shortcut)
+    {
+        ArgumentNullException.ThrowIfNull(shortcut);
+        if (!shortcut.CtrlKey || shortcut.AltKey)
+        {
+            return false;
+        }
+
+        switch (shortcut.Key, shortcut.ShiftKey)
+        {
+            case ("n", false):
+                NewDocument();
+                break;
+            case ("n", true):
+                await NewDocumentWithSizeAsync();
+                break;
+            case ("o", false):
+                await OpenAsync();
+                break;
+            case ("s", false):
+                await SaveAsync();
+                break;
+            case ("s", true):
+                await SaveAsAsync();
+                break;
+            case ("w", false):
+                await RequestCloseDocumentAsync(SelectedDocument);
+                break;
+            case ("r", false):
+                ShowRulers = !ShowRulers;
+                break;
+            default:
+                return false;
+        }
+
+        return true;
+    }
+
+    partial void OnShowRulersChanged(bool value) => SendViewOptions();
+
+    partial void OnShowGridChanged(bool value) => SendViewOptions();
+
+    partial void OnSnapToGridChanged(bool value) => SendViewOptions();
+
+    private void SendViewOptions()
+    {
+        if (IsEngineReady)
+        {
+            var options = new ViewOptions(ShowRulers, ShowGrid, SnapToGrid);
+            Enqueue(() => SendAsync(BridgeCommands.ViewSetOptions, options));
+        }
+    }
+
     private Task StepHistoryAsync(BridgeCommand<DocumentRef, HistoryState> command)
     {
         if (SelectedDocument is not { IsLoaded: true } document)
@@ -439,6 +596,10 @@ public sealed partial class MainViewModel : ObservableObject
             bridge.Subscribe(BridgeEvents.SelectionChanged, OnSelectionChanged),
             bridge.Subscribe(BridgeEvents.DocumentChanged, OnDocumentChanged),
             bridge.Subscribe(BridgeEvents.HistoryChanged, OnHistoryChanged),
+            bridge.Subscribe(BridgeEvents.ViewportChanged, OnViewportChanged),
+            bridge.Subscribe(BridgeEvents.ToolChanged, OnToolChanged),
+            bridge.Subscribe(BridgeEvents.ArtboardChanged, OnArtboardChanged),
+            bridge.Subscribe(BridgeEvents.KeyboardShortcut, shortcut => _ = HandleShortcutAsync(shortcut)),
         };
         return new CompositeSubscription(subscriptions, () =>
         {
@@ -453,6 +614,9 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedDocumentChanged(DocumentTabViewModel? value)
     {
         SelectionSummary = string.Empty;
+        HasSelection = false;
+        OnPropertyChanged(nameof(ZoomText));
+        OnPropertyChanged(nameof(CurrentArtboard));
         NotifyEditCommandsChanged();
         if (value is not null && IsEngineReady)
         {
@@ -473,6 +637,13 @@ public sealed partial class MainViewModel : ObservableObject
         IsEngineReady = true;
         EngineStatus = string.Empty;
         LogEngineReady(ready.EngineVersion, ready.ProtocolVersion);
+
+        // El motor empieza con sus valores por defecto: recibe los de la aplicación.
+        Enqueue(() => SendAsync(BridgeCommands.ViewSetOptions, new ViewOptions(ShowRulers, ShowGrid, SnapToGrid)));
+        if (ActiveTool != ToolName.Select)
+        {
+            Enqueue(() => SendAsync(BridgeCommands.ToolSelect, new ToolState(ActiveTool)));
+        }
 
         // Las pestañas abiertas antes de que el motor estuviera listo se cargan ahora.
         foreach (var document in Documents.ToArray())
@@ -595,6 +766,7 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        HasSelection = selection.Items.Count > 0;
         var items = selection.Items.Count switch
         {
             0 => string.Empty,
@@ -610,6 +782,36 @@ public sealed partial class MainViewModel : ObservableObject
         if (document is not null)
         {
             document.Revision = state.Revision;
+        }
+    }
+
+    private void OnViewportChanged(ViewportChanged state)
+    {
+        if (Documents.FirstOrDefault(d => d.DocumentId == state.DocumentId) is not { } document)
+        {
+            return;
+        }
+
+        document.Zoom = state.Zoom;
+        if (ReferenceEquals(document, SelectedDocument))
+        {
+            OnPropertyChanged(nameof(ZoomText));
+        }
+    }
+
+    private void OnToolChanged(ToolState state) => ActiveTool = state.Tool;
+
+    private void OnArtboardChanged(Artboard artboard)
+    {
+        if (Documents.FirstOrDefault(d => d.DocumentId == artboard.DocumentId) is not { } document)
+        {
+            return;
+        }
+
+        document.Artboard = artboard;
+        if (ReferenceEquals(document, SelectedDocument))
+        {
+            OnPropertyChanged(nameof(CurrentArtboard));
         }
     }
 
@@ -636,9 +838,14 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(UndoLabel));
         OnPropertyChanged(nameof(RedoLabel));
         OnPropertyChanged(nameof(CanSelectAll));
+        OnPropertyChanged(nameof(ZoomText));
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         SelectAllCommand.NotifyCanExecuteChanged();
+        ZoomInCommand.NotifyCanExecuteChanged();
+        ZoomOutCommand.NotifyCanExecuteChanged();
+        ZoomFitCommand.NotifyCanExecuteChanged();
+        ZoomActualCommand.NotifyCanExecuteChanged();
     }
 
     private static string Describe(SelectedElement element) =>

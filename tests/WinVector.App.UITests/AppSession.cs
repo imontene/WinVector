@@ -229,17 +229,24 @@ internal sealed class AppSession : IDisposable
         && Math.Abs(actual.G - expected.G) <= tolerance
         && Math.Abs(actual.B - expected.B) <= tolerance;
 
-    /// <summary>Punto de la pantalla que corresponde a unas coordenadas del SVG de ejemplo.</summary>
+    /// <summary>Punto de la pantalla que corresponde a un punto del SVG de ejemplo (viewBox 400 × 300).</summary>
     /// <remarks>
-    /// El motor dibuja el SVG de ejemplo (viewBox 400 × 300) centrado, con un ancho de
-    /// min(90 % del ancho, 90 % del alto × 4/3) del lienzo.
+    /// Al abrirlo, el motor ajusta la mesa de trabajo (800 × 600) al lienzo sin las reglas (20 px a la
+    /// izquierda y arriba), con un margen de 24 px, y la centra. Supone una escala de pantalla del 100 %.
     /// </remarks>
     public static Point SamplePoint(Rectangle canvas, double svgX, double svgY)
     {
-        var width = Math.Min(canvas.Width * 0.9, canvas.Height * 0.9 * 4 / 3);
-        var height = width * 3 / 4;
+        const double Ruler = 20;
+        const double Margin = 24;
+        var areaX = canvas.X + Ruler;
+        var areaY = canvas.Y + Ruler;
+        var areaWidth = canvas.Width - Ruler;
+        var areaHeight = canvas.Height - Ruler;
+        var zoom = Math.Min((areaWidth - (2 * Margin)) / 800, (areaHeight - (2 * Margin)) / 600);
+        var width = 800 * zoom;
+        var height = 600 * zoom;
         return new Point(
-            (int)(canvas.X + ((canvas.Width - width) / 2) + (width * svgX / 400)),
-            (int)(canvas.Y + ((canvas.Height - height) / 2) + (height * svgY / 300)));
+            (int)(areaX + ((areaWidth - width) / 2) + (width * svgX / 400)),
+            (int)(areaY + ((areaHeight - height) / 2) + (height * svgY / 300)));
     }
 }

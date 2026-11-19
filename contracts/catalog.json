@@ -92,6 +92,58 @@
       "kind": "event",
       "description": "Ha cambiado el historial de deshacer de un documento.",
       "payload": "HistoryState"
+    },
+    {
+      "name": "view.zoom",
+      "kind": "command",
+      "description": "Acerca, aleja, ajusta a la ventana o muestra a tamaño real un documento. Responde con el zoom resultante.",
+      "payload": "ViewZoom",
+      "response": "ViewportChanged"
+    },
+    {
+      "name": "viewport.changed",
+      "kind": "event",
+      "description": "Ha cambiado el zoom de un documento.",
+      "payload": "ViewportChanged"
+    },
+    {
+      "name": "view.setOptions",
+      "kind": "command",
+      "description": "Muestra u oculta las reglas y la cuadrícula y activa el ajuste a la cuadrícula.",
+      "payload": "ViewOptions",
+      "response": "ViewOptions"
+    },
+    {
+      "name": "tool.select",
+      "kind": "command",
+      "description": "Cambia la herramienta activa del lienzo.",
+      "payload": "ToolState",
+      "response": "ToolState"
+    },
+    {
+      "name": "tool.changed",
+      "kind": "event",
+      "description": "La herramienta activa ha cambiado desde el lienzo (por ejemplo, con su atajo de teclado).",
+      "payload": "ToolState"
+    },
+    {
+      "name": "artboard.set",
+      "kind": "command",
+      "description": "Cambia el tamaño de la mesa de trabajo de un documento. Se puede deshacer.",
+      "payload": "Artboard",
+      "response": "Artboard"
+    },
+    {
+      "name": "artboard.changed",
+      "kind": "event",
+      "description": "El tamaño de la mesa de trabajo de un documento es nuevo o ha cambiado (también al cargarlo).",
+      "payload": "Artboard"
+    },
+    {
+      "name": "keyboard.shortcut",
+      "kind": "event",
+      "description": "Con el lienzo enfocado, WebView2 entrega el teclado a la página y los atajos de la ventana no se disparan: el motor atiende los suyos (deshacer, zoom, seleccionar todo) y envía los demás a la aplicación.",
+      "payload": "KeyboardShortcut"
     }
   ]
 }

@@ -46,4 +46,7 @@ public interface IShellTexts
 
     /// <summary>Texto de la orden de rehacer con la acción que se reharía ("Rehacer mover").</summary>
     string RedoCommand(string? action);
+
+    /// <summary>Zoom para la barra de estado ("150 %"); 1 es el 100 %.</summary>
+    string ZoomPercent(double zoom);
 }

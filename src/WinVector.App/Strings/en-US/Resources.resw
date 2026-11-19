@@ -382,4 +382,49 @@ Licensed under the Apache License 2.0.</value>
   <data name="SelectionInsideGroup" xml:space="preserve">
     <value>In {0}</value>
   </data>
+  <data name="ZoomPercent" xml:space="preserve">
+    <value>{0}%</value>
+  </data>
+  <data name="MenuViewActualSize.Text" xml:space="preserve">
+    <value>Actual size</value>
+  </data>
+  <data name="MenuViewRulers.Text" xml:space="preserve">
+    <value>Rulers</value>
+  </data>
+  <data name="MenuViewGrid.Text" xml:space="preserve">
+    <value>Grid</value>
+  </data>
+  <data name="MenuViewSnapToGrid.Text" xml:space="preserve">
+    <value>Snap to grid</value>
+  </data>
+  <data name="ToolHand.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Hand (H): drag to pan the canvas</value>
+  </data>
+  <data name="ToolHand.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Hand</value>
+  </data>
+  <data name="ArtboardTitle.Text" xml:space="preserve">
+    <value>Artboard</value>
+  </data>
+  <data name="ArtboardWidth.Header" xml:space="preserve">
+    <value>Width</value>
+  </data>
+  <data name="ArtboardHeight.Header" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="ArtboardViewBox.Header" xml:space="preserve">
+    <value>viewBox</value>
+  </data>
+  <data name="ArtboardWidth.PlaceholderText" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="ArtboardHeight.PlaceholderText" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="ArtboardViewBox.PlaceholderText" xml:space="preserve">
+    <value>x y width height</value>
+  </data>
+  <data name="ArtboardHint.Text" xml:space="preserve">
+    <value>Width and height accept units (210mm, 8.5in). The viewBox sets the drawing's coordinate system.</value>
+  </data>
 </root>
