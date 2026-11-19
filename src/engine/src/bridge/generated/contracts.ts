@@ -2,7 +2,7 @@
 // modifica los esquemas y ejecuta `npm run contracts:generate` en src/engine.
 
 /** Versión del protocolo del puente. Debe coincidir en la aplicación y en el motor. */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 /** Comando de comprobación enviado por la aplicación. */
 export interface AppPing {
@@ -29,7 +29,70 @@ export interface BridgeError {
 
 /** Categoría del error del puente. */
 export type BridgeErrorCode =
-  "invalid-message" | "unknown-message" | "protocol-mismatch" | "timeout" | "internal";
+  | "invalid-message"
+  | "unknown-message"
+  | "protocol-mismatch"
+  | "unknown-document"
+  | "timeout"
+  | "internal";
+
+/** Texto de un documento para guardarlo. */
+export interface DocumentContent {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Texto completo del SVG. */
+  readonly svg: string;
+  /** Revisión a la que corresponde el texto. */
+  readonly revision: number;
+}
+
+/** Documento que la aplicación entrega al motor. */
+export interface DocumentLoad {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Nombre que se muestra en la pestaña, por ejemplo el nombre del archivo. */
+  readonly name: string;
+  /** Texto completo del archivo SVG. */
+  readonly svg: string;
+}
+
+/** Resultado de cargar un documento. */
+export interface DocumentLoadResult {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** true si el documento se cargó. */
+  readonly loaded: boolean;
+  /** Revisión inicial del documento (0). */
+  readonly revision: number;
+  /** true si al guardar se conservará el formato original de todo lo que no cambie. */
+  readonly exactMapping: boolean;
+  /** Por qué no se cargó, si loaded es false. */
+  readonly error: DocumentParseError | null;
+}
+
+/** Por qué no se pudo cargar un documento. */
+export interface DocumentParseError {
+  /** Descripción del problema para mostrar al usuario. */
+  readonly message: string;
+  /** Línea del error en el texto, empezando en 1, si se conoce. */
+  readonly line: number | null;
+  /** Columna del error, empezando en 1, si se conoce. */
+  readonly column: number | null;
+}
+
+/** Referencia a un documento abierto en el motor. */
+export interface DocumentRef {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+}
+
+/** Estado de un documento. */
+export interface DocumentState {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Aumenta con cada cambio del documento. */
+  readonly revision: number;
+}
 
 /** Datos que el motor envía al terminar de cargar. */
 export interface EngineReady {
@@ -49,6 +112,8 @@ export interface SelectedElement {
 
 /** Estado completo de la selección tras un cambio. */
 export interface SelectionChanged {
+  /** Documento al que pertenece la selección. */
+  readonly documentId: string;
   /** Elementos seleccionados, en orden de documento. Vacío si no hay selección. */
   readonly items: readonly SelectedElement[];
 }
@@ -57,6 +122,20 @@ export interface SelectionChanged {
 export interface BridgeCommands {
   /** Comprueba que el motor responde y mide la latencia del puente. */
   readonly "app.ping": { readonly payload: AppPing; readonly response: AppPong };
+  /** Carga un documento SVG en el motor con el identificador que le asigna la aplicación. */
+  readonly "document.load": {
+    readonly payload: DocumentLoad;
+    readonly response: DocumentLoadResult;
+  };
+  /** Devuelve el SVG de un documento listo para guardarlo. */
+  readonly "document.serialize": {
+    readonly payload: DocumentRef;
+    readonly response: DocumentContent;
+  };
+  /** Muestra un documento en el lienzo; los demás quedan ocultos. */
+  readonly "document.activate": { readonly payload: DocumentRef; readonly response: DocumentState };
+  /** Descarta un documento del motor. */
+  readonly "document.close": { readonly payload: DocumentRef; readonly response: DocumentRef };
 }
 
 /** Eventos que el motor envía a la aplicación, con el tipo de su payload. */
@@ -67,16 +146,25 @@ export interface BridgeEvents {
   readonly "selection.changed": SelectionChanged;
   /** El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno. */
   readonly error: BridgeError;
+  /** Un documento ha cambiado. La revisión aumenta con cada cambio. */
+  readonly "document.changed": DocumentState;
 }
 
 export type BridgeCommandName = keyof BridgeCommands;
 export type BridgeEventName = keyof BridgeEvents;
 
-export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = ["app.ping"];
+export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
+  "app.ping",
+  "document.load",
+  "document.serialize",
+  "document.activate",
+  "document.close",
+];
 export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "engine.ready",
   "selection.changed",
   "error",
+  "document.changed",
 ];
 
 /** Campos comunes a todos los mensajes. */

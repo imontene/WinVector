@@ -172,7 +172,12 @@
                         <MenuFlyoutItem x:Uid="MenuViewFit" IsEnabled="False" />
                     </MenuBarItem>
 
-                    <MenuBarItem x:Uid="MenuHelp">
+                    <MenuBarItem x:Name="HelpMenu" x:Uid="MenuHelp">
+                        <MenuFlyoutItem
+                            x:Name="OpenSampleMenuItem"
+                            x:Uid="MenuHelpOpenSample"
+                            Click="OnOpenSampleClick" />
+                        <MenuFlyoutSeparator />
                         <MenuFlyoutItem x:Uid="MenuHelpAbout" Click="OnAboutClick" />
                     </MenuBarItem>
                 </MenuBar>

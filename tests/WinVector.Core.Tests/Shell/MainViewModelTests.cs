@@ -90,7 +90,7 @@ public sealed class MainViewModelTests
     {
         var viewModel = Create();
 
-        viewModel.CloseDocument(new DocumentTabViewModel("Otra"));
+        viewModel.CloseDocument(new DocumentTabViewModel("x", "Otra", "<svg/>"));
         viewModel.CloseDocument(null);
 
         Assert.HasCount(1, viewModel.Documents);

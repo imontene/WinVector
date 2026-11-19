@@ -6,99 +6,195 @@ using WinVector.Core.Tests.Bridge;
 namespace WinVector.Core.Tests.Shell;
 
 [TestClass]
-public sealed class MainViewModelBridgeTests
+public sealed class MainViewModelBridgeTests : IDisposable
 {
     private readonly FakeBridgeTransport _transport = new();
     private readonly FakeTimeProvider _time = new();
+    private readonly MainViewModel _viewModel;
+    private readonly BridgeClient _bridge;
+    private readonly IDisposable _attachment;
+    private readonly FakeEngine _engine;
 
-    private (MainViewModel ViewModel, BridgeClient Bridge, IDisposable Attachment) Create()
+    public MainViewModelBridgeTests()
     {
-        var viewModel = new MainViewModel(MainViewModelTests.Texts, timeProvider: _time);
-        var bridge = new BridgeClient(_transport, timeProvider: _time);
-        return (viewModel, bridge, viewModel.AttachBridge(bridge));
+        _viewModel = new MainViewModel(MainViewModelTests.Texts, timeProvider: _time);
+        _bridge = new BridgeClient(_transport, timeProvider: _time);
+        _attachment = _viewModel.AttachBridge(_bridge);
+        _engine = new FakeEngine(_transport);
+    }
+
+    public void Dispose()
+    {
+        _attachment.Dispose();
+        _bridge.Dispose();
+    }
+
+    private async Task ReadyAsync()
+    {
+        _engine.Ready();
+        await _viewModel.EngineWork;
+        await _viewModel.LatencyMeasurement;
     }
 
     [TestMethod]
-    public async Task AlCargarElMotorMideLaLatencia()
+    public async Task AlCargarElMotorCargaLasPestañasYActivaLaSeleccionada()
     {
-        var (viewModel, bridge, attachment) = Create();
-        using (bridge)
-        using (attachment)
-        {
-            _transport.SendEvent("engine.ready", """{"engineVersion":"0.0.0","protocolVersion":1}""");
+        await ReadyAsync();
 
-            Assert.IsTrue(viewModel.IsEngineReady);
-            Assert.AreEqual(string.Empty, viewModel.EngineStatus);
-            var ping = _transport.LastPosted();
-            Assert.AreEqual("app.ping", ping.GetProperty("name").GetString());
+        Assert.AreEqual("document.load d1 | document.activate d1 | app.ping", string.Join(" | ", _engine.Commands));
+        Assert.IsTrue(_viewModel.Documents[0].IsLoaded);
+        Assert.AreEqual("d1", _engine.ActiveDocument);
+        Assert.IsTrue(_viewModel.IsEngineReady);
+    }
 
-            _time.Advance(TimeSpan.FromMilliseconds(4));
-            _transport.RespondOk("c1", "app.ping", """{"sentAt":0,"receivedAt":0}""");
-            await viewModel.LatencyMeasurement;
+    [TestMethod]
+    public async Task UnDocumentoAbiertoAntesDeQueCargueElMotorSeCargaYSeActivaAlCargar()
+    {
+        _viewModel.OpenDocument("Ejemplo", "<svg/>");
 
-            Assert.AreEqual(TimeSpan.FromMilliseconds(4), viewModel.BridgeLatency);
-        }
+        await ReadyAsync();
+
+        // El ping se envía en paralelo; su posición depende de cuándo responde el motor.
+        Assert.AreEqual(
+            "document.load d1 | document.load d2 | document.activate d2",
+            string.Join(" | ", _engine.Commands.Where(c => c != "app.ping")));
+        Assert.AreEqual("d2", _engine.ActiveDocument);
+    }
+
+    [TestMethod]
+    public async Task UnaPestañaNuevaSeCargaYSeActiva()
+    {
+        await ReadyAsync();
+        _engine.Commands.Clear();
+
+        _viewModel.NewDocument();
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual("document.load d2 | document.activate d2", string.Join(" | ", _engine.Commands));
+        Assert.AreEqual("d2", _engine.ActiveDocument);
+    }
+
+    [TestMethod]
+    public async Task CambiarDePestañaActivaSuDocumentoYVaciaLaSeleccion()
+    {
+        await ReadyAsync();
+        _viewModel.NewDocument();
+        await _viewModel.EngineWork;
+        _transport.SendEvent("selection.changed", """{"documentId":"d2","items":[{"id":"sol","tagName":"circle"}]}""");
+
+        _viewModel.SelectedDocument = _viewModel.Documents[0];
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual("d1", _engine.ActiveDocument);
+        Assert.AreEqual(string.Empty, _viewModel.SelectionSummary);
+    }
+
+    [TestMethod]
+    public async Task CerrarUnaPestañaCierraSuDocumento()
+    {
+        await ReadyAsync();
+        _viewModel.NewDocument();
+        await _viewModel.EngineWork;
+        _engine.Commands.Clear();
+
+        _viewModel.CloseDocument(_viewModel.Documents[1]);
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual("document.close d2 | document.activate d1", string.Join(" | ", _engine.Commands));
+    }
+
+    [TestMethod]
+    public async Task UnDocumentoSinCambiosSeRecuperaIdentico()
+    {
+        await ReadyAsync();
+        var svg = """<svg xmlns="http://www.w3.org/2000/svg"><!-- hola --><rect id="a"/></svg>""";
+
+        var document = _viewModel.OpenDocument("ejemplo.svg", svg);
+        var content = await _viewModel.SerializeAsync(document);
+
+        Assert.AreEqual(svg, content.Svg);
+    }
+
+    [TestMethod]
+    public async Task UnSvgNoValidoQuedaSinCargarConElMotivo()
+    {
+        await ReadyAsync();
+        _engine.InvalidSvgs.Add("<svg");
+
+        var document = _viewModel.OpenDocument("roto.svg", "<svg");
+        await _viewModel.EngineWork;
+
+        Assert.IsFalse(document.IsLoaded);
+        Assert.AreEqual("XML no válido", document.LoadError);
+        Assert.IsFalse(_engine.Commands.Contains("document.activate d2"));
+    }
+
+    [TestMethod]
+    public async Task LosCambiosDelDocumentoMarcanLaPestañaComoModificada()
+    {
+        await ReadyAsync();
+        var document = _viewModel.Documents[0];
+        Assert.IsFalse(document.IsModified);
+
+        _transport.SendEvent("document.changed", """{"documentId":"d1","revision":3}""");
+
+        Assert.AreEqual(3, document.Revision);
+        Assert.IsTrue(document.IsModified);
+    }
+
+    [TestMethod]
+    public async Task MideLaLatenciaDelPuente()
+    {
+        _engine.BeforePingResponse = () => _time.Advance(TimeSpan.FromMilliseconds(4));
+
+        await ReadyAsync();
+
+        Assert.AreEqual(TimeSpan.FromMilliseconds(4), _viewModel.BridgeLatency);
     }
 
     [TestMethod]
     public async Task SiElPingFallaLaLatenciaQuedaVacia()
     {
-        var (viewModel, bridge, attachment) = Create();
-        using (bridge)
-        using (attachment)
-        {
-            _transport.SendEvent("engine.ready", """{"engineVersion":"0.0.0","protocolVersion":1}""");
-            _time.Advance(BridgeClient.DefaultTimeout);
-            await viewModel.LatencyMeasurement;
+        _transport.OnPosted = null;
+        _engine.Ready();
+        _time.Advance(BridgeClient.DefaultTimeout);
+        await _viewModel.LatencyMeasurement;
 
-            Assert.IsNull(viewModel.BridgeLatency);
-            Assert.IsTrue(viewModel.IsEngineReady);
-        }
+        Assert.IsNull(_viewModel.BridgeLatency);
+        Assert.IsTrue(_viewModel.IsEngineReady);
     }
 
     [TestMethod]
     public void UnMotorConOtroProtocoloSeMarcaComoIncompatible()
     {
-        var (viewModel, bridge, attachment) = Create();
-        using (bridge)
-        using (attachment)
-        {
-            _transport.SendEvent("engine.ready", """{"engineVersion":"9.0.0","protocolVersion":2}""", protocolVersion: 2);
+        _transport.SendEvent("engine.ready", """{"engineVersion":"9.0.0","protocolVersion":99}""", protocolVersion: 99);
 
-            Assert.IsFalse(viewModel.IsEngineReady);
-            Assert.AreEqual("Protocolo 2, se esperaba 1", viewModel.EngineStatus);
-            Assert.IsEmpty(_transport.Posted);
-        }
+        Assert.IsFalse(_viewModel.IsEngineReady);
+        Assert.AreEqual($"Protocolo 99, se esperaba {BridgeProtocol.Version}", _viewModel.EngineStatus);
+        Assert.IsEmpty(_engine.Commands);
     }
 
     [TestMethod]
-    [DataRow("""{"items":[{"id":"sol","tagName":"circle"}]}""", "circle#sol")]
-    [DataRow("""{"items":[{"id":null,"tagName":"path"}]}""", "path")]
-    [DataRow("""{"items":[{"id":"a","tagName":"rect"},{"id":"b","tagName":"rect"}]}""", "2 objetos")]
-    [DataRow("""{"items":[]}""", "")]
-    public void ResumeLaSeleccion(string payload, string expected)
+    [DataRow("""{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}]}""", "circle#sol")]
+    [DataRow("""{"documentId":"d1","items":[{"id":null,"tagName":"path"}]}""", "path")]
+    [DataRow("""{"documentId":"d1","items":[{"id":"a","tagName":"rect"},{"id":"b","tagName":"rect"}]}""", "2 objetos")]
+    [DataRow("""{"documentId":"d1","items":[]}""", "")]
+    [DataRow("""{"documentId":"otro","items":[{"id":"x","tagName":"rect"}]}""", "previo")]
+    public void ResumeLaSeleccionDelDocumentoActivo(string payload, string expected)
     {
-        var (viewModel, bridge, attachment) = Create();
-        using (bridge)
-        using (attachment)
-        {
-            _transport.SendEvent("selection.changed", """{"items":[{"id":"previo","tagName":"g"}]}""");
-            _transport.SendEvent("selection.changed", payload);
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"previo","tagName":"g"}]}""");
+        _transport.SendEvent("selection.changed", payload);
 
-            Assert.AreEqual(expected, viewModel.SelectionSummary);
-        }
+        Assert.AreEqual(expected == "previo" ? "g#previo" : expected, _viewModel.SelectionSummary);
     }
 
     [TestMethod]
     public void AlDesconectarseDejaDeActualizarse()
     {
-        var (viewModel, bridge, attachment) = Create();
-        using (bridge)
-        {
-            attachment.Dispose();
-            _transport.SendEvent("selection.changed", """{"items":[{"id":"sol","tagName":"circle"}]}""");
+        _attachment.Dispose();
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}]}""");
 
-            Assert.AreEqual(string.Empty, viewModel.SelectionSummary);
-        }
+        Assert.AreEqual(string.Empty, _viewModel.SelectionSummary);
+        Assert.IsFalse(_viewModel.IsEngineReady);
     }
 }

@@ -55,11 +55,17 @@ public sealed partial class BridgeClient : IDisposable
     /// El motor respondió con un error, no respondió a tiempo (<see cref="BridgeErrorCode.Timeout"/>)
     /// o la respuesta no se pudo leer (<see cref="BridgeErrorCode.InvalidMessage"/>).
     /// </exception>
+    /// <param name="timeout">
+    /// Tiempo máximo de espera de la respuesta. Si es null, se usa el del cliente. Los comandos que
+    /// llevan documentos completos pueden necesitar más: cargar un SVG de 20 MB tarda varios segundos.
+    /// </param>
     public async Task<TResponse> SendAsync<TPayload, TResponse>(
         BridgeCommand<TPayload, TResponse> command,
         TPayload payload,
+        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
+        var limit = timeout ?? _timeout;
         ArgumentNullException.ThrowIfNull(command);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -80,13 +86,13 @@ public sealed partial class BridgeClient : IDisposable
             JsonElement response;
             try
             {
-                response = await completion.Task.WaitAsync(_timeout, _time, cancellationToken).ConfigureAwait(false);
+                response = await completion.Task.WaitAsync(limit, _time, cancellationToken).ConfigureAwait(false);
             }
             catch (TimeoutException ex)
             {
                 throw new BridgeException(
                     BridgeErrorCode.Timeout,
-                    string.Create(CultureInfo.InvariantCulture, $"El motor no respondió a {command.Name} en {_timeout.TotalSeconds} s."),
+                    string.Create(CultureInfo.InvariantCulture, $"El motor no respondió a {command.Name} en {limit.TotalSeconds} s."),
                     ex);
             }
 

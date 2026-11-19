@@ -16,8 +16,8 @@ public sealed class BridgeContractTests
     public void LeeUnEventoTalComoLoEnviaElMotor()
     {
         const string json = """
-            {"kind":"event","id":"e1","name":"selection.changed","protocolVersion":1,
-             "payload":{"items":[{"id":"sol","tagName":"circle"},{"id":null,"tagName":"path"}]}}
+            {"kind":"event","id":"e1","name":"selection.changed","protocolVersion":2,
+             "payload":{"documentId":"d1","items":[{"id":"sol","tagName":"circle"},{"id":null,"tagName":"path"}]}}
             """;
 
         var envelope = JsonSerializer.Deserialize(json, Context.BridgeEnvelope);
@@ -41,14 +41,14 @@ public sealed class BridgeContractTests
 
         var json = JsonSerializer.Serialize(envelope, Context.BridgeEnvelope);
 
-        Assert.AreEqual("""{"kind":"command","id":"c1","name":"app.ping","protocolVersion":1,"payload":{"sentAt":1234.5}}""", json);
+        Assert.AreEqual("""{"kind":"command","id":"c1","name":"app.ping","protocolVersion":2,"payload":{"sentAt":1234.5}}""", json);
     }
 
     [TestMethod]
     public void LeeUnaRespuestaFallida()
     {
         const string json = """
-            {"kind":"response","id":"c1","name":"app.ping","protocolVersion":1,"ok":false,
+            {"kind":"response","id":"c1","name":"app.ping","protocolVersion":2,"ok":false,
              "error":{"code":"unknown-message","message":"desconocido","relatedId":"c1"}}
             """;
 

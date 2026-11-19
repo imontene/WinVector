@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentParseError",
+  "description": "Por qué no se pudo cargar un documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "message",
+    "line",
+    "column"
+  ],
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "Descripción del problema para mostrar al usuario."
+    },
+    "line": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Línea del error en el texto, empezando en 1, si se conoce."
+    },
+    "column": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Columna del error, empezando en 1, si se conoce."
+    }
+  }
+}

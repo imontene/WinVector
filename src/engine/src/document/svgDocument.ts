@@ -15,6 +15,11 @@ export class SvgParseError extends Error {
   }
 }
 
+export interface SvgDocumentOptions {
+  /** Se llama tras cada lote de cambios del documento, con la revisión nueva. */
+  readonly onChange?: (revision: number) => void;
+}
+
 /** Origen de un nodo mostrado: su posición en el texto original y, si es un elemento, sus atributos. */
 interface NodeOrigin {
   readonly source: SourceNode;
@@ -28,6 +33,7 @@ interface NodeOrigin {
  */
 const ARTBOARD_STYLES = `
   :host { display: contents; }
+  :host([hidden]) { display: none; }
   .artboard { display: contents; }
   .artboard > svg {
     width: min(90vw, calc(90vh * var(--artboard-ratio, 1)));
@@ -67,7 +73,10 @@ export class SvgDocument {
   readonly #exactMapping: boolean;
   #revision = 0;
 
-  private constructor(source: string, host: HTMLElement) {
+  readonly #onChange: ((revision: number) => void) | undefined;
+
+  private constructor(source: string, host: HTMLElement, options: SvgDocumentOptions) {
+    this.#onChange = options.onChange;
     // DOMParser no admite la marca BOM al principio; se aparta y se conserva en el prólogo.
     const bom = source.startsWith("\uFEFF") ? "\uFEFF" : "";
     const body = source.slice(bom.length);
@@ -111,8 +120,8 @@ export class SvgDocument {
    * Analiza `source` y lo muestra dentro de `host`.
    * @throws {SvgParseError} si el texto no es XML bien formado o su raíz no es `<svg>`.
    */
-  static load(source: string, host: HTMLElement): SvgDocument {
-    return new SvgDocument(source, host);
+  static load(source: string, host: HTMLElement, options: SvgDocumentOptions = {}): SvgDocument {
+    return new SvgDocument(source, host, options);
   }
 
   /** Aumenta con cada cambio del documento. */
@@ -202,12 +211,14 @@ export class SvgDocument {
   }
 
   #record(records: MutationRecord[]): void {
+    if (records.length === 0) return;
     for (const record of records) {
       this.#revision++;
       if (record.type === "attributes") this.#dirtyStartTags.add(record.target);
       else if (record.type === "childList") this.#dirtyChildren.add(record.target);
       else this.#dirtyData.add(record.target);
     }
+    this.#onChange?.(this.#revision);
   }
 
   #idInUse(id: string): boolean {

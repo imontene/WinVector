@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentLoadResult",
+  "description": "Resultado de cargar un documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "loaded",
+    "revision",
+    "exactMapping",
+    "error"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "loaded": {
+      "type": "boolean",
+      "description": "true si el documento se cargó."
+    },
+    "revision": {
+      "type": "integer",
+      "description": "Revisión inicial del documento (0)."
+    },
+    "exactMapping": {
+      "type": "boolean",
+      "description": "true si al guardar se conservará el formato original de todo lo que no cambie."
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "./document-parse-error.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Por qué no se cargó, si loaded es false."
+    }
+  }
+}

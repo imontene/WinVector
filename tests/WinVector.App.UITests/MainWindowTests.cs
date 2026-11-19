@@ -99,6 +99,58 @@ public sealed class MainWindowTests
         Assert.AreEqual(string.Empty, Session.WaitForName("SelectionStatus", string.IsNullOrEmpty, EngineTimeout));
     }
 
+    [TestMethod]
+    public void AbrirElEjemploAñadeUnaPestañaConSuDocumento()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+
+        Assert.HasCount(2, Tabs());
+        Assert.IsNotNull(Session.FindSampleText());
+    }
+
+    [TestMethod]
+    public void CadaPestañaMuestraSuDocumento()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_N);
+        Assert.IsTrue(
+            Retry.WhileFalse(() => Session.FindSampleText() is null, TimeSpan.FromSeconds(10)).Result,
+            "El documento de ejemplo sigue visible en una pestaña nueva.");
+
+        Tabs()[1].Click();
+        Assert.IsTrue(
+            Retry.WhileFalse(() => Session.FindSampleText() is not null, TimeSpan.FromSeconds(10)).Result,
+            "Al volver a la pestaña del ejemplo no se muestra su documento.");
+    }
+
+    /// <summary>
+    /// Abrir un documento mientras el motor aún carga: debe mostrarse en cuanto el motor esté listo.
+    /// </summary>
+    /// <remarks>
+    /// Se comprueba por el color de la pantalla y no con UI Automation: si se consulta el árbol de
+    /// accesibilidad del WebView2 antes de que cargue el motor, su contenido deja de aparecer en él
+    /// aunque se vea en pantalla.
+    /// </remarks>
+    [TestMethod]
+    public void UnDocumentoAbiertoAntesDeQueCargueElMotorSeMuestraAlCargar()
+    {
+        Session.GetById("HelpMenu").Patterns.ExpandCollapse.Pattern.Expand();
+        var item = Retry.WhileNull(() => Session.FindInApp("OpenSampleMenuItem"), TimeSpan.FromSeconds(10)).Result;
+        Assert.IsNotNull(item, "No aparece el menú del documento de ejemplo.");
+        item.Patterns.Invoke.Pattern.Invoke();
+
+        WaitForEngine();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var sun = AppSession.SamplePoint(canvas, 300, 96);
+        var orange = System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47);
+        var shown = Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(sun), orange), TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(250)).Result;
+
+        Assert.IsTrue(shown, $"El sol del documento de ejemplo no se ve en el lienzo: el color es {AppSession.ColorAt(sun)}.");
+    }
+
     /// <summary>
     /// Investigación (#9): ¿se ve el contenido web del lienzo desde UI Automation? Si se ve, las
     /// pruebas de interfaz podrán comprobar también lo que dibuja el motor.
@@ -107,6 +159,7 @@ public sealed class MainWindowTests
     public void ElContenidoDelLienzoEsAccesible()
     {
         WaitForEngine();
+        Session.OpenSample();
         var canvas = Session.GetById("EngineCanvas");
 
         var text = Retry.WhileNull(
@@ -129,6 +182,7 @@ public sealed class MainWindowTests
     private void ClickSample(double svgX, double svgY)
     {
         WaitForEngine();
+        Session.OpenSample();
         var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
         Mouse.Click(AppSession.SamplePoint(canvas, svgX, svgY));
     }
