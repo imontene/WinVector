@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <style type="text/css"><![CDATA[
+      rect > title { display: none }
+      .resaltado { fill: url(#nada, #ffb547) }
+      .linea { stroke: #333; stroke-width: 4 }
+    ]]></style>
+  </defs>
+  <rect class="resaltado" x="20" y="20" width="160" height="80"/>
+  <line class="linea" x1="20" y1="150" x2="180" y2="150"/>
+</svg>

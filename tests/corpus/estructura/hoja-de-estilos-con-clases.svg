@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <style>
+    .fondo { fill: #eaf3ff }
+    .marca, #principal { fill: #1f4f99; stroke: #000 }
+    @media (min-width: 100px) { .marca { stroke-width: 2 } }
+  </style>
+  <rect class="fondo" width="200" height="200"/>
+  <circle id="principal" class="marca" cx="100" cy="100" r="50"/>
+</svg>

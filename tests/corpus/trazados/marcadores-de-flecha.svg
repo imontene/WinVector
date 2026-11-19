@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#e94b3c"/>
+    </marker>
+  </defs>
+  <path d="M20 180 C 60 20, 140 20, 180 180" fill="none" stroke="#333" stroke-width="3" marker-start="url(#flecha)" marker-end="url(#flecha)"/>
+</svg>

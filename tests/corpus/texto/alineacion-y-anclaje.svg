@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <line x1="100" y1="0" x2="100" y2="200" stroke="#ccc"/>
+  <text x="100" y="40" text-anchor="start">inicio</text>
+  <text x="100" y="80" text-anchor="middle">medio</text>
+  <text x="100" y="120" text-anchor="end">fin</text>
+  <text x="100" y="160" text-anchor="middle" dominant-baseline="middle">centrado</text>
+</svg>

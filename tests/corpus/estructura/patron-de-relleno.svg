@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <pattern id="cuadros" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#ccc"/><rect x="10" y="10" width="10" height="10" fill="#ccc"/>
+    </pattern>
+  </defs>
+  <rect width="200" height="200" fill="url(#cuadros)" stroke="#000"/>
+</svg>
