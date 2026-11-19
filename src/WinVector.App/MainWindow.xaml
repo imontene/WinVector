@@ -3,6 +3,7 @@
     x:Class="WinVector.App.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:app="using:WinVector.App.Shell"
     xmlns:controls="using:WinVector.App.Controls"
     xmlns:shell="using:WinVector.Core.Shell"
     Title="WinVector">
@@ -383,10 +384,10 @@
                         x:Uid="PropertiesEmpty"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap"
-                        Visibility="{x:Bind VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
 
                     <!-- Sin nada seleccionado, el panel edita la mesa de trabajo. -->
-                    <StackPanel Spacing="8" Visibility="{x:Bind VisibleUnless(ViewModel.HasSelection), Mode=OneWay}">
+                    <StackPanel Spacing="8" Visibility="{x:Bind app:BindingFunctions.VisibleUnless(ViewModel.HasSelection), Mode=OneWay}">
                         <TextBlock x:Uid="ArtboardTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -399,7 +400,7 @@
                                 AutomationProperties.AutomationId="ArtboardWidth"
                                 KeyDown="OnArtboardKeyDown"
                                 LostFocus="OnArtboardLostFocus"
-                                Text="{x:Bind ArtboardWidthText(ViewModel.CurrentArtboard), Mode=OneWay}" />
+                                Text="{x:Bind app:BindingFunctions.ArtboardWidthText(ViewModel.CurrentArtboard), Mode=OneWay}" />
                             <TextBox
                                 x:Name="ArtboardHeightBox"
                                 x:Uid="ArtboardHeight"
@@ -407,7 +408,7 @@
                                 AutomationProperties.AutomationId="ArtboardHeight"
                                 KeyDown="OnArtboardKeyDown"
                                 LostFocus="OnArtboardLostFocus"
-                                Text="{x:Bind ArtboardHeightText(ViewModel.CurrentArtboard), Mode=OneWay}" />
+                                Text="{x:Bind app:BindingFunctions.ArtboardHeightText(ViewModel.CurrentArtboard), Mode=OneWay}" />
                         </Grid>
                         <TextBox
                             x:Name="ArtboardViewBoxBox"
@@ -415,7 +416,7 @@
                             AutomationProperties.AutomationId="ArtboardViewBox"
                             KeyDown="OnArtboardKeyDown"
                             LostFocus="OnArtboardLostFocus"
-                            Text="{x:Bind ArtboardViewBoxText(ViewModel.CurrentArtboard), Mode=OneWay}" />
+                            Text="{x:Bind app:BindingFunctions.ArtboardViewBoxText(ViewModel.CurrentArtboard), Mode=OneWay}" />
                         <TextBlock
                             x:Uid="ArtboardHint"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"

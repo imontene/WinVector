@@ -109,16 +109,6 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private static Visibility VisibleWhen(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
-
-    private static Visibility VisibleUnless(bool value) => value ? Visibility.Collapsed : Visibility.Visible;
-
-    private static string ArtboardWidthText(Artboard? artboard) => artboard?.Width ?? string.Empty;
-
-    private static string ArtboardHeightText(Artboard? artboard) => artboard?.Height ?? string.Empty;
-
-    private static string ArtboardViewBoxText(Artboard? artboard) => ArtboardInput.Format(artboard?.ViewBox);
-
     /// <summary>Intro aplica el tamaño escrito y Esc lo descarta.</summary>
     private void OnArtboardKeyDown(object sender, KeyRoutedEventArgs e)
     {
@@ -147,9 +137,9 @@ public sealed partial class MainWindow : Window
     private void ResetArtboardEditor()
     {
         var artboard = ViewModel.CurrentArtboard;
-        ArtboardWidthBox.Text = ArtboardWidthText(artboard);
-        ArtboardHeightBox.Text = ArtboardHeightText(artboard);
-        ArtboardViewBoxBox.Text = ArtboardViewBoxText(artboard);
+        ArtboardWidthBox.Text = BindingFunctions.ArtboardWidthText(artboard);
+        ArtboardHeightBox.Text = BindingFunctions.ArtboardHeightText(artboard);
+        ArtboardViewBoxBox.Text = BindingFunctions.ArtboardViewBoxText(artboard);
     }
 
     public MainViewModel ViewModel { get; }
