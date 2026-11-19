@@ -17,6 +17,12 @@ namespace WinVector.Core.Shell;
 /// </remarks>
 public sealed partial class MainViewModel : ObservableObject
 {
+    /// <summary>
+    /// Tiempo máximo de los comandos que llevan un documento completo. Medido con el puente real:
+    /// cargar 20 MB tarda unos 7 s y 50 MB unos 17 s (ver contracts/README.md).
+    /// </summary>
+    public static readonly TimeSpan DocumentCommandTimeout = TimeSpan.FromMinutes(2);
+
     private readonly ShellTexts _texts;
     private readonly ILogger _logger;
     private readonly TimeProvider _time;
@@ -131,7 +137,7 @@ public sealed partial class MainViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(document);
         var bridge = _bridge ?? throw new BridgeException(BridgeErrorCode.Internal, "El motor no está conectado.");
         await _engineWork.ConfigureAwait(false);
-        return await bridge.SendAsync(BridgeCommands.DocumentSerialize, new DocumentRef(document.DocumentId)).ConfigureAwait(false);
+        return await bridge.SendAsync(BridgeCommands.DocumentSerialize, new DocumentRef(document.DocumentId), DocumentCommandTimeout).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -207,7 +213,8 @@ public sealed partial class MainViewModel : ObservableObject
 
         var result = await SendAsync(
             BridgeCommands.DocumentLoad,
-            new DocumentLoad(document.DocumentId, document.Title, document.InitialSvg));
+            new DocumentLoad(document.DocumentId, document.Title, document.InitialSvg),
+            DocumentCommandTimeout);
         if (result is null)
         {
             return;
@@ -232,7 +239,10 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>Envía un comando; si falla, lo registra y devuelve null.</summary>
-    private async Task<TResponse?> SendAsync<TPayload, TResponse>(BridgeCommand<TPayload, TResponse> command, TPayload payload)
+    private async Task<TResponse?> SendAsync<TPayload, TResponse>(
+        BridgeCommand<TPayload, TResponse> command,
+        TPayload payload,
+        TimeSpan? timeout = null)
         where TResponse : class
     {
         if (_bridge is not { } bridge)
@@ -242,7 +252,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         try
         {
-            return await bridge.SendAsync(command, payload);
+            return await bridge.SendAsync(command, payload, timeout);
         }
         catch (BridgeException ex)
         {

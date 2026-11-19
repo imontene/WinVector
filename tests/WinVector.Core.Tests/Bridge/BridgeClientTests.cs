@@ -73,6 +73,21 @@ public sealed class BridgeClientTests
     }
 
     [TestMethod]
+    public async Task UnComandoPuedeEsperarMasQueElTiempoPredeterminado()
+    {
+        using var client = Create();
+
+        var task = client.SendAsync(BridgeCommands.AppPing, new AppPing(1), TimeSpan.FromMinutes(2));
+        _time.Advance(BridgeClient.DefaultTimeout * 2);
+        Assert.IsFalse(task.IsCompleted);
+
+        _time.Advance(TimeSpan.FromMinutes(2));
+        var error = await Assert.ThrowsExactlyAsync<BridgeException>(() => task);
+        Assert.AreEqual(BridgeErrorCode.Timeout, error.Code);
+        StringAssert.Contains(error.Message, "120 s");
+    }
+
+    [TestMethod]
     public async Task UnaRespuestaTardiaSeIgnora()
     {
         using var client = Create();
@@ -89,7 +104,7 @@ public sealed class BridgeClientTests
         using var client = Create();
         using var cancellation = new CancellationTokenSource();
 
-        var task = client.SendAsync(BridgeCommands.AppPing, new AppPing(1), cancellation.Token);
+        var task = client.SendAsync(BridgeCommands.AppPing, new AppPing(1), cancellationToken: cancellation.Token);
         await cancellation.CancelAsync();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() => task);

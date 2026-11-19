@@ -68,7 +68,16 @@ Un único motor gestiona los documentos de todas las pestañas ([ADR 0004](../do
 
 Un comando sobre un documento que no existe responde con el error `unknown-document`. La aplicación encola las órdenes al motor para que lleguen en el orden en que se producen.
 
-**Tamaño de los documentos.** El texto completo del SVG viaja dentro del mensaje. El workflow **Medición de pestañas** mide `document.load` y `document.serialize` con documentos de 1 a 50 MB (`tools/TabsBenchmark --mode messages`); los resultados de referencia están en la descripción de la pull request que añadió estos mensajes.
+**Tamaño de los documentos.** El texto completo del SVG viaja dentro del mensaje. Medición con el puente real de WebView2 (workflow **Medición de pestañas**, `tools/TabsBenchmark --mode messages`, WebView2 156 en el runner de Windows de la CI):
+
+| Documento | `document.load` | `document.serialize` | Texto devuelto idéntico |
+| --------- | --------------- | -------------------- | ----------------------- |
+| 1 MB      | 0,3 s           | 12 ms                | Sí                      |
+| 5 MB      | 1,5 s           | 89 ms                | Sí                      |
+| 20 MB     | 6,9 s           | 232 ms               | Sí                      |
+| 50 MB     | 16,8 s          | 542 ms               | Sí                      |
+
+Casi todo el tiempo de `document.load` es crear el documento en el motor, no transmitir el mensaje. Por eso los comandos que llevan un documento completo esperan hasta 2 minutos (`MainViewModel.DocumentCommandTimeout`) en lugar de los 5 s del resto. El límite práctico no lo pone el puente sino la velocidad de carga, que se medirá con documentos grandes en el issue #34.
 
 ## Añadir un mensaje
 
