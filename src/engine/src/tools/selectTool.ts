@@ -108,6 +108,7 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     const handle = screenRect ? handleAt(point(event), screenRect) : null;
     const bounds = selectionBounds(selection.items, root);
     if (handle && bounds) {
+      event.preventDefault();
       press = { kind: "handle", handle, start: point(event), bounds, session: null };
       target.documentElement.setPointerCapture(event.pointerId);
       return;
@@ -143,7 +144,10 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
       session: null,
     };
     // Sin capturar el puntero todavía: con la captura, el navegador enviaría el clic y el doble clic
-    // al elemento que captura y no al objeto. Se captura al empezar a arrastrar.
+    // al elemento que captura y no al objeto. Se captura al empezar a arrastrar. Sí se cancela la
+    // acción por defecto, para que el navegador no empiece su propio gesto (que acabaría en
+    // pointercancel); click y dblclick siguen llegando.
+    event.preventDefault();
   };
 
   const onPointerMove = (event: PointerEvent) => {
