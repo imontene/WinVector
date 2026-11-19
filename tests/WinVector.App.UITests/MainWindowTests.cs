@@ -83,26 +83,65 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
-    public void ClicEnElSolLoSelecciona()
+    public void ClicEnElSolSeleccionaSuGrupo()
     {
+        // Un clic selecciona el objeto de nivel superior: el sol está dentro de g#fondo.
         ClickSample(300, 96);
 
-        Assert.AreEqual("circle#sol", Session.WaitForName("SelectionStatus", name => name == "circle#sol", EngineTimeout));
+        Assert.AreEqual("g#fondo", Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout));
     }
 
     [TestMethod]
-    public void ClicEnElTituloSeleccionaElTextoEntero()
+    public void CtrlClicEnElTituloSeleccionaElTextoEntero()
     {
-        ClickSample(100, 87);
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        using (Keyboard.Pressing(VirtualKeyShort.CONTROL))
+        {
+            Mouse.Click(AppSession.SamplePoint(canvas, 100, 87));
+        }
 
         Assert.AreEqual("text#titulo", Session.WaitForName("SelectionStatus", name => name == "text#titulo", EngineTimeout));
+    }
+
+    [TestMethod]
+    public void DobleClicEntraEnElGrupoYEscSale()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.DoubleClick(AppSession.SamplePoint(canvas, 300, 96));
+
+        // "circle#sol en g#fondo": el texto que une los dos depende del idioma.
+        static bool InsideGroup(string name) =>
+            name.StartsWith("circle#sol", StringComparison.Ordinal) && name.EndsWith("g#fondo", StringComparison.Ordinal);
+        var inside = Session.WaitForName("SelectionStatus", InsideGroup, EngineTimeout);
+        Assert.IsTrue(InsideGroup(inside), $"El doble clic no entró en el grupo: {inside}");
+
+        Keyboard.Press(VirtualKeyShort.ESCAPE);
+        Keyboard.Press(VirtualKeyShort.ESCAPE);
+        Assert.AreEqual("g#fondo", Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout));
+    }
+
+    [TestMethod]
+    public void CtrlAEnElLienzoSeleccionaTodo()
+    {
+        ClickSample(300, 96);
+        Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout);
+
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
+
+        // "2 objetos": g#fondo y g#contenido.
+        var all = Session.WaitForName("SelectionStatus", name => name.StartsWith('2'), EngineTimeout);
+        Assert.StartsWith("2", all, "Ctrl+A no seleccionó los dos grupos del ejemplo.");
     }
 
     [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);
-        Session.WaitForName("SelectionStatus", name => name == "circle#sol", EngineTimeout);
+        Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout);
 
         var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
         Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));

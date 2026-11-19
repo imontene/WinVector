@@ -6,7 +6,9 @@
   "additionalProperties": false,
   "required": [
     "documentId",
-    "items"
+    "items",
+    "bounds",
+    "scope"
   ],
   "properties": {
     "documentId": {
@@ -19,6 +21,28 @@
       "items": {
         "$ref": "./selected-element.schema.json"
       }
+    },
+    "bounds": {
+      "anyOf": [
+        {
+          "$ref": "./rect.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Caja que rodea todo lo seleccionado, en unidades de usuario del elemento raíz del documento (las del viewBox). Null si no hay selección o no se puede medir."
+    },
+    "scope": {
+      "anyOf": [
+        {
+          "$ref": "./selected-element.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Grupo en el que ha entrado el usuario con doble clic; la selección con un clic elige entre sus hijos. Null en el nivel superior del documento."
     }
   }
 }

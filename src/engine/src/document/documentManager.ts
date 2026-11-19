@@ -1,4 +1,5 @@
 import type { HistoryState } from "../history";
+import { Selection, type SelectionState } from "../selection";
 import { SvgDocument } from "./svgDocument";
 
 /** No hay ningún documento abierto con ese identificador. */
@@ -16,6 +17,8 @@ export interface OpenDocument {
   readonly id: string;
   readonly name: string;
   readonly document: SvgDocument;
+  /** Selección del documento; cada documento conserva la suya al cambiar de pestaña. */
+  readonly selection: Selection;
 }
 
 interface Entry extends OpenDocument {
@@ -27,6 +30,8 @@ export interface DocumentManagerOptions {
   readonly onChanged?: (documentId: string, revision: number) => void;
   /** Se llama cuando cambia el historial de deshacer de cualquier documento abierto. */
   readonly onHistoryChanged?: (documentId: string, state: HistoryState) => void;
+  /** Se llama cuando cambia la selección de cualquier documento abierto. */
+  readonly onSelectionChanged?: (documentId: string, state: SelectionState) => void;
 }
 
 /**
@@ -68,17 +73,24 @@ export class DocumentManager {
     let document: SvgDocument;
     try {
       document = SvgDocument.load(svg, host, {
-        onChange: (revision) => this.#options.onChanged?.(id, revision),
+        onChange: (revision) => {
+          // Un cambio puede quitar elementos seleccionados (por ejemplo, al deshacer su creación).
+          this.#entries.get(id)?.selection.prune();
+          this.#options.onChanged?.(id, revision);
+        },
         onHistoryChange: (state) => this.#options.onHistoryChanged?.(id, state),
       });
     } catch (error) {
       host.remove();
       throw error;
     }
+    const selection = new Selection(document.root, (state) => {
+      this.#options.onSelectionChanged?.(id, state);
+    });
 
     const wasActive = this.#activeId === id;
     if (this.#entries.has(id)) this.close(id);
-    this.#entries.set(id, { id, name, document, host });
+    this.#entries.set(id, { id, name, document, selection, host });
     if (wasActive) this.activate(id);
     return document;
   }
@@ -86,6 +98,11 @@ export class DocumentManager {
   /** @throws {UnknownDocumentError} */
   get(id: string): SvgDocument {
     return this.#entry(id).document;
+  }
+
+  /** Documento abierto con su selección. @throws {UnknownDocumentError} */
+  open(id: string): OpenDocument {
+    return this.#entry(id);
   }
 
   /** Muestra un documento y oculta los demás. */

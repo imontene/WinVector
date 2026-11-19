@@ -14,6 +14,12 @@ public interface IShellTexts
     /// <summary>Resumen de una selección de varios objetos ("3 objetos").</summary>
     string MultipleSelection(int count);
 
+    /// <summary>
+    /// Resumen de la selección dentro del grupo en el que ha entrado el usuario ("circle#sol en
+    /// g#fondo"). <paramref name="selection"/> está vacío si no hay nada seleccionado ("En g#fondo").
+    /// </summary>
+    string SelectionInGroup(string selection, string group);
+
     /// <summary>Aviso de motor incompatible, con la versión del protocolo del motor y la de la aplicación.</summary>
     string ProtocolMismatch(int engineProtocol, int appProtocol);
 

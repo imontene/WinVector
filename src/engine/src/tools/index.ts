@@ -1,8 +1,9 @@
 /**
  * Módulo `tools`.
  *
- * Herramientas del lienzo (selección, nodos, pluma, formas, texto, degradado, mano, zoom). Cada herramienta es una máquina de estados sobre eventos de puntero.
+ * Herramientas del lienzo (selección, nodos, pluma, formas, texto, degradado, mano, zoom). Cada
+ * herramienta atiende los eventos de puntero y de teclado del lienzo.
  *
- * Pendiente de implementar; ver docs/PLAN.md, sección 3.2.
+ * Por ahora, la herramienta Selección (issue #27).
  */
-export {};
+export * from "./selectTool";

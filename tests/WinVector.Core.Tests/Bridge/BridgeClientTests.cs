@@ -117,7 +117,7 @@ public sealed class BridgeClientTests
         SelectionChanged? received = null;
         using var subscription = client.Subscribe(BridgeEvents.SelectionChanged, e => received = e);
 
-        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}]}""");
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}],"bounds":null,"scope":null}""");
 
         Assert.IsNotNull(received);
         Assert.AreEqual(new SelectedElement("sol", "circle"), received.Items.Single());
@@ -130,9 +130,9 @@ public sealed class BridgeClientTests
         var count = 0;
         var subscription = client.Subscribe(BridgeEvents.SelectionChanged, _ => count++);
 
-        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[]}""");
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[],"bounds":null,"scope":null}""");
         subscription.Dispose();
-        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[]}""");
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[],"bounds":null,"scope":null}""");
 
         Assert.AreEqual(1, count);
     }
@@ -145,7 +145,7 @@ public sealed class BridgeClientTests
         using var subscription = client.Subscribe(BridgeEvents.SelectionChanged, _ => count++);
 
         _transport.Receive(
-            """{"kind":"event","id":"e1","name":"selection.changed","protocolVersion":1,"payload":{"documentId":"d1","items":[]}}""",
+            """{"kind":"event","id":"e1","name":"selection.changed","protocolVersion":1,"payload":{"documentId":"d1","items":[],"bounds":null,"scope":null}}""",
             source: "https://example.com/");
 
         Assert.AreEqual(0, count);
@@ -164,7 +164,7 @@ public sealed class BridgeClientTests
         using var subscription = client.Subscribe(BridgeEvents.SelectionChanged, _ => count++);
 
         _transport.Receive(json);
-        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[]}""");
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[],"bounds":null,"scope":null}""");
 
         Assert.AreEqual(1, count);
         Assert.IsTrue(_logger.Entries.Any(e => e.Level == LogLevel.Warning));
@@ -188,7 +188,7 @@ public sealed class BridgeClientTests
         using var failing = client.Subscribe(BridgeEvents.SelectionChanged, _ => throw new InvalidOperationException("fallo"));
         using var working = client.Subscribe(BridgeEvents.SelectionChanged, _ => called = true);
 
-        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[]}""");
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[],"bounds":null,"scope":null}""");
 
         Assert.IsTrue(called);
         Assert.IsTrue(_logger.Entries.Any(e => e.Level == LogLevel.Error));
@@ -214,7 +214,7 @@ public sealed class BridgeClientTests
         var count = 0;
         using var subscription = client.Subscribe(BridgeEvents.SelectionChanged, _ => count++);
 
-        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[]}""", protocolVersion: 99);
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[],"bounds":null,"scope":null}""", protocolVersion: 99);
 
         Assert.AreEqual(0, count);
     }

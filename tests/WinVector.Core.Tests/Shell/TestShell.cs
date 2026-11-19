@@ -16,6 +16,9 @@ internal sealed class TestTexts : IShellTexts
 
     public string MultipleSelection(int count) => $"{count} objetos";
 
+    public string SelectionInGroup(string selection, string group) =>
+        selection.Length == 0 ? $"En {group}" : $"{selection} en {group}";
+
     public string ProtocolMismatch(int engineProtocol, int appProtocol) => $"Protocolo {engineProtocol}, se esperaba {appProtocol}";
 
     public string FileError(FileErrorKind kind, string fileName) => $"{kind}: {fileName}";

@@ -2,7 +2,7 @@
 // modifica los esquemas y ejecuta `npm run contracts:generate` en src/engine.
 
 /** Versión del protocolo del puente. Debe coincidir en la aplicación y en el motor. */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 
 /** Comando de comprobación enviado por la aplicación. */
 export interface AppPing {
@@ -122,6 +122,18 @@ export interface HistoryState {
   readonly redoAction: string | null;
 }
 
+/** Rectángulo alineado con los ejes. */
+export interface Rect {
+  /** Borde izquierdo. */
+  readonly x: number;
+  /** Borde superior. */
+  readonly y: number;
+  /** Ancho. */
+  readonly width: number;
+  /** Alto. */
+  readonly height: number;
+}
+
 /** Un elemento SVG seleccionado. */
 export interface SelectedElement {
   /** Valor del atributo id, o null si el elemento no tiene. */
@@ -136,12 +148,18 @@ export interface SelectionChanged {
   readonly documentId: string;
   /** Elementos seleccionados, en orden de documento. Vacío si no hay selección. */
   readonly items: readonly SelectedElement[];
+  /** Caja que rodea todo lo seleccionado, en unidades de usuario del elemento raíz del documento (las del viewBox). Null si no hay selección o no se puede medir. */
+  readonly bounds: Rect | null;
+  /** Grupo en el que ha entrado el usuario con doble clic; la selección con un clic elige entre sus hijos. Null en el nivel superior del documento. */
+  readonly scope: SelectedElement | null;
 }
 
 /** Comandos que la aplicación envía al motor, con el tipo de su payload y de su respuesta. */
 export interface BridgeCommands {
   /** Comprueba que el motor responde y mide la latencia del puente. */
   readonly "app.ping": { readonly payload: AppPing; readonly response: AppPong };
+  /** Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno. */
+  readonly "selection.selectAll": { readonly payload: DocumentRef; readonly response: DocumentRef };
   /** Carga un documento SVG en el motor con el identificador que le asigna la aplicación. */
   readonly "document.load": {
     readonly payload: DocumentLoad;
@@ -183,6 +201,7 @@ export type BridgeEventName = keyof BridgeEvents;
 
 export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "app.ping",
+  "selection.selectAll",
   "document.load",
   "document.serialize",
   "document.activate",

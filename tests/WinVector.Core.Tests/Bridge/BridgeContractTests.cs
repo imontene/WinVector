@@ -16,8 +16,8 @@ public sealed class BridgeContractTests
     public void LeeUnEventoTalComoLoEnviaElMotor()
     {
         const string json = """
-            {"kind":"event","id":"e1","name":"selection.changed","protocolVersion":2,
-             "payload":{"documentId":"d1","items":[{"id":"sol","tagName":"circle"},{"id":null,"tagName":"path"}]}}
+            {"kind":"event","id":"e1","name":"selection.changed","protocolVersion":3,
+             "payload":{"documentId":"d1","items":[{"id":"sol","tagName":"circle"},{"id":null,"tagName":"path"}],"bounds":null,"scope":null}}
             """;
 
         var envelope = JsonSerializer.Deserialize(json, Context.BridgeEnvelope);
@@ -41,7 +41,7 @@ public sealed class BridgeContractTests
 
         var json = JsonSerializer.Serialize(envelope, Context.BridgeEnvelope);
 
-        Assert.AreEqual("""{"kind":"command","id":"c1","name":"app.ping","protocolVersion":2,"payload":{"sentAt":1234.5}}""", json);
+        Assert.AreEqual("""{"kind":"command","id":"c1","name":"app.ping","protocolVersion":3,"payload":{"sentAt":1234.5}}""", json);
     }
 
     [TestMethod]

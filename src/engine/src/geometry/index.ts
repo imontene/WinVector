@@ -5,3 +5,4 @@
  * ajuste a cuadrícula.
  */
 export * from "./matrix";
+export * from "./rect";

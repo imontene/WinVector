@@ -89,6 +89,8 @@ describe("EngineBridge", () => {
     bridge.emit("selection.changed", {
       documentId: "d1",
       items: [{ id: "sol", tagName: "circle" }],
+      bounds: { x: 248, y: 44, width: 104, height: 104 },
+      scope: null,
     });
     expect(sent.at(-1)).toMatchObject({ kind: "event", id: "e2", name: "selection.changed" });
   });

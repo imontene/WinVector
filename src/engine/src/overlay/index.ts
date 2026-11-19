@@ -1,8 +1,7 @@
 /**
  * Módulo `overlay`.
  *
- * Capa SVG separada del documento para manejadores, guías y vistas previas.
- *
- * Pendiente de implementar; ver docs/PLAN.md, sección 3.2.
+ * Capa SVG separada del documento para la selección y, más adelante, manejadores, guías y vistas
+ * previas.
  */
-export {};
+export * from "./overlay";

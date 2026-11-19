@@ -176,7 +176,8 @@ internal sealed class BenchmarkForm : Form
         core.SetVirtualHostNameToFolderMapping(HostName, Path.Combine(AppContext.BaseDirectory, "Engine"), CoreWebView2HostResourceAccessKind.Deny);
 
         var pending = new Dictionary<string, TaskCompletionSource<JsonElement>>();
-        var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        // El motor anuncia su versión del protocolo en engine.ready; los comandos usan la misma.
+        var ready = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
         core.WebMessageReceived += (_, e) =>
         {
             using var message = JsonDocument.Parse(e.WebMessageAsJson);
@@ -184,7 +185,7 @@ internal sealed class BenchmarkForm : Form
             var kind = root.GetProperty("kind").GetString();
             if (kind == "event" && root.GetProperty("name").GetString() == "engine.ready")
             {
-                ready.TrySetResult();
+                ready.TrySetResult(root.GetProperty("payload").GetProperty("protocolVersion").GetInt32());
             }
             else if (kind == "response" && pending.Remove(root.GetProperty("id").GetString() ?? string.Empty, out var completion))
             {
@@ -193,7 +194,7 @@ internal sealed class BenchmarkForm : Form
         };
 
         core.Navigate($"https://{HostName}/index.html");
-        await ready.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        var protocolVersion = await ready.Task.WaitAsync(TimeSpan.FromSeconds(30));
 
         var counter = 0;
         async Task<(JsonElement Response, double Ms)> SendAsync(string name, object payload)
@@ -201,7 +202,7 @@ internal sealed class BenchmarkForm : Form
             var id = $"m{++counter}";
             var completion = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
             pending[id] = completion;
-            var json = JsonSerializer.Serialize(new { kind = "command", id, name, protocolVersion = 2, payload });
+            var json = JsonSerializer.Serialize(new { kind = "command", id, name, protocolVersion, payload });
             var watch = Stopwatch.StartNew();
             core.PostWebMessageAsJson(json);
             var response = await completion.Task.WaitAsync(TimeSpan.FromMinutes(2));

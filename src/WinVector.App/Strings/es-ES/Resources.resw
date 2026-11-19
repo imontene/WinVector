@@ -378,4 +378,10 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="HistoryActionEdit" xml:space="preserve">
     <value>edición</value>
   </data>
+  <data name="SelectionInGroup" xml:space="preserve">
+    <value>{0} en {1}</value>
+  </data>
+  <data name="SelectionInsideGroup" xml:space="preserve">
+    <value>En {0}</value>
+  </data>
 </root>
