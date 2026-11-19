@@ -129,6 +129,11 @@ public sealed class MainWindowTests
     /// <summary>
     /// Abrir un documento mientras el motor aún carga: debe mostrarse en cuanto el motor esté listo.
     /// </summary>
+    /// <remarks>
+    /// Se comprueba por el color de la pantalla y no con UI Automation: si se consulta el árbol de
+    /// accesibilidad del WebView2 antes de que cargue el motor, su contenido deja de aparecer en él
+    /// aunque se vea en pantalla.
+    /// </remarks>
     [TestMethod]
     public void UnDocumentoAbiertoAntesDeQueCargueElMotorSeMuestraAlCargar()
     {
@@ -138,36 +143,12 @@ public sealed class MainWindowTests
         item.Patterns.Invoke.Pattern.Invoke();
 
         WaitForEngine();
-        var shown = Retry.WhileNull(() => Session.FindSampleText(), TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(250)).Result;
-        if (shown is null)
-        {
-            using var fresh = new FlaUI.UIA3.UIA3Automation();
-            var freshWindow = Session.Application.GetMainWindow(fresh);
-            var freshCanvas = freshWindow?.FindFirstDescendant(cf => cf.ByAutomationId("EngineCanvas"));
-            var freshText = freshCanvas?.FindFirstDescendant(cf => cf.ByName("WinVector"));
-            TestContext.WriteLine($"Pestañas: {Tabs().Length}");
-            TestContext.WriteLine($"Latencia (motor listo): '{Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault}'");
-            TestContext.WriteLine($"Con una conexión nueva de UI Automation, el texto {(freshText is null ? "tampoco aparece" : "sí aparece")}");
-            var tabs = Tabs();
-            TestContext.WriteLine("Pestañas seleccionadas: " + string.Join(", ", tabs.Select(t =>
-                $"{t.Name}={t.Patterns.SelectionItem.PatternOrDefault?.IsSelected.ValueOrDefault}")));
-            tabs[^1].Click();
-            var afterClick = Retry.WhileNull(() => Session.FindSampleText(), TimeSpan.FromSeconds(5)).Result;
-            TestContext.WriteLine($"Tras pulsar la pestaña del ejemplo, el texto {(afterClick is null ? "sigue sin aparecer" : "aparece")}");
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var sun = AppSession.SamplePoint(canvas, 300, 96);
+        var orange = System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47);
+        var shown = Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(sun), orange), TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(250)).Result;
 
-            // TEMPORAL: captura reducida en el registro para ver si el documento se pinta.
-            using var screen = FlaUI.Core.Capturing.Capture.Screen().Bitmap;
-            using var small = new System.Drawing.Bitmap(screen, screen.Width * 3 / 4, screen.Height * 3 / 4);
-            using var stream = new MemoryStream();
-            small.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-            var base64 = Convert.ToBase64String(stream.ToArray());
-            for (var i = 0; i < base64.Length; i += 4000)
-            {
-                TestContext.WriteLine($"CAPTURA:{base64.AsSpan(i, Math.Min(4000, base64.Length - i))}");
-            }
-        }
-
-        Assert.IsNotNull(shown, "El documento abierto antes de cargar el motor no se muestra.");
+        Assert.IsTrue(shown, $"El sol del documento de ejemplo no se ve en el lienzo: el color es {AppSession.ColorAt(sun)}.");
     }
 
     /// <summary>

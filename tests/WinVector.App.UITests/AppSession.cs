@@ -215,6 +215,19 @@ internal sealed class AppSession : IDisposable
         }
     }
 
+    /// <summary>Color del píxel de la pantalla en un punto.</summary>
+    public static Color ColorAt(Point point)
+    {
+        using var image = FlaUI.Core.Capturing.Capture.Rectangle(new Rectangle(point.X, point.Y, 1, 1));
+        return image.Bitmap.GetPixel(0, 0);
+    }
+
+    /// <summary>True si dos colores se parecen, canal a canal, dentro de una tolerancia.</summary>
+    public static bool IsClose(Color actual, Color expected, int tolerance = 24) =>
+        Math.Abs(actual.R - expected.R) <= tolerance
+        && Math.Abs(actual.G - expected.G) <= tolerance
+        && Math.Abs(actual.B - expected.B) <= tolerance;
+
     /// <summary>Punto de la pantalla que corresponde a unas coordenadas del SVG de ejemplo.</summary>
     /// <remarks>
     /// El motor dibuja el SVG de ejemplo (viewBox 400 × 300) centrado, con un ancho de
