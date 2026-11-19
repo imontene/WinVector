@@ -52,16 +52,21 @@ const sortPoints = (points: Point[]) =>
 
 function expectTransformed(doc: SvgDocument, element: Element, m: Matrix): void {
   const boxBefore = localBox(element);
+  const isText = element.localName === "text";
+  const [xBefore, yBefore] = [element.getAttribute("x"), element.getAttribute("y")];
   const matrixBefore = elementToRoot(element, doc.root);
   if (!boxBefore || !matrixBefore) throw new Error("No se puede medir");
   const before = rootCorners(element, doc.root).map((p) => applyToPoint(m, p));
   expect(applyTransform(element, m, doc.root)).toBe(true);
   const boxAfter = localBox(element);
+  const rewroteText =
+    isText && (element.getAttribute("x") !== xBefore || element.getAttribute("y") !== yBefore);
   const unchangedGeometry =
-    boxAfter !== null &&
-    (["x", "y", "width", "height"] as const).every(
-      (key) => Math.abs(boxAfter[key] - boxBefore[key]) < 1e-6,
-    );
+    (isText && !rewroteText) ||
+    (boxAfter !== null &&
+      (["x", "y", "width", "height"] as const).every(
+        (key) => Math.abs(boxAfter[key] - boxBefore[key]) < 1e-6,
+      ));
   if (unchangedGeometry) {
     // Solo ha cambiado transform: se comparan las matrices, exactas incluso con texto (cuya caja
     // medida no escala de forma lineal con el tamaño de letra).
@@ -70,6 +75,13 @@ function expectTransformed(doc: SvgDocument, element: Element, m: Matrix): void 
     for (const key of ["a", "b", "c", "d", "e", "f"] as const) {
       expect(after?.[key]).toBeCloseTo(expected[key], 4);
     }
+    return;
+  }
+  if (rewroteText) {
+    // La caja medida de un texto depende de las fuentes instaladas (y de los emojis): un texto
+    // movido con sus atributos se comprueba en ellos. Solo se mueve así, sin escalar ni girar.
+    expect(Number(element.getAttribute("x"))).toBeCloseTo(m.a * Number(xBefore ?? 0) + m.e, 4);
+    expect(Number(element.getAttribute("y"))).toBeCloseTo(m.d * Number(yBefore ?? 0) + m.f, 4);
     return;
   }
   const after = rootCorners(element, doc.root);
