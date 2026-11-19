@@ -743,19 +743,26 @@ public sealed partial class MainViewModel : ObservableObject
         await work();
     }
 
+    /// <summary>Intentos de medir la latencia: en un equipo lento, el primer ping puede perderse mientras carga el motor.</summary>
+    internal const int PingAttempts = 3;
+
     private async Task MeasureLatencyAsync(BridgeClient bridge)
     {
-        var start = _time.GetTimestamp();
-        try
+        for (var attempt = 1; attempt <= PingAttempts; attempt++)
         {
-            await bridge.SendAsync(BridgeCommands.AppPing, new AppPing(_time.GetUtcNow().ToUnixTimeMilliseconds()));
-            BridgeLatency = _time.GetElapsedTime(start);
-            LogLatency(BridgeLatency.Value.TotalMilliseconds);
-        }
-        catch (BridgeException ex)
-        {
-            BridgeLatency = null;
-            LogPingFailed(ex.Code, ex.Message);
+            var start = _time.GetTimestamp();
+            try
+            {
+                await bridge.SendAsync(BridgeCommands.AppPing, new AppPing(_time.GetUtcNow().ToUnixTimeMilliseconds()));
+                BridgeLatency = _time.GetElapsedTime(start);
+                LogLatency(BridgeLatency.Value.TotalMilliseconds);
+                return;
+            }
+            catch (BridgeException ex)
+            {
+                BridgeLatency = null;
+                LogPingFailed(ex.Code, ex.Message);
+            }
         }
     }
 
