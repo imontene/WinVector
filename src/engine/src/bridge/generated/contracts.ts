@@ -102,6 +102,12 @@ export interface EngineReady {
   readonly protocolVersion: number;
 }
 
+/** Archivos soltados sobre el lienzo. */
+export interface FilesDropped {
+  /** Número de archivos soltados. */
+  readonly count: number;
+}
+
 /** Un elemento SVG seleccionado. */
 export interface SelectedElement {
   /** Valor del atributo id, o null si el elemento no tiene. */
@@ -148,6 +154,8 @@ export interface BridgeEvents {
   readonly error: BridgeError;
   /** Un documento ha cambiado. La revisión aumenta con cada cambio. */
   readonly "document.changed": DocumentState;
+  /** El usuario ha soltado archivos sobre el lienzo. Los archivos viajan como objetos adicionales del mensaje de WebView2, con su ruta. */
+  readonly "files.dropped": FilesDropped;
 }
 
 export type BridgeCommandName = keyof BridgeCommands;
@@ -165,6 +173,7 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "selection.changed",
   "error",
   "document.changed",
+  "files.dropped",
 ];
 
 /** Campos comunes a todos los mensajes. */

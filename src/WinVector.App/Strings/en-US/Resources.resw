@@ -251,4 +251,120 @@ Licensed under the Apache License 2.0.</value>
   <data name="SampleDocumentTitle" xml:space="preserve">
     <value>Sample</value>
   </data>
+  <data name="MenuFileNewWithSize.Text" xml:space="preserve">
+    <value>New with size…</value>
+  </data>
+  <data name="MenuFileRecent.Text" xml:space="preserve">
+    <value>Recent files</value>
+  </data>
+  <data name="RecentFilesEmpty" xml:space="preserve">
+    <value>No recent files</value>
+  </data>
+  <data name="RecentFilesClear" xml:space="preserve">
+    <value>Clear the list</value>
+  </data>
+  <data name="OpenFailedTitle" xml:space="preserve">
+    <value>The file couldn't be opened</value>
+  </data>
+  <data name="SaveFailedTitle" xml:space="preserve">
+    <value>The file couldn't be saved</value>
+  </data>
+  <data name="FileErrorNotFound" xml:space="preserve">
+    <value>{0} can't be found. It may have been moved or deleted, or its folder no longer exists.</value>
+  </data>
+  <data name="FileErrorAccessDenied" xml:space="preserve">
+    <value>You don't have permission to access {0}. Try saving it to another folder.</value>
+  </data>
+  <data name="FileErrorInUse" xml:space="preserve">
+    <value>Another app is using {0}. Close it and try again.</value>
+  </data>
+  <data name="FileErrorInvalidEncoding" xml:space="preserve">
+    <value>{0} contains characters that can't be read or saved in its encoding.</value>
+  </data>
+  <data name="FileErrorOther" xml:space="preserve">
+    <value>{0} couldn't be read or written. Check that the drive is available and has free space.</value>
+  </data>
+  <data name="FileErrorInvalidSvg" xml:space="preserve">
+    <value>{0} isn't a valid SVG.
+
+{1}</value>
+  </data>
+  <data name="FileErrorEngineUnavailable" xml:space="preserve">
+    <value>The contents of {0} couldn't be retrieved from the canvas. Try again.</value>
+  </data>
+  <data name="FileTypeSvg" xml:space="preserve">
+    <value>SVG image</value>
+  </data>
+  <data name="SaveChangesTitle" xml:space="preserve">
+    <value>Do you want to save changes to {0}?</value>
+  </data>
+  <data name="SaveChangesBody" xml:space="preserve">
+    <value>If you don't save them, they'll be lost.</value>
+  </data>
+  <data name="SaveChangesSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SaveChangesDontSave" xml:space="preserve">
+    <value>Don't save</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="NewSizeTitle" xml:space="preserve">
+    <value>New document</value>
+  </data>
+  <data name="NewSizePreset" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="NewSizePresetDefault" xml:space="preserve">
+    <value>Default (800 × 600 px)</value>
+  </data>
+  <data name="NewSizePresetA4Portrait" xml:space="preserve">
+    <value>A4 portrait (210 × 297 mm)</value>
+  </data>
+  <data name="NewSizePresetA4Landscape" xml:space="preserve">
+    <value>A4 landscape (297 × 210 mm)</value>
+  </data>
+  <data name="NewSizePresetA5" xml:space="preserve">
+    <value>A5 (148 × 210 mm)</value>
+  </data>
+  <data name="NewSizePresetLetter" xml:space="preserve">
+    <value>Letter (8.5 × 11 in)</value>
+  </data>
+  <data name="NewSizePresetFullHd" xml:space="preserve">
+    <value>Full HD (1920 × 1080 px)</value>
+  </data>
+  <data name="NewSizePresetSquare" xml:space="preserve">
+    <value>Square (1080 × 1080 px)</value>
+  </data>
+  <data name="NewSizePresetIcon" xml:space="preserve">
+    <value>Icon (256 × 256 px)</value>
+  </data>
+  <data name="NewSizePresetCustom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="NewSizeWidth" xml:space="preserve">
+    <value>Width</value>
+  </data>
+  <data name="NewSizeHeight" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="NewSizeUnit" xml:space="preserve">
+    <value>Unit</value>
+  </data>
+  <data name="UnitPixels" xml:space="preserve">
+    <value>Pixels (px)</value>
+  </data>
+  <data name="UnitMillimeters" xml:space="preserve">
+    <value>Millimeters (mm)</value>
+  </data>
+  <data name="UnitInches" xml:space="preserve">
+    <value>Inches (in)</value>
+  </data>
+  <data name="NewSizeCreate" xml:space="preserve">
+    <value>Create</value>
+  </data>
 </root>

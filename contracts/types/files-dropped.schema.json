@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FilesDropped",
+  "description": "Archivos soltados sobre el lienzo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "count"
+  ],
+  "properties": {
+    "count": {
+      "type": "integer",
+      "description": "Número de archivos soltados."
+    }
+  }
+}

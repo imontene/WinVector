@@ -55,7 +55,8 @@ internal sealed class AppSession : IDisposable
     public Window Window { get; }
 
     /// <summary>Arranca WinVector o marca la prueba como no concluyente si no está instalado.</summary>
-    public static AppSession Start()
+    /// <param name="arguments">Argumentos de arranque, por ejemplo la ruta de un archivo para abrir.</param>
+    public static AppSession Start(string? arguments = null)
     {
         var aumid = Environment.GetEnvironmentVariable(AumidVariable);
         if (string.IsNullOrEmpty(aumid))
@@ -63,7 +64,7 @@ internal sealed class AppSession : IDisposable
             Assert.Inconclusive($"Instala WinVector y define {AumidVariable} para ejecutar las pruebas de interfaz.");
         }
 
-        var application = Application.LaunchStoreApp(aumid);
+        var application = Application.LaunchStoreApp(aumid, arguments ?? string.Empty);
 
         // En un arranque en frío (el primero tras instalar el paquete) la ventana tarda en responder a
         // UI Automation más que los tiempos predeterminados, y la primera conexión agota el tiempo.

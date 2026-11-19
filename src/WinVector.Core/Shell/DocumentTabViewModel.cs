@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using WinVector.Core.Files;
 
 namespace WinVector.Core.Shell;
 
@@ -24,9 +25,26 @@ public sealed partial class DocumentTabViewModel : ObservableObject
     /// <summary>Texto con el que se abrió el documento.</summary>
     public string InitialSvg { get; }
 
-    /// <summary>Título que se muestra en la pestaña.</summary>
+    /// <summary>Nombre del documento: el del archivo o "Sin título N".</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Header))]
     private string _title;
+
+    /// <summary>Ruta completa del archivo, o null si el documento no se ha guardado nunca.</summary>
+    [ObservableProperty]
+    private string? _filePath;
+
+    /// <summary>Codificación con la que se leyó el archivo, para guardarlo igual.</summary>
+    public FileEncoding FileEncoding { get; set; } = FileEncoding.Utf8;
+
+    /// <summary>True si es un documento nuevo en blanco que el usuario aún no ha tocado.</summary>
+    internal bool IsNewBlank { get; init; }
+
+    /// <summary>True si es un documento nuevo en blanco sin cambios: abrir un archivo lo sustituye.</summary>
+    public bool IsPristine => IsNewBlank && FilePath is null && Revision == 0;
+
+    /// <summary>Texto de la pestaña: el título y una marca si hay cambios sin guardar.</summary>
+    public string Header => IsModified ? $"{Title} •" : Title;
 
     /// <summary>True cuando el motor ha cargado el documento.</summary>
     [ObservableProperty]
@@ -39,11 +57,13 @@ public sealed partial class DocumentTabViewModel : ObservableObject
     /// <summary>Revisión actual del documento en el motor; aumenta con cada cambio.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsModified))]
+    [NotifyPropertyChangedFor(nameof(Header))]
     private int _revision;
 
     /// <summary>Revisión que coincide con el archivo guardado.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsModified))]
+    [NotifyPropertyChangedFor(nameof(Header))]
     private int _savedRevision;
 
     /// <summary>True si hay cambios sin guardar.</summary>

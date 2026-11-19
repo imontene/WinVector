@@ -186,3 +186,47 @@ test("al cambiar de documento solo se ve el activo", async ({ page }) => {
   await expect(page.locator("#otro")).toBeVisible();
   await expect(page.locator("#sol")).toBeHidden();
 });
+
+test("los archivos soltados sobre el lienzo se pasan a la aplicación con el mensaje", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const host = window as unknown as {
+      chrome: { webview: Record<string, unknown> };
+      __withObjects: unknown[];
+    };
+    host.__withObjects = [];
+    host.chrome.webview.postMessageWithAdditionalObjects = (
+      message: unknown,
+      objects: unknown[],
+    ) => {
+      host.__withObjects.push({ message, names: [...objects].map((f) => (f as File).name) });
+    };
+  });
+
+  await page.evaluate(() => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(["<svg/>"], "dibujo.svg", { type: "image/svg+xml" }));
+    const workspace = document.getElementById("workspace");
+    const over = new DragEvent("dragover", {
+      dataTransfer: transfer,
+      bubbles: true,
+      cancelable: true,
+    });
+    workspace?.dispatchEvent(over);
+    if (!over.defaultPrevented) throw new Error("dragover no se canceló");
+    workspace?.dispatchEvent(
+      new DragEvent("drop", { dataTransfer: transfer, bubbles: true, cancelable: true }),
+    );
+  });
+
+  const sent = await page.evaluate(
+    () => (window as unknown as { __withObjects: unknown[] }).__withObjects,
+  );
+  expect(sent).toMatchObject([
+    {
+      message: { kind: "event", name: "files.dropped", payload: { count: 1 } },
+      names: ["dibujo.svg"],
+    },
+  ]);
+});

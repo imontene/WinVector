@@ -40,6 +40,17 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <!-- WinVector aparece en "Abrir con" para los archivos .svg, sin convertirse en la aplicación predeterminada. -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="svg">
+            <uap:DisplayName>ms-resource:FileTypeSvg</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType ContentType="image/svg+xml">.svg</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
     </Application>
   </Applications>
 

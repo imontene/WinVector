@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using WinVector.Core.Bridge;
+using WinVector.Core.Files;
 
 namespace WinVector.Core.Shell;
 
@@ -23,7 +24,8 @@ public sealed partial class MainViewModel : ObservableObject
     /// </summary>
     public static readonly TimeSpan DocumentCommandTimeout = TimeSpan.FromMinutes(2);
 
-    private readonly ShellTexts _texts;
+    private readonly IShellTexts _texts;
+    private readonly IShellDialogs _dialogs;
     private readonly ILogger _logger;
     private readonly TimeProvider _time;
     private BridgeClient? _bridge;
@@ -31,14 +33,24 @@ public sealed partial class MainViewModel : ObservableObject
     private int _untitledCount;
     private int _documentCount;
 
-    public MainViewModel(ShellTexts texts, ILogger<MainViewModel>? logger = null, TimeProvider? timeProvider = null)
+    public MainViewModel(
+        IShellTexts texts,
+        IShellDialogs? dialogs = null,
+        RecentFiles? recentFiles = null,
+        ILogger<MainViewModel>? logger = null,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(texts);
         _texts = texts;
+        _dialogs = dialogs ?? NoDialogs.Instance;
+        RecentFiles = recentFiles ?? new RecentFiles(new MemoryRecentFilesStore());
         _logger = logger ?? NullLogger<MainViewModel>.Instance;
         _time = timeProvider ?? TimeProvider.System;
         NewDocument();
     }
+
+    /// <summary>Archivos abiertos o guardados recientemente.</summary>
+    public RecentFiles RecentFiles { get; }
 
     /// <summary>Pestañas abiertas, en el orden en que se muestran.</summary>
     public ObservableCollection<DocumentTabViewModel> Documents { get; } = [];
@@ -74,17 +86,229 @@ public sealed partial class MainViewModel : ObservableObject
     public void NewDocument()
     {
         _untitledCount++;
-        OpenDocument(_texts.UntitledDocument(_untitledCount), DocumentTemplates.Blank());
+        AddDocument(_texts.UntitledDocument(_untitledCount), DocumentTemplates.Blank(), filePath: null, FileEncoding.Utf8, isNewBlank: true);
+    }
+
+    /// <summary>Pide el tamaño y abre un documento nuevo vacío con él.</summary>
+    [RelayCommand]
+    public async Task NewDocumentWithSizeAsync()
+    {
+        if (await _dialogs.AskNewDocumentSizeAsync() is not { } size)
+        {
+            return;
+        }
+
+        _untitledCount++;
+        AddDocument(_texts.UntitledDocument(_untitledCount), DocumentTemplates.Blank(size), filePath: null, FileEncoding.Utf8, isNewBlank: false);
     }
 
     /// <summary>Abre un documento a partir de su texto SVG en una pestaña nueva y la activa.</summary>
-    public DocumentTabViewModel OpenDocument(string title, string svg)
+    public DocumentTabViewModel OpenDocument(string title, string svg) =>
+        AddDocument(title, svg, filePath: null, FileEncoding.Utf8, isNewBlank: false);
+
+    /// <summary>Pide un archivo y lo abre.</summary>
+    [RelayCommand]
+    public async Task OpenAsync()
+    {
+        if (await _dialogs.PickFileToOpenAsync() is { } path)
+        {
+            await OpenFileAsync(path);
+        }
+    }
+
+    /// <summary>
+    /// Abre un archivo SVG en una pestaña nueva, o activa su pestaña si ya está abierto. Si la única
+    /// pestaña es un documento nuevo sin tocar, la sustituye. Los errores se muestran al usuario.
+    /// </summary>
+    /// <returns>La pestaña del documento, o null si no se pudo abrir.</returns>
+    public async Task<DocumentTabViewModel?> OpenFileAsync(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        var fullPath = Path.GetFullPath(path);
+        var fileName = Path.GetFileName(fullPath);
+
+        var existing = Documents.FirstOrDefault(d => d.FilePath is { } open && RecentFiles.PathComparer.Equals(open, fullPath));
+        if (existing is not null)
+        {
+            SelectedDocument = existing;
+            RecentFiles.Add(fullPath);
+            return existing;
+        }
+
+        SvgFileContent content;
+        try
+        {
+            content = await SvgFile.ReadAsync(fullPath);
+        }
+        catch (FileOperationException ex)
+        {
+            if (ex.Kind == FileErrorKind.NotFound)
+            {
+                RecentFiles.Remove(fullPath);
+            }
+
+            LogFileFailed("abrir", fullPath, ex.Kind, ex.Message);
+            await _dialogs.ShowErrorAsync(_texts.OpenFailedTitle, _texts.FileError(ex.Kind, fileName));
+            return null;
+        }
+
+        var pristine = Documents.Count == 1 && Documents[0].IsPristine ? Documents[0] : null;
+        var document = AddDocument(fileName, content.Text, fullPath, content.Encoding, isNewBlank: false);
+        if (IsEngineReady)
+        {
+            await _engineWork;
+            if (!document.IsLoaded)
+            {
+                // LoadAsync ya ha cerrado la pestaña y ha explicado el error.
+                return null;
+            }
+        }
+
+        if (pristine is not null && pristine.IsPristine && Documents.Contains(pristine))
+        {
+            CloseDocument(pristine);
+        }
+
+        RecentFiles.Add(fullPath);
+        return document;
+    }
+
+    /// <summary>Guarda el documento activo; si no tiene archivo, pregunta dónde.</summary>
+    [RelayCommand]
+    public async Task SaveAsync()
+    {
+        if (SelectedDocument is { } document)
+        {
+            await SaveDocumentAsync(document);
+        }
+    }
+
+    /// <summary>Guarda el documento activo en un archivo nuevo.</summary>
+    [RelayCommand]
+    public async Task SaveAsAsync()
+    {
+        if (SelectedDocument is { } document)
+        {
+            await SaveDocumentAsync(document, chooseLocation: true);
+        }
+    }
+
+    /// <summary>
+    /// Guarda un documento con la codificación con la que se abrió. Si no tiene archivo o
+    /// <paramref name="chooseLocation"/> es true, pregunta dónde. Los errores se muestran al usuario.
+    /// </summary>
+    /// <returns>True si se guardó.</returns>
+    public async Task<bool> SaveDocumentAsync(DocumentTabViewModel document, bool chooseLocation = false)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        var path = document.FilePath;
+        if (chooseLocation || path is null)
+        {
+            path = await _dialogs.PickFileToSaveAsync(document.FilePath is { } current ? Path.GetFileName(current) : $"{document.Title}.svg");
+            if (path is null)
+            {
+                return false;
+            }
+        }
+
+        var fullPath = Path.GetFullPath(path);
+        var fileName = Path.GetFileName(fullPath);
+
+        DocumentContent content;
+        try
+        {
+            content = await SerializeAsync(document);
+        }
+        catch (BridgeException ex)
+        {
+            LogFileFailed("guardar", fullPath, FileErrorKind.Other, ex.Message);
+            await _dialogs.ShowErrorAsync(_texts.SaveFailedTitle, _texts.EngineUnavailable(fileName));
+            return false;
+        }
+
+        try
+        {
+            await SvgFile.WriteAsync(fullPath, content.Svg, document.FileEncoding);
+        }
+        catch (FileOperationException ex)
+        {
+            LogFileFailed("guardar", fullPath, ex.Kind, ex.Message);
+            await _dialogs.ShowErrorAsync(_texts.SaveFailedTitle, _texts.FileError(ex.Kind, fileName));
+            return false;
+        }
+
+        document.SavedRevision = content.Revision;
+        document.FilePath = fullPath;
+        document.Title = fileName;
+        RecentFiles.Add(fullPath);
+        return true;
+    }
+
+    /// <summary>
+    /// Cierra una pestaña. Si tiene cambios sin guardar, pregunta antes: Guardar, No guardar o Cancelar.
+    /// </summary>
+    /// <returns>True si la pestaña se cerró.</returns>
+    public async Task<bool> RequestCloseDocumentAsync(DocumentTabViewModel? document)
+    {
+        if (document is null || !Documents.Contains(document))
+        {
+            return false;
+        }
+
+        if (!await ConfirmDiscardAsync(document))
+        {
+            return false;
+        }
+
+        CloseDocument(document);
+        return true;
+    }
+
+    /// <summary>
+    /// Antes de cerrar la ventana: pregunta por cada documento con cambios sin guardar.
+    /// </summary>
+    /// <returns>True si se puede cerrar la ventana; false si el usuario canceló o falló un guardado.</returns>
+    public async Task<bool> RequestCloseAllAsync()
+    {
+        foreach (var document in Documents.Where(d => d.IsModified).ToArray())
+        {
+            if (!await ConfirmDiscardAsync(document))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private async Task<bool> ConfirmDiscardAsync(DocumentTabViewModel document)
+    {
+        if (!document.IsModified)
+        {
+            return true;
+        }
+
+        SelectedDocument = document;
+        return await _dialogs.AskToSaveChangesAsync(document.Title) switch
+        {
+            UnsavedChangesChoice.Save => await SaveDocumentAsync(document),
+            UnsavedChangesChoice.DontSave => true,
+            _ => false,
+        };
+    }
+
+    private DocumentTabViewModel AddDocument(string title, string svg, string? filePath, FileEncoding encoding, bool isNewBlank)
     {
         _documentCount++;
         var document = new DocumentTabViewModel(
             string.Create(CultureInfo.InvariantCulture, $"d{_documentCount}"),
             title,
-            svg);
+            svg)
+        {
+            FilePath = filePath,
+            FileEncoding = encoding,
+            IsNewBlank = isNewBlank,
+        };
         Documents.Add(document);
         if (IsEngineReady)
         {
@@ -227,6 +451,12 @@ public sealed partial class MainViewModel : ObservableObject
         if (!result.Loaded)
         {
             LogLoadFailed(document.DocumentId, result.Error?.Message ?? string.Empty);
+            if (document.FilePath is not null)
+            {
+                // Un archivo que no es un SVG válido no se queda abierto: se explica por qué.
+                CloseDocument(document);
+                _ = _dialogs.ShowErrorAsync(_texts.OpenFailedTitle, _texts.InvalidSvg(document.Title, result.Error?.Message ?? string.Empty));
+            }
         }
     }
 
@@ -331,8 +561,36 @@ public sealed partial class MainViewModel : ObservableObject
     [LoggerMessage(Level = LogLevel.Warning, Message = "El documento {DocumentId} no se pudo cargar: {Reason}")]
     private partial void LogLoadFailed(string documentId, string reason);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "No se pudo {Operation} {Path} ({Kind}): {Reason}")]
+    private partial void LogFileFailed(string operation, string path, FileErrorKind kind, string reason);
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "Falló el comando {Command} ({Code}): {Reason}")]
     private partial void LogCommandFailed(string command, BridgeErrorCode code, string reason);
+
+    /// <summary>Diálogos que no preguntan nada: para pruebas y usos sin interfaz.</summary>
+    private sealed class NoDialogs : IShellDialogs
+    {
+        public static readonly NoDialogs Instance = new();
+
+        public Task<string?> PickFileToOpenAsync() => Task.FromResult<string?>(null);
+
+        public Task<string?> PickFileToSaveAsync(string suggestedFileName) => Task.FromResult<string?>(null);
+
+        public Task<UnsavedChangesChoice> AskToSaveChangesAsync(string documentName) => Task.FromResult(UnsavedChangesChoice.Cancel);
+
+        public Task<DocumentSize?> AskNewDocumentSizeAsync() => Task.FromResult<DocumentSize?>(null);
+
+        public Task ShowErrorAsync(string title, string message) => Task.CompletedTask;
+    }
+
+    private sealed class MemoryRecentFilesStore : IRecentFilesStore
+    {
+        public IReadOnlyList<string> Load() => [];
+
+        public void Save(IReadOnlyList<string> paths)
+        {
+        }
+    }
 
     private sealed class CompositeSubscription(IDisposable[] subscriptions, Action onDispose) : IDisposable
     {
