@@ -294,6 +294,28 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void AgruparDesdeElMenuObjetoYDeshacer()
+    {
+        ClickSample(300, 96);
+        Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout);
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
+        Session.WaitForName("SelectionStatus", name => name.StartsWith('2'), EngineTimeout);
+
+        Session.GetById("ObjectMenu").Patterns.ExpandCollapse.Pattern.Expand();
+        var item = Retry.WhileNull(() => Session.FindInApp("MenuObjectGroup"), TimeSpan.FromSeconds(10)).Result
+            ?? throw new AssertFailedException("No aparece Objeto > Agrupar.");
+        item.Patterns.Invoke.Pattern.Invoke();
+
+        // El grupo nuevo no tiene id: la barra de estado dice "g".
+        Assert.AreEqual("g", Session.WaitForName("SelectionStatus", name => name == "g", EngineTimeout));
+
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result);
+        undo.Click();
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, "Deshacer agrupar no dejó el documento como estaba.");
+    }
+
+    [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);

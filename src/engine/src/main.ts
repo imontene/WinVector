@@ -3,6 +3,7 @@ import {
   BridgeCommandError,
   EngineBridge,
   detectTransport,
+  type ArrangeAction,
   type ToolName,
   type ZoomAction,
 } from "./bridge";
@@ -26,6 +27,7 @@ import {
   installShortcuts,
   trackModifiers,
 } from "./tools";
+import { arrange, group, ungroup } from "./structure";
 import { rotationOf, setGeometry } from "./transform";
 import { gridSpacing, Guides, type Viewport } from "./viewport";
 
@@ -217,6 +219,55 @@ bridge.handle("selection.setGeometry", ({ documentId, ...target }) =>
   }),
 );
 
+/**
+ * Operaciones del menú Objeto sobre la selección del documento, cada una en un paso del historial.
+ * Devuelve `true` si cambió algo.
+ */
+function objectOperation(
+  documentId: string,
+  operation: { kind: "arrange"; action: ArrangeAction } | { kind: "group" | "ungroup" },
+): boolean {
+  const { document: doc, selection } = documents.open(documentId);
+  const items = selection.items;
+  if (items.length === 0) return false;
+  switch (operation.kind) {
+    case "arrange":
+      return doc.history.transact("arrange", () => arrange(items, operation.action));
+    case "group": {
+      const created = doc.history.transact("group", () => group(items, doc.root));
+      if (created) selection.set([created], created.parentElement ?? doc.root);
+      return created !== null;
+    }
+    case "ungroup": {
+      const released = doc.history.transact("ungroup", () => ungroup(items, doc.root));
+      const [first] = released;
+      if (first) selection.set(released, first.parentElement ?? doc.root);
+      return released.length > 0;
+    }
+  }
+}
+
+bridge.handle("object.arrange", ({ documentId, action }) =>
+  withDocumentErrors(() => ({
+    documentId,
+    changed: objectOperation(documentId, { kind: "arrange", action }),
+  })),
+);
+
+bridge.handle("object.group", ({ documentId }) =>
+  withDocumentErrors(() => ({
+    documentId,
+    changed: objectOperation(documentId, { kind: "group" }),
+  })),
+);
+
+bridge.handle("object.ungroup", ({ documentId }) =>
+  withDocumentErrors(() => ({
+    documentId,
+    changed: objectOperation(documentId, { kind: "ungroup" }),
+  })),
+);
+
 bridge.handle("history.undo", ({ documentId }) =>
   withDocumentErrors(() => {
     const { history } = documents.get(documentId);
@@ -277,6 +328,18 @@ installShortcuts(window, {
   zoom: (action) => {
     const viewport = documents.active?.viewport;
     if (viewport) zoom(viewport, action);
+  },
+  arrange: (action) => {
+    const id = documents.active?.id;
+    if (id) objectOperation(id, { kind: "arrange", action });
+  },
+  group: () => {
+    const id = documents.active?.id;
+    if (id) objectOperation(id, { kind: "group" });
+  },
+  ungroup: () => {
+    const id = documents.active?.id;
+    if (id) objectOperation(id, { kind: "ungroup" });
   },
   forward: (shortcut) => {
     bridge.emit("keyboard.shortcut", shortcut);

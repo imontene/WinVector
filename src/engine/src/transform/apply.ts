@@ -56,7 +56,7 @@ export function localTransform(element: Element): Matrix {
  * Matriz que lleva las coordenadas propias de `node` (sin su transform) a las del elemento raíz,
  * es decir, la de su padre; o `null` si no se puede medir (documento oculto).
  */
-function parentToRoot(element: Element, root: SVGSVGElement): Matrix | null {
+export function parentToRoot(element: Element, root: SVGSVGElement): Matrix | null {
   const parent = element.parentNode;
   if (!(parent instanceof Element) || parent === root) return IDENTITY;
   if (!(parent instanceof SVGGraphicsElement)) return null;

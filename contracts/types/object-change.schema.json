@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ObjectChange",
+  "description": "Resultado de una operación sobre la selección.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "changed"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "changed": {
+      "type": "boolean",
+      "description": "False si no había nada que cambiar (por ejemplo, un grupo que no se puede desagrupar sin cambiar su aspecto)."
+    }
+  }
+}

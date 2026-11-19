@@ -177,12 +177,57 @@
                             KeyboardAcceleratorTextOverride="Ctrl+A" />
                     </MenuBarItem>
 
-                    <MenuBarItem x:Uid="MenuObject">
-                        <MenuFlyoutItem x:Uid="MenuObjectGroup" IsEnabled="False" />
-                        <MenuFlyoutItem x:Uid="MenuObjectUngroup" IsEnabled="False" />
+                    <MenuBarItem x:Name="ObjectMenu" x:Uid="MenuObject">
+                        <!-- Con el lienzo enfocado, estos atajos los atiende el motor (ver src/engine/src/tools/shortcuts.ts). -->
+                        <MenuFlyoutItem
+                            x:Uid="MenuObjectGroup"
+                            AutomationProperties.AutomationId="MenuObjectGroup"
+                            Command="{x:Bind ViewModel.GroupCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="G" Modifiers="Control" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            x:Uid="MenuObjectUngroup"
+                            AutomationProperties.AutomationId="MenuObjectUngroup"
+                            Command="{x:Bind ViewModel.UngroupCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="G" Modifiers="Control,Shift" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem x:Uid="MenuObjectBringToFront" IsEnabled="False" />
-                        <MenuFlyoutItem x:Uid="MenuObjectSendToBack" IsEnabled="False" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuObjectBringToFront"
+                            AutomationProperties.AutomationId="MenuObjectBringToFront"
+                            Command="{x:Bind ViewModel.BringToFrontCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="PageUp" Modifiers="Control,Shift" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            x:Uid="MenuObjectBringForward"
+                            AutomationProperties.AutomationId="MenuObjectBringForward"
+                            Command="{x:Bind ViewModel.BringForwardCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="PageUp" Modifiers="Control" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            x:Uid="MenuObjectSendBackward"
+                            AutomationProperties.AutomationId="MenuObjectSendBackward"
+                            Command="{x:Bind ViewModel.SendBackwardCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="PageDown" Modifiers="Control" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            x:Uid="MenuObjectSendToBack"
+                            AutomationProperties.AutomationId="MenuObjectSendToBack"
+                            Command="{x:Bind ViewModel.SendToBackCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="PageDown" Modifiers="Control,Shift" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
                     </MenuBarItem>
 
                     <MenuBarItem x:Uid="MenuPath">

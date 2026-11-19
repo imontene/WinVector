@@ -468,4 +468,19 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="GeometryHint.Text" xml:space="preserve">
     <value>En unidades del documento (las del viewBox). Intro aplica el valor; las flechas lo suben y lo bajan. Con varios objetos, los valores son los del conjunto.</value>
   </data>
+  <data name="MenuObjectBringForward.Text" xml:space="preserve">
+    <value>Subir un nivel</value>
+  </data>
+  <data name="MenuObjectSendBackward.Text" xml:space="preserve">
+    <value>Bajar un nivel</value>
+  </data>
+  <data name="HistoryActionArrange" xml:space="preserve">
+    <value>ordenar</value>
+  </data>
+  <data name="HistoryActionGroup" xml:space="preserve">
+    <value>agrupar</value>
+  </data>
+  <data name="HistoryActionUngroup" xml:space="preserve">
+    <value>desagrupar</value>
+  </data>
 </root>

@@ -415,6 +415,25 @@ public sealed class MainViewModelBridgeTests : IDisposable
     }
 
     [TestMethod]
+    public async Task LasOrdenesDelMenuObjetoNecesitanSeleccionYLleganAlMotor()
+    {
+        await ReadyAsync();
+        Assert.IsFalse(_viewModel.GroupCommand.CanExecute(null));
+        Assert.IsFalse(_viewModel.BringToFrontCommand.CanExecute(null));
+
+        SelectSun();
+        Assert.IsTrue(_viewModel.GroupCommand.CanExecute(null));
+        _engine.Commands.Clear();
+
+        await _viewModel.BringToFrontAsync();
+        await _viewModel.SendBackwardAsync();
+        await _viewModel.GroupAsync();
+        await _viewModel.UngroupAsync();
+
+        Assert.AreEqual("object.arrange d1 | object.arrange d1 | object.group d1 | object.ungroup d1", string.Join(" | ", _engine.Commands));
+    }
+
+    [TestMethod]
     public async Task MideLaLatenciaDelPuente()
     {
         _engine.BeforePingResponse = () => _time.Advance(TimeSpan.FromMilliseconds(4));

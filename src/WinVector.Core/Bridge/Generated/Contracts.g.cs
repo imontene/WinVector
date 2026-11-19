@@ -29,6 +29,20 @@ public sealed record AppPong(
     [property: JsonPropertyName("sentAt")] double SentAt,
     [property: JsonPropertyName("receivedAt")] double ReceivedAt);
 
+/// <summary>Cambio del orden de apilado.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ArrangeAction>))]
+public enum ArrangeAction
+{
+    [JsonStringEnumMemberName("front")]
+    Front,
+    [JsonStringEnumMemberName("back")]
+    Back,
+    [JsonStringEnumMemberName("forward")]
+    Forward,
+    [JsonStringEnumMemberName("backward")]
+    Backward,
+}
+
 /// <summary>Tamaño de la mesa de trabajo: los atributos width, height y viewBox del elemento raíz.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Width">Atributo width tal cual, con sus unidades ("210mm"). Null si no lo tiene.</param>
@@ -153,6 +167,20 @@ public sealed record KeyboardShortcut(
     [property: JsonPropertyName("ctrlKey")] bool CtrlKey,
     [property: JsonPropertyName("shiftKey")] bool ShiftKey,
     [property: JsonPropertyName("altKey")] bool AltKey);
+
+/// <summary>Cambia el orden de apilado de la selección.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Action">Al frente, al fondo, un nivel arriba o un nivel abajo.</param>
+public sealed record ObjectArrange(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("action")] ArrangeAction Action);
+
+/// <summary>Resultado de una operación sobre la selección.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Changed">False si no había nada que cambiar (por ejemplo, un grupo que no se puede desagrupar sin cambiar su aspecto).</param>
+public sealed record ObjectChange(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("changed")] bool Changed);
 
 /// <summary>Rectángulo alineado con los ejes.</summary>
 /// <param name="X">Borde izquierdo.</param>
@@ -300,6 +328,15 @@ public static class BridgeCommands
     /// <summary>Mueve, redimensiona o gira la selección hasta los valores del panel de propiedades, en un paso que se puede deshacer.</summary>
     public static readonly BridgeCommand<SelectionGeometry, DocumentRef> SelectionSetGeometry = new("selection.setGeometry");
 
+    /// <summary>Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<ObjectArrange, ObjectChange> ObjectArrange = new("object.arrange");
+
+    /// <summary>Agrupa la selección en un &lt;g&gt; sin cambiar su aspecto. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectGroup = new("object.group");
+
+    /// <summary>Desagrupa los grupos seleccionados sin cambiar su aspecto; los que cambiarían (opacidad, filtro, recorte, máscara) se dejan. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectUngroup = new("object.ungroup");
+
     /// <summary>Carga un documento SVG en el motor con el identificador que le asigna la aplicación.</summary>
     public static readonly BridgeCommand<DocumentLoad, DocumentLoadResult> DocumentLoad = new("document.load");
 
@@ -387,6 +424,8 @@ public static class BridgeEvents
 [JsonSerializable(typeof(FilesDropped))]
 [JsonSerializable(typeof(HistoryState))]
 [JsonSerializable(typeof(KeyboardShortcut))]
+[JsonSerializable(typeof(ObjectArrange))]
+[JsonSerializable(typeof(ObjectChange))]
 [JsonSerializable(typeof(Rect))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]

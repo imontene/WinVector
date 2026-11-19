@@ -163,6 +163,11 @@ internal sealed class FakeEngine
                 ArtboardsSet.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, payload.GetRawText());
                 break;
+            case "object.arrange":
+            case "object.group":
+            case "object.ungroup":
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
+                break;
             case "selection.setGeometry":
                 GeometriesSet.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}"}""");

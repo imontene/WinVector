@@ -661,6 +661,60 @@ public sealed partial class MainViewModel : ObservableObject
         SelectionRotation = rotation is { } degrees ? Math.Round(degrees, 2) : double.NaN;
     }
 
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task BringToFrontAsync() => ArrangeAsync(ArrangeAction.Front);
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task BringForwardAsync() => ArrangeAsync(ArrangeAction.Forward);
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task SendBackwardAsync() => ArrangeAsync(ArrangeAction.Backward);
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task SendToBackAsync() => ArrangeAsync(ArrangeAction.Back);
+
+    /// <summary>Agrupa la selección sin cambiar su aspecto.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task GroupAsync() => SelectionCommandAsync(BridgeCommands.ObjectGroup);
+
+    /// <summary>Desagrupa los grupos seleccionados que se pueden desagrupar sin cambiar su aspecto.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task UngroupAsync() => SelectionCommandAsync(BridgeCommands.ObjectUngroup);
+
+    private Task ArrangeAsync(ArrangeAction action)
+    {
+        if (SelectedDocument is not { IsLoaded: true } document)
+        {
+            return Task.CompletedTask;
+        }
+
+        Enqueue(() => SendAsync(BridgeCommands.ObjectArrange, new ObjectArrange(document.DocumentId, action)));
+        return _engineWork;
+    }
+
+    /// <summary>Envía al motor un comando sobre la selección del documento activo.</summary>
+    private Task SelectionCommandAsync<TResponse>(BridgeCommand<DocumentRef, TResponse> command)
+        where TResponse : class
+    {
+        if (SelectedDocument is not { IsLoaded: true } document)
+        {
+            return Task.CompletedTask;
+        }
+
+        Enqueue(() => SendAsync(command, new DocumentRef(document.DocumentId)));
+        return _engineWork;
+    }
+
+    partial void OnHasSelectionChanged(bool value)
+    {
+        BringToFrontCommand.NotifyCanExecuteChanged();
+        BringForwardCommand.NotifyCanExecuteChanged();
+        SendBackwardCommand.NotifyCanExecuteChanged();
+        SendToBackCommand.NotifyCanExecuteChanged();
+        GroupCommand.NotifyCanExecuteChanged();
+        UngroupCommand.NotifyCanExecuteChanged();
+    }
+
     private Task StepHistoryAsync(BridgeCommand<DocumentRef, HistoryState> command)
     {
         if (SelectedDocument is not { IsLoaded: true } document)

@@ -18,6 +18,9 @@ export interface AppPong {
   readonly receivedAt: number;
 }
 
+/** Cambio del orden de apilado. */
+export type ArrangeAction = "front" | "back" | "forward" | "backward";
+
 /** Tamaño de la mesa de trabajo: los atributos width, height y viewBox del elemento raíz. */
 export interface Artboard {
   /** Identificador del documento, asignado por la aplicación. */
@@ -146,6 +149,22 @@ export interface KeyboardShortcut {
   readonly altKey: boolean;
 }
 
+/** Cambia el orden de apilado de la selección. */
+export interface ObjectArrange {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Al frente, al fondo, un nivel arriba o un nivel abajo. */
+  readonly action: ArrangeAction;
+}
+
+/** Resultado de una operación sobre la selección. */
+export interface ObjectChange {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** False si no había nada que cambiar (por ejemplo, un grupo que no se puede desagrupar sin cambiar su aspecto). */
+  readonly changed: boolean;
+}
+
 /** Rectángulo alineado con los ejes. */
 export interface Rect {
   /** Borde izquierdo. */
@@ -245,6 +264,12 @@ export interface BridgeCommands {
     readonly payload: SelectionGeometry;
     readonly response: DocumentRef;
   };
+  /** Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer. */
+  readonly "object.arrange": { readonly payload: ObjectArrange; readonly response: ObjectChange };
+  /** Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer. */
+  readonly "object.group": { readonly payload: DocumentRef; readonly response: ObjectChange };
+  /** Desagrupa los grupos seleccionados sin cambiar su aspecto; los que cambiarían (opacidad, filtro, recorte, máscara) se dejan. Se puede deshacer. */
+  readonly "object.ungroup": { readonly payload: DocumentRef; readonly response: ObjectChange };
   /** Carga un documento SVG en el motor con el identificador que le asigna la aplicación. */
   readonly "document.load": {
     readonly payload: DocumentLoad;
@@ -304,6 +329,9 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "app.ping",
   "selection.selectAll",
   "selection.setGeometry",
+  "object.arrange",
+  "object.group",
+  "object.ungroup",
   "document.load",
   "document.serialize",
   "document.activate",
