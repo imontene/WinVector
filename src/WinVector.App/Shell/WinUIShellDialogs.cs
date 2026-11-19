@@ -154,7 +154,7 @@ internal sealed class WinUIShellDialogs(Window window, ResourceLoader resources)
         await ShowAsync(dialog);
     }
 
-    private ContentDialog CreateDialog(string title, object content) => new()
+    private static ContentDialog CreateDialog(string title, object content) => new()
     {
         Title = title,
         Content = content is string text ? new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap } : content,

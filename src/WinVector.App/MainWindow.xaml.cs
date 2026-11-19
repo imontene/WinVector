@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,10 @@ namespace WinVector.App;
 /// <summary>
 /// Ventana principal con la distribución "Estudio clásico".
 /// </summary>
+[SuppressMessage(
+    "Design",
+    "CA1001:Types that own disposable fields should be disposable",
+    Justification = "Las ventanas de WinUI no se desechan: los diálogos se liberan en Closed.")]
 public sealed partial class MainWindow : Window
 {
     private const int InitialWidth = 1280;
