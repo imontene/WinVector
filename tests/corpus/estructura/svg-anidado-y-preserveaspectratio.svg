@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <svg x="10" y="10" width="80" height="180" viewBox="0 0 10 10" preserveAspectRatio="xMidYMax slice">
+    <circle cx="5" cy="5" r="5" fill="#0a8"/>
+  </svg>
+  <svg x="110" y="10" width="80" height="180" viewBox="0 0 10 10" preserveAspectRatio="none">
+    <circle cx="5" cy="5" r="5" fill="#e94b3c"/>
+  </svg>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="borde"><stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/></linearGradient>
+  </defs>
+  <rect x="20" y="20" width="160" height="160" rx="20" fill="none" stroke="url(#borde)" stroke-width="12"/>
+</svg>

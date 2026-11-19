@@ -298,7 +298,7 @@ export class SvgDocument {
     const source = origin?.source.kind === "element" ? origin.source : undefined;
     const children = [...element.childNodes];
     const empty = children.length === 0;
-    const name = element.nodeName;
+    const name = qualifiedName(element);
 
     let startTag: string;
     let selfClosing: boolean;
@@ -353,7 +353,7 @@ export class SvgDocument {
         parts.push(`${attribute.name}="${escapeAttribute(attribute.value)}"`);
     }
     const attributes = parts.map((part) => ` ${part}`).join("");
-    return `<${element.nodeName}${attributes}${selfClosing ? "/>" : ">"}`;
+    return `<${qualifiedName(element)}${attributes}${selfClosing ? "/>" : ">"}`;
   }
 }
 
@@ -391,6 +391,14 @@ function tryScan(source: string): ScannedDocument | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Nombre cualificado tal como se escribió. No se usa `nodeName` porque, en un documento HTML, el de
+ * los elementos XHTML (por ejemplo dentro de `<foreignObject>`) se devuelve en mayúsculas.
+ */
+function qualifiedName(element: Element): string {
+  return element.prefix ? `${element.prefix}:${element.localName}` : element.localName;
 }
 
 function sameKind(node: Node, source: SourceNode): boolean {

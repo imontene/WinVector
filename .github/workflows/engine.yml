@@ -6,11 +6,13 @@ on:
     paths:
       - "src/engine/**"
       - "contracts/**"
+      - "tests/corpus/**"
       - ".github/workflows/engine.yml"
   pull_request:
     paths:
       - "src/engine/**"
       - "contracts/**"
+      - "tests/corpus/**"
       - ".github/workflows/engine.yml"
   workflow_dispatch:
 

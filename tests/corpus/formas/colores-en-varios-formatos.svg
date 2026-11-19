@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <rect x="0" y="0" width="50" height="50" fill="rgb(255, 0, 0)"/>
+  <rect x="50" y="0" width="50" height="50" fill="hsl(120 60% 40%)"/>
+  <rect x="100" y="0" width="50" height="50" fill="#00f8"/>
+  <rect x="150" y="0" width="50" height="50" fill="rebeccapurple"/>
+  <rect x="0" y="50" width="200" height="50" fill="currentColor" color="#a52"/>
+</svg>

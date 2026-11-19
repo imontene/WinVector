@@ -50,6 +50,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Las pruebas leen el corpus de SVG de tests/corpus, fuera de la carpeta del motor.
+    fs: { allow: [".", "../../tests/corpus"] },
   },
   preview: {
     port: 4173,

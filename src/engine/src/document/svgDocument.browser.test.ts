@@ -119,6 +119,20 @@ describe("ediciones parciales", () => {
     expect(doc.serialize()).toBe(svg(`<g id="v" class="c"><rect/></g>`));
   });
 
+  it("los elementos XHTML de un foreignObject conservan su nombre en minúsculas", () => {
+    const doc = load(
+      svg(
+        `<foreignObject><div xmlns="http://www.w3.org/1999/xhtml" id="d">Hola <b>mundo</b></div></foreignObject>`,
+      ),
+    );
+    byId(doc, "d").setAttribute("title", "x");
+    expect(doc.serialize()).toBe(
+      svg(
+        `<foreignObject><div xmlns="http://www.w3.org/1999/xhtml" id="d" title="x">Hola <b>mundo</b></div></foreignObject>`,
+      ),
+    );
+  });
+
   it("el texto cambiado se escapa", () => {
     const doc = load(svg(`<text id="t">hola</text>`));
     const text = byId(doc, "t").firstChild as Text;
