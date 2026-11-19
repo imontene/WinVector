@@ -12,6 +12,12 @@ namespace WinVector.App.UITests;
 public sealed class FileTests
 {
     private static readonly TimeSpan EngineTimeout = TimeSpan.FromSeconds(20);
+
+    /// <summary>
+    /// Espera a que arranque el motor. En un equipo recién creado de la CI, el primer WebView2 de la
+    /// sesión puede tardar más de 20 s en arrancar; las demás esperas siguen en 20 s.
+    /// </summary>
+    private static readonly TimeSpan EngineStartTimeout = TimeSpan.FromSeconds(60);
     private static readonly Color SunOrange = Color.FromArgb(0xff, 0xb5, 0x47);
 
     private AppSession? _session;
@@ -84,7 +90,7 @@ public sealed class FileTests
 
     private void WaitForEngine() =>
         Assert.IsTrue(
-            Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineTimeout).Result,
+            Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineStartTimeout).Result,
             "El motor no terminó de cargar.");
 
     private bool SunIsVisible()
