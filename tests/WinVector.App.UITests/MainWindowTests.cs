@@ -102,6 +102,7 @@ public sealed class MainWindowTests
     [TestMethod]
     public void AbrirElEjemploAñadeUnaPestañaConSuDocumento()
     {
+        WaitForEngine();
         Session.OpenSample();
 
         Assert.HasCount(2, Tabs());
@@ -111,6 +112,7 @@ public sealed class MainWindowTests
     [TestMethod]
     public void CadaPestañaMuestraSuDocumento()
     {
+        WaitForEngine();
         Session.OpenSample();
 
         Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_N);
@@ -122,6 +124,33 @@ public sealed class MainWindowTests
         Assert.IsTrue(
             Retry.WhileFalse(() => Session.FindSampleText() is not null, TimeSpan.FromSeconds(10)).Result,
             "Al volver a la pestaña del ejemplo no se muestra su documento.");
+    }
+
+    /// <summary>
+    /// Abrir un documento mientras el motor aún carga: debe mostrarse en cuanto el motor esté listo.
+    /// </summary>
+    [TestMethod]
+    public void UnDocumentoAbiertoAntesDeQueCargueElMotorSeMuestraAlCargar()
+    {
+        Session.GetById("HelpMenu").Patterns.ExpandCollapse.Pattern.Expand();
+        var item = Retry.WhileNull(() => Session.FindInApp("OpenSampleMenuItem"), TimeSpan.FromSeconds(10)).Result;
+        Assert.IsNotNull(item, "No aparece el menú del documento de ejemplo.");
+        item.Patterns.Invoke.Pattern.Invoke();
+
+        WaitForEngine();
+        var shown = Retry.WhileNull(() => Session.FindSampleText(), TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(250)).Result;
+        if (shown is null)
+        {
+            using var fresh = new FlaUI.UIA3.UIA3Automation();
+            var freshWindow = Session.Application.GetMainWindow(fresh);
+            var freshCanvas = freshWindow.FindFirstDescendant(cf => cf.ByAutomationId("EngineCanvas"));
+            var freshText = freshCanvas?.FindFirstDescendant(cf => cf.ByName("WinVector"));
+            TestContext.WriteLine($"Pestañas: {Tabs().Length}");
+            TestContext.WriteLine($"Latencia (motor listo): '{Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault}'");
+            TestContext.WriteLine($"Con una conexión nueva de UI Automation, el texto {(freshText is null ? "tampoco aparece" : "sí aparece")}");
+        }
+
+        Assert.IsNotNull(shown, "El documento abierto antes de cargar el motor no se muestra.");
     }
 
     /// <summary>
