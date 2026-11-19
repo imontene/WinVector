@@ -427,4 +427,16 @@ Licensed under the Apache License 2.0.</value>
   <data name="ArtboardHint.Text" xml:space="preserve">
     <value>Width and height accept units (210mm, 8.5in). The viewBox sets the drawing's coordinate system.</value>
   </data>
+  <data name="HistoryActionMove" xml:space="preserve">
+    <value>move</value>
+  </data>
+  <data name="HistoryActionScale" xml:space="preserve">
+    <value>scale</value>
+  </data>
+  <data name="HistoryActionRotate" xml:space="preserve">
+    <value>rotate</value>
+  </data>
+  <data name="HistoryActionArtboard" xml:space="preserve">
+    <value>artboard change</value>
+  </data>
 </root>

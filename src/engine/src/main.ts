@@ -18,7 +18,7 @@ import {
 import type { Rect } from "./geometry";
 import { EMPTY_SCENE, Overlay } from "./overlay";
 import sampleSvg from "./sample.svg?raw";
-import { describeElement, selectionBounds } from "./selection";
+import { describeElement, selectionBounds, selectionScreenRect } from "./selection";
 import {
   cursorForTool,
   installNavigation,
@@ -26,7 +26,7 @@ import {
   installShortcuts,
   trackModifiers,
 } from "./tools";
-import { Guides, type Viewport } from "./viewport";
+import { gridSpacing, Guides, type Viewport } from "./viewport";
 
 const workspace = document.getElementById("workspace");
 if (!workspace) {
@@ -100,8 +100,14 @@ function refreshOverlay(): void {
   overlayFrame = requestAnimationFrame(() => {
     overlayFrame = 0;
     const active = documents.active;
+    const items = active?.selection.items ?? [];
+    // Los manejadores solo tienen sentido con la herramienta Selección y fuera de un marco.
+    const handles =
+      active && activeTool === "select" && items.length > 0 && !marquee
+        ? selectionScreenRect(items, active.document.root)
+        : null;
     overlay.render(
-      active ? { ...active.selection.state, marquee } : { ...EMPTY_SCENE, marquee: null },
+      active ? { ...active.selection.state, marquee, handles } : { ...EMPTY_SCENE, marquee: null },
     );
     guides.render(
       active?.viewport.documentToScreen() ?? null,
@@ -122,6 +128,7 @@ function setTool(tool: ToolName, fromCanvas: boolean): void {
   if (cursor) document.body.dataset.cursor = cursor;
   else delete document.body.dataset.cursor;
   if (fromCanvas) bridge.emit("tool.changed", { tool });
+  refreshOverlay();
 }
 
 /** Traduce los errores de documento a los códigos del contrato. */
@@ -278,7 +285,17 @@ installNavigation(window, {
 installSelectTool(document, {
   active: () => {
     const active = documents.active;
-    return active ? { root: active.document.root, selection: active.selection } : null;
+    return active
+      ? {
+          root: active.document.root,
+          selection: active.selection,
+          history: active.document.history,
+        }
+      : null;
+  },
+  snapSpacing: () => {
+    const scale = documents.active?.viewport.documentToScreen()?.a;
+    return snapToGrid && scale ? gridSpacing(scale) : null;
   },
   showMarquee: (rect) => {
     marquee = rect;

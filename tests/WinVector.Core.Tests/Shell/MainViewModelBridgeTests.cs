@@ -343,11 +343,32 @@ public sealed class MainViewModelBridgeTests : IDisposable
     {
         _transport.OnPosted = null;
         _engine.Ready();
-        _time.Advance(BridgeClient.DefaultTimeout);
-        await _viewModel.LatencyMeasurement;
+        await ExpirePingsAsync();
 
+        Assert.IsTrue(_viewModel.LatencyMeasurement.IsCompleted, "La medición debe terminar tras los reintentos.");
         Assert.IsNull(_viewModel.BridgeLatency);
         Assert.IsTrue(_viewModel.IsEngineReady);
+    }
+
+    [TestMethod]
+    public async Task UnPingPerdidoSeReintenta()
+    {
+        _engine.DroppedPings = 1;
+        _engine.Ready();
+        await ExpirePingsAsync();
+
+        Assert.IsNotNull(_viewModel.BridgeLatency, "El segundo ping debe medir la latencia.");
+        Assert.AreEqual(2, _engine.Commands.Count(c => c == "app.ping"));
+    }
+
+    /// <summary>Deja que caduquen los ping sin respuesta, uno tras otro, hasta que termine la medición.</summary>
+    private async Task ExpirePingsAsync()
+    {
+        for (var i = 0; i < 100 && !_viewModel.LatencyMeasurement.IsCompleted; i++)
+        {
+            _time.Advance(BridgeClient.DefaultTimeout);
+            await Task.Delay(10);
+        }
     }
 
     [TestMethod]

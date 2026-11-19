@@ -7,3 +7,4 @@
 export * from "./bounds";
 export * from "./hitTest";
 export * from "./selection";
+export * from "./handles";
