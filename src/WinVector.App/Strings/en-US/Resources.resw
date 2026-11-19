@@ -245,4 +245,10 @@ Licensed under the Apache License 2.0.</value>
   <data name="StatusReady" xml:space="preserve">
     <value>Ready</value>
   </data>
+  <data name="MenuHelpOpenSample.Text" xml:space="preserve">
+    <value>Open the sample document</value>
+  </data>
+  <data name="SampleDocumentTitle" xml:space="preserve">
+    <value>Sample</value>
+  </data>
 </root>

@@ -6,7 +6,12 @@
  */
 export type * from "./generated/contracts";
 export { BRIDGE_COMMAND_NAMES, BRIDGE_EVENT_NAMES, PROTOCOL_VERSION } from "./generated/contracts";
-export { EngineBridge, type CommandHandler, type EngineBridgeOptions } from "./bridge";
+export {
+  BridgeCommandError,
+  EngineBridge,
+  type CommandHandler,
+  type EngineBridgeOptions,
+} from "./bridge";
 export {
   consoleTransport,
   detectTransport,

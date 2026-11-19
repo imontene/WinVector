@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentContent",
+  "description": "Texto de un documento para guardarlo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "svg",
+    "revision"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "svg": {
+      "type": "string",
+      "description": "Texto completo del SVG."
+    },
+    "revision": {
+      "type": "integer",
+      "description": "Revisión a la que corresponde el texto."
+    }
+  }
+}

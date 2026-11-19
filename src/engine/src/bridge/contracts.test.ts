@@ -6,73 +6,156 @@ import {
   type BridgeMessage,
 } from "./generated/contracts";
 
+const base = { protocolVersion: PROTOCOL_VERSION } as const;
+
 // Un ejemplo de cada forma de mensaje. Si el contrato cambia (por ejemplo, un campo obligatorio
 // nuevo), este archivo deja de compilar hasta que se actualice, igual que el resto del motor.
 const examples: readonly BridgeMessage[] = [
+  { ...base, kind: "command", id: "c1", name: "app.ping", payload: { sentAt: 1234.5 } },
   {
-    kind: "command",
-    id: "c1",
-    name: "app.ping",
-    protocolVersion: PROTOCOL_VERSION,
-    payload: { sentAt: 1234.5 },
-  },
-  {
+    ...base,
     kind: "response",
     id: "c1",
     name: "app.ping",
-    protocolVersion: PROTOCOL_VERSION,
     ok: true,
     payload: { sentAt: 1234.5, receivedAt: 1236 },
   },
   {
+    ...base,
     kind: "response",
     id: "c2",
     name: "app.ping",
-    protocolVersion: PROTOCOL_VERSION,
     ok: false,
     error: { code: "timeout", message: "Sin respuesta", relatedId: "c2" },
   },
   {
+    ...base,
+    kind: "command",
+    id: "c3",
+    name: "document.load",
+    payload: { documentId: "d1", name: "logo.svg", svg: "<svg/>" },
+  },
+  {
+    ...base,
+    kind: "response",
+    id: "c3",
+    name: "document.load",
+    ok: true,
+    payload: {
+      documentId: "d1",
+      loaded: false,
+      revision: 0,
+      exactMapping: false,
+      error: { message: "XML no válido", line: 1, column: 5 },
+    },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c4",
+    name: "document.serialize",
+    payload: { documentId: "d1" },
+  },
+  {
+    ...base,
+    kind: "response",
+    id: "c4",
+    name: "document.serialize",
+    ok: true,
+    payload: { documentId: "d1", svg: "<svg/>", revision: 3 },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c5",
+    name: "document.activate",
+    payload: { documentId: "d1" },
+  },
+  {
+    ...base,
+    kind: "response",
+    id: "c5",
+    name: "document.activate",
+    ok: true,
+    payload: { documentId: "d1", revision: 3 },
+  },
+  { ...base, kind: "command", id: "c6", name: "document.close", payload: { documentId: "d1" } },
+  {
+    ...base,
+    kind: "response",
+    id: "c6",
+    name: "document.close",
+    ok: false,
+    error: { code: "unknown-document", message: "No existe", relatedId: "c6" },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e1",
     name: "engine.ready",
-    protocolVersion: PROTOCOL_VERSION,
     payload: { engineVersion: "0.0.0", protocolVersion: PROTOCOL_VERSION },
   },
   {
+    ...base,
     kind: "event",
     id: "e2",
     name: "selection.changed",
-    protocolVersion: PROTOCOL_VERSION,
-    payload: { items: [{ id: "sol", tagName: "circle" }] },
+    payload: { documentId: "d1", items: [{ id: "sol", tagName: "circle" }] },
   },
   {
+    ...base,
     kind: "event",
     id: "e3",
+    name: "document.changed",
+    payload: { documentId: "d1", revision: 4 },
+  },
+  {
+    ...base,
+    kind: "event",
+    id: "e4",
     name: "error",
-    protocolVersion: PROTOCOL_VERSION,
     payload: { code: "unknown-message", message: "Mensaje desconocido", relatedId: null },
   },
 ];
 
 /** Resume un mensaje; comprueba que TypeScript estrecha el payload según kind y name. */
 function summarize(message: BridgeMessage): string {
-  switch (message.kind) {
-    case "command":
-      return `${message.name} enviado en ${String(message.payload.sentAt)}`;
-    case "response":
-      return message.ok
-        ? `${message.name} respondido en ${String(message.payload.receivedAt)}`
-        : `${message.name} falló: ${message.error.code}`;
-    case "event":
-      switch (message.name) {
-        case "engine.ready":
-          return `motor ${message.payload.engineVersion}`;
-        case "selection.changed":
-          return `${String(message.payload.items.length)} seleccionados`;
-        case "error":
-          return `error ${message.payload.code}`;
-      }
+  if (message.kind === "response") {
+    if (!message.ok) return `${message.name} falló: ${message.error.code}`;
+    switch (message.name) {
+      case "app.ping":
+        return `ping respondido en ${String(message.payload.receivedAt)}`;
+      case "document.load":
+        return `cargado: ${String(message.payload.loaded)}, línea ${String(message.payload.error?.line)}`;
+      case "document.serialize":
+        return `${String(message.payload.svg.length)} caracteres`;
+      case "document.activate":
+        return `activo en la revisión ${String(message.payload.revision)}`;
+      case "document.close":
+        return `cerrado ${message.payload.documentId}`;
+    }
+  }
+  if (message.kind === "command") {
+    switch (message.name) {
+      case "app.ping":
+        return `ping enviado en ${String(message.payload.sentAt)}`;
+      case "document.load":
+        return `cargar ${message.payload.name}`;
+      case "document.serialize":
+      case "document.activate":
+      case "document.close":
+        return `${message.name} ${message.payload.documentId}`;
+    }
+  }
+  switch (message.name) {
+    case "engine.ready":
+      return `motor ${message.payload.engineVersion}`;
+    case "selection.changed":
+      return `${String(message.payload.items.length)} seleccionados en ${message.payload.documentId}`;
+    case "document.changed":
+      return `revisión ${String(message.payload.revision)}`;
+    case "error":
+      return `error ${message.payload.code}`;
   }
 }
 
@@ -85,11 +168,20 @@ describe("contrato del puente", () => {
 
   it("estrecha los tipos de cada mensaje", () => {
     expect(examples.map(summarize)).toEqual([
-      "app.ping enviado en 1234.5",
-      "app.ping respondido en 1236",
+      "ping enviado en 1234.5",
+      "ping respondido en 1236",
       "app.ping falló: timeout",
+      "cargar logo.svg",
+      "cargado: false, línea 1",
+      "document.serialize d1",
+      "6 caracteres",
+      "document.activate d1",
+      "activo en la revisión 3",
+      "document.close d1",
+      "document.close falló: unknown-document",
       "motor 0.0.0",
-      "1 seleccionados",
+      "1 seleccionados en d1",
+      "revisión 4",
       "error unknown-message",
     ]);
   });

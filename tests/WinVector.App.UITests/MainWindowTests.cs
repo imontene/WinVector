@@ -99,6 +99,31 @@ public sealed class MainWindowTests
         Assert.AreEqual(string.Empty, Session.WaitForName("SelectionStatus", string.IsNullOrEmpty, EngineTimeout));
     }
 
+    [TestMethod]
+    public void AbrirElEjemploAñadeUnaPestañaConSuDocumento()
+    {
+        Session.OpenSample();
+
+        Assert.HasCount(2, Tabs());
+        Assert.IsNotNull(Session.FindSampleText());
+    }
+
+    [TestMethod]
+    public void CadaPestañaMuestraSuDocumento()
+    {
+        Session.OpenSample();
+
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_N);
+        Assert.IsTrue(
+            Retry.WhileFalse(() => Session.FindSampleText() is null, TimeSpan.FromSeconds(10)).Result,
+            "El documento de ejemplo sigue visible en una pestaña nueva.");
+
+        Tabs()[1].Click();
+        Assert.IsTrue(
+            Retry.WhileFalse(() => Session.FindSampleText() is not null, TimeSpan.FromSeconds(10)).Result,
+            "Al volver a la pestaña del ejemplo no se muestra su documento.");
+    }
+
     /// <summary>
     /// Investigación (#9): ¿se ve el contenido web del lienzo desde UI Automation? Si se ve, las
     /// pruebas de interfaz podrán comprobar también lo que dibuja el motor.
@@ -107,6 +132,7 @@ public sealed class MainWindowTests
     public void ElContenidoDelLienzoEsAccesible()
     {
         WaitForEngine();
+        Session.OpenSample();
         var canvas = Session.GetById("EngineCanvas");
 
         var text = Retry.WhileNull(
@@ -129,6 +155,7 @@ public sealed class MainWindowTests
     private void ClickSample(double svgX, double svgY)
     {
         WaitForEngine();
+        Session.OpenSample();
         var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
         Mouse.Click(AppSession.SamplePoint(canvas, svgX, svgY));
     }

@@ -14,7 +14,7 @@ namespace WinVector.Core.Bridge;
 /// <summary>Versión del protocolo del puente. Debe coincidir en la aplicación y en el motor.</summary>
 public static class BridgeProtocol
 {
-    public const int Version = 1;
+    public const int Version = 2;
 }
 
 /// <summary>Comando de comprobación enviado por la aplicación.</summary>
@@ -47,11 +47,65 @@ public enum BridgeErrorCode
     UnknownMessage,
     [JsonStringEnumMemberName("protocol-mismatch")]
     ProtocolMismatch,
+    [JsonStringEnumMemberName("unknown-document")]
+    UnknownDocument,
     [JsonStringEnumMemberName("timeout")]
     Timeout,
     [JsonStringEnumMemberName("internal")]
     Internal,
 }
+
+/// <summary>Texto de un documento para guardarlo.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Svg">Texto completo del SVG.</param>
+/// <param name="Revision">Revisión a la que corresponde el texto.</param>
+public sealed record DocumentContent(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("svg")] string Svg,
+    [property: JsonPropertyName("revision")] int Revision);
+
+/// <summary>Documento que la aplicación entrega al motor.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Name">Nombre que se muestra en la pestaña, por ejemplo el nombre del archivo.</param>
+/// <param name="Svg">Texto completo del archivo SVG.</param>
+public sealed record DocumentLoad(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("svg")] string Svg);
+
+/// <summary>Resultado de cargar un documento.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Loaded">true si el documento se cargó.</param>
+/// <param name="Revision">Revisión inicial del documento (0).</param>
+/// <param name="ExactMapping">true si al guardar se conservará el formato original de todo lo que no cambie.</param>
+/// <param name="Error">Por qué no se cargó, si loaded es false.</param>
+public sealed record DocumentLoadResult(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("loaded")] bool Loaded,
+    [property: JsonPropertyName("revision")] int Revision,
+    [property: JsonPropertyName("exactMapping")] bool ExactMapping,
+    [property: JsonPropertyName("error")] DocumentParseError? Error);
+
+/// <summary>Por qué no se pudo cargar un documento.</summary>
+/// <param name="Message">Descripción del problema para mostrar al usuario.</param>
+/// <param name="Line">Línea del error en el texto, empezando en 1, si se conoce.</param>
+/// <param name="Column">Columna del error, empezando en 1, si se conoce.</param>
+public sealed record DocumentParseError(
+    [property: JsonPropertyName("message")] string Message,
+    [property: JsonPropertyName("line")] int? Line,
+    [property: JsonPropertyName("column")] int? Column);
+
+/// <summary>Referencia a un documento abierto en el motor.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+public sealed record DocumentRef(
+    [property: JsonPropertyName("documentId")] string DocumentId);
+
+/// <summary>Estado de un documento.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Revision">Aumenta con cada cambio del documento.</param>
+public sealed record DocumentState(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("revision")] int Revision);
 
 /// <summary>Datos que el motor envía al terminar de cargar.</summary>
 /// <param name="EngineVersion">Versión del motor de edición.</param>
@@ -68,8 +122,10 @@ public sealed record SelectedElement(
     [property: JsonPropertyName("tagName")] string TagName);
 
 /// <summary>Estado completo de la selección tras un cambio.</summary>
+/// <param name="DocumentId">Documento al que pertenece la selección.</param>
 /// <param name="Items">Elementos seleccionados, en orden de documento. Vacío si no hay selección.</param>
 public sealed record SelectionChanged(
+    [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items);
 
 /// <summary>Tipo de mensaje del puente.</summary>
@@ -111,6 +167,18 @@ public static class BridgeCommands
 {
     /// <summary>Comprueba que el motor responde y mide la latencia del puente.</summary>
     public static readonly BridgeCommand<AppPing, AppPong> AppPing = new("app.ping");
+
+    /// <summary>Carga un documento SVG en el motor con el identificador que le asigna la aplicación.</summary>
+    public static readonly BridgeCommand<DocumentLoad, DocumentLoadResult> DocumentLoad = new("document.load");
+
+    /// <summary>Devuelve el SVG de un documento listo para guardarlo.</summary>
+    public static readonly BridgeCommand<DocumentRef, DocumentContent> DocumentSerialize = new("document.serialize");
+
+    /// <summary>Muestra un documento en el lienzo; los demás quedan ocultos.</summary>
+    public static readonly BridgeCommand<DocumentRef, DocumentState> DocumentActivate = new("document.activate");
+
+    /// <summary>Descarta un documento del motor.</summary>
+    public static readonly BridgeCommand<DocumentRef, DocumentRef> DocumentClose = new("document.close");
 }
 
 /// <summary>Eventos que el motor envía a la aplicación.</summary>
@@ -124,6 +192,9 @@ public static class BridgeEvents
 
     /// <summary>El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno.</summary>
     public static readonly BridgeEvent<BridgeError> Error = new("error");
+
+    /// <summary>Un documento ha cambiado. La revisión aumenta con cada cambio.</summary>
+    public static readonly BridgeEvent<DocumentState> DocumentChanged = new("document.changed");
 }
 
 /// <summary>
@@ -137,6 +208,12 @@ public static class BridgeEvents
 [JsonSerializable(typeof(AppPing))]
 [JsonSerializable(typeof(AppPong))]
 [JsonSerializable(typeof(BridgeError))]
+[JsonSerializable(typeof(DocumentContent))]
+[JsonSerializable(typeof(DocumentLoad))]
+[JsonSerializable(typeof(DocumentLoadResult))]
+[JsonSerializable(typeof(DocumentParseError))]
+[JsonSerializable(typeof(DocumentRef))]
+[JsonSerializable(typeof(DocumentState))]
 [JsonSerializable(typeof(EngineReady))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]

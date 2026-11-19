@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -10,12 +11,19 @@ namespace WinVector.Core.Shell;
 /// <summary>
 /// Estado de la ventana principal: pestañas de documento, pestaña activa y estado del lienzo.
 /// </summary>
+/// <remarks>
+/// Un único motor gestiona los documentos de todas las pestañas (ADR 0004). Las órdenes al motor
+/// (cargar, activar, cerrar) se encolan para que lleguen en el orden en que se producen.
+/// </remarks>
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ShellTexts _texts;
     private readonly ILogger _logger;
     private readonly TimeProvider _time;
+    private BridgeClient? _bridge;
+    private Task _engineWork = Task.CompletedTask;
     private int _untitledCount;
+    private int _documentCount;
 
     public MainViewModel(ShellTexts texts, ILogger<MainViewModel>? logger = null, TimeProvider? timeProvider = null)
     {
@@ -33,14 +41,52 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private DocumentTabViewModel? _selectedDocument;
 
+    /// <summary>Resumen de la selección del lienzo para la barra de estado ("circle#sol"). Vacío sin selección.</summary>
+    [ObservableProperty]
+    private string _selectionSummary = string.Empty;
+
+    /// <summary>Aviso sobre el estado del motor para la barra de estado. Vacío si todo va bien.</summary>
+    [ObservableProperty]
+    private string _engineStatus = string.Empty;
+
+    /// <summary>True cuando el motor ha cargado y usa la misma versión del protocolo.</summary>
+    [ObservableProperty]
+    private bool _isEngineReady;
+
+    /// <summary>Latencia de ida y vuelta del puente medida con app.ping al cargar el motor.</summary>
+    [ObservableProperty]
+    private TimeSpan? _bridgeLatency;
+
+    /// <summary>Última medición de latencia en curso o terminada. Permite esperarla en las pruebas.</summary>
+    internal Task LatencyMeasurement { get; private set; } = Task.CompletedTask;
+
+    /// <summary>Órdenes al motor pendientes. Permite esperarlas en las pruebas.</summary>
+    internal Task EngineWork => _engineWork;
+
     /// <summary>Abre un documento nuevo vacío y lo activa.</summary>
     [RelayCommand]
     public void NewDocument()
     {
         _untitledCount++;
-        var document = new DocumentTabViewModel(_texts.UntitledDocument(_untitledCount));
+        OpenDocument(_texts.UntitledDocument(_untitledCount), DocumentTemplates.Blank());
+    }
+
+    /// <summary>Abre un documento a partir de su texto SVG en una pestaña nueva y la activa.</summary>
+    public DocumentTabViewModel OpenDocument(string title, string svg)
+    {
+        _documentCount++;
+        var document = new DocumentTabViewModel(
+            string.Create(CultureInfo.InvariantCulture, $"d{_documentCount}"),
+            title,
+            svg);
         Documents.Add(document);
+        if (IsEngineReady)
+        {
+            Enqueue(() => LoadAsync(document));
+        }
+
         SelectedDocument = document;
+        return document;
     }
 
     /// <summary>
@@ -63,6 +109,10 @@ public sealed partial class MainViewModel : ObservableObject
 
         var wasSelected = ReferenceEquals(document, SelectedDocument);
         Documents.RemoveAt(index);
+        if (IsEngineReady && document.IsLoaded)
+        {
+            Enqueue(() => SendAsync(BridgeCommands.DocumentClose, new DocumentRef(document.DocumentId)));
+        }
 
         if (Documents.Count == 0)
         {
@@ -74,24 +124,15 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Resumen de la selección del lienzo para la barra de estado ("circle#sol"). Vacío sin selección.</summary>
-    [ObservableProperty]
-    private string _selectionSummary = string.Empty;
-
-    /// <summary>Aviso sobre el estado del motor para la barra de estado. Vacío si todo va bien.</summary>
-    [ObservableProperty]
-    private string _engineStatus = string.Empty;
-
-    /// <summary>True cuando el motor ha cargado y usa la misma versión del protocolo.</summary>
-    [ObservableProperty]
-    private bool _isEngineReady;
-
-    /// <summary>Latencia de ida y vuelta del puente medida con app.ping al cargar el motor.</summary>
-    [ObservableProperty]
-    private TimeSpan? _bridgeLatency;
-
-    /// <summary>Última medición de latencia en curso o terminada. Permite esperarla en las pruebas.</summary>
-    internal Task LatencyMeasurement { get; private set; } = Task.CompletedTask;
+    /// <summary>Pide al motor el texto actual de un documento, por ejemplo para guardarlo.</summary>
+    /// <exception cref="BridgeException">El motor no está disponible o no conoce el documento.</exception>
+    public async Task<DocumentContent> SerializeAsync(DocumentTabViewModel document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        var bridge = _bridge ?? throw new BridgeException(BridgeErrorCode.Internal, "El motor no está conectado.");
+        await _engineWork.ConfigureAwait(false);
+        return await bridge.SendAsync(BridgeCommands.DocumentSerialize, new DocumentRef(document.DocumentId)).ConfigureAwait(false);
+    }
 
     /// <summary>
     /// Conecta el modelo de vista con el motor. Devuelve un objeto que, al descartarse, deja de
@@ -100,15 +141,33 @@ public sealed partial class MainViewModel : ObservableObject
     public IDisposable AttachBridge(BridgeClient bridge)
     {
         ArgumentNullException.ThrowIfNull(bridge);
+        _bridge = bridge;
         var subscriptions = new[]
         {
-            bridge.Subscribe(BridgeEvents.EngineReady, ready => OnEngineReady(bridge, ready)),
+            bridge.Subscribe(BridgeEvents.EngineReady, OnEngineReady),
             bridge.Subscribe(BridgeEvents.SelectionChanged, OnSelectionChanged),
+            bridge.Subscribe(BridgeEvents.DocumentChanged, OnDocumentChanged),
         };
-        return new CompositeSubscription(subscriptions);
+        return new CompositeSubscription(subscriptions, () =>
+        {
+            if (ReferenceEquals(_bridge, bridge))
+            {
+                _bridge = null;
+                IsEngineReady = false;
+            }
+        });
     }
 
-    private void OnEngineReady(BridgeClient bridge, EngineReady ready)
+    partial void OnSelectedDocumentChanged(DocumentTabViewModel? value)
+    {
+        SelectionSummary = string.Empty;
+        if (value is not null && IsEngineReady)
+        {
+            Enqueue(() => ActivateAsync(value));
+        }
+    }
+
+    private void OnEngineReady(EngineReady ready)
     {
         if (ready.ProtocolVersion != BridgeProtocol.Version)
         {
@@ -121,7 +180,87 @@ public sealed partial class MainViewModel : ObservableObject
         IsEngineReady = true;
         EngineStatus = string.Empty;
         LogEngineReady(ready.EngineVersion, ready.ProtocolVersion);
-        LatencyMeasurement = MeasureLatencyAsync(bridge);
+
+        // Las pestañas abiertas antes de que el motor estuviera listo se cargan ahora.
+        foreach (var document in Documents.ToArray())
+        {
+            Enqueue(() => LoadAsync(document));
+        }
+
+        if (SelectedDocument is { } selected)
+        {
+            Enqueue(() => ActivateAsync(selected));
+        }
+
+        if (_bridge is { } bridge)
+        {
+            LatencyMeasurement = MeasureLatencyAsync(bridge);
+        }
+    }
+
+    private async Task LoadAsync(DocumentTabViewModel document)
+    {
+        if (!Documents.Contains(document))
+        {
+            return;
+        }
+
+        var result = await SendAsync(
+            BridgeCommands.DocumentLoad,
+            new DocumentLoad(document.DocumentId, document.Title, document.InitialSvg));
+        if (result is null)
+        {
+            return;
+        }
+
+        document.IsLoaded = result.Loaded;
+        document.LoadError = result.Error?.Message;
+        document.Revision = result.Revision;
+        document.SavedRevision = result.Revision;
+        if (!result.Loaded)
+        {
+            LogLoadFailed(document.DocumentId, result.Error?.Message ?? string.Empty);
+        }
+    }
+
+    private async Task ActivateAsync(DocumentTabViewModel document)
+    {
+        if (document.IsLoaded && ReferenceEquals(document, SelectedDocument))
+        {
+            await SendAsync(BridgeCommands.DocumentActivate, new DocumentRef(document.DocumentId));
+        }
+    }
+
+    /// <summary>Envía un comando; si falla, lo registra y devuelve null.</summary>
+    private async Task<TResponse?> SendAsync<TPayload, TResponse>(BridgeCommand<TPayload, TResponse> command, TPayload payload)
+        where TResponse : class
+    {
+        if (_bridge is not { } bridge)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await bridge.SendAsync(command, payload);
+        }
+        catch (BridgeException ex)
+        {
+            LogCommandFailed(command.Name, ex.Code, ex.Message);
+            return null;
+        }
+    }
+
+    private void Enqueue(Func<Task> work)
+    {
+        var previous = _engineWork;
+        _engineWork = RunAfterAsync(previous, work);
+    }
+
+    private static async Task RunAfterAsync(Task previous, Func<Task> work)
+    {
+        await previous;
+        await work();
     }
 
     private async Task MeasureLatencyAsync(BridgeClient bridge)
@@ -142,12 +281,26 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OnSelectionChanged(SelectionChanged selection)
     {
+        if (selection.DocumentId != SelectedDocument?.DocumentId)
+        {
+            return;
+        }
+
         SelectionSummary = selection.Items.Count switch
         {
             0 => string.Empty,
             1 => Describe(selection.Items[0]),
             var count => _texts.MultipleSelection(count),
         };
+    }
+
+    private void OnDocumentChanged(DocumentState state)
+    {
+        var document = Documents.FirstOrDefault(d => d.DocumentId == state.DocumentId);
+        if (document is not null)
+        {
+            document.Revision = state.Revision;
+        }
     }
 
     private static string Describe(SelectedElement element) =>
@@ -165,7 +318,13 @@ public sealed partial class MainViewModel : ObservableObject
     [LoggerMessage(Level = LogLevel.Warning, Message = "No se pudo medir la latencia del puente ({Code}): {Reason}")]
     private partial void LogPingFailed(BridgeErrorCode code, string reason);
 
-    private sealed class CompositeSubscription(IDisposable[] subscriptions) : IDisposable
+    [LoggerMessage(Level = LogLevel.Warning, Message = "El documento {DocumentId} no se pudo cargar: {Reason}")]
+    private partial void LogLoadFailed(string documentId, string reason);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Falló el comando {Command} ({Code}): {Reason}")]
+    private partial void LogCommandFailed(string command, BridgeErrorCode code, string reason);
+
+    private sealed class CompositeSubscription(IDisposable[] subscriptions, Action onDispose) : IDisposable
     {
         public void Dispose()
         {
@@ -173,6 +332,8 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 subscription.Dispose();
             }
+
+            onDispose();
         }
     }
 }

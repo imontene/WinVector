@@ -1,5 +1,5 @@
 {
-  "protocolVersion": 1,
+  "protocolVersion": 2,
   "messages": [
     {
       "name": "engine.ready",
@@ -25,6 +25,40 @@
       "kind": "event",
       "description": "El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno.",
       "payload": "BridgeError"
+    },
+    {
+      "name": "document.load",
+      "kind": "command",
+      "description": "Carga un documento SVG en el motor con el identificador que le asigna la aplicación.",
+      "payload": "DocumentLoad",
+      "response": "DocumentLoadResult"
+    },
+    {
+      "name": "document.serialize",
+      "kind": "command",
+      "description": "Devuelve el SVG de un documento listo para guardarlo.",
+      "payload": "DocumentRef",
+      "response": "DocumentContent"
+    },
+    {
+      "name": "document.activate",
+      "kind": "command",
+      "description": "Muestra un documento en el lienzo; los demás quedan ocultos.",
+      "payload": "DocumentRef",
+      "response": "DocumentState"
+    },
+    {
+      "name": "document.close",
+      "kind": "command",
+      "description": "Descarta un documento del motor.",
+      "payload": "DocumentRef",
+      "response": "DocumentRef"
+    },
+    {
+      "name": "document.changed",
+      "kind": "event",
+      "description": "Un documento ha cambiado. La revisión aumenta con cada cambio.",
+      "payload": "DocumentState"
     }
   ]
 }

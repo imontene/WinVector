@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentLoad",
+  "description": "Documento que la aplicación entrega al motor.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "name",
+    "svg"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "name": {
+      "type": "string",
+      "description": "Nombre que se muestra en la pestaña, por ejemplo el nombre del archivo."
+    },
+    "svg": {
+      "type": "string",
+      "description": "Texto completo del archivo SVG."
+    }
+  }
+}
