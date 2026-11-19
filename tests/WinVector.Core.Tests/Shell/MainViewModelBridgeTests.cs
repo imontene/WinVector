@@ -143,6 +143,97 @@ public sealed class MainViewModelBridgeTests : IDisposable
     }
 
     [TestMethod]
+    public async Task SinPasosNoSePuedeDeshacerNiRehacer()
+    {
+        await ReadyAsync();
+
+        Assert.IsFalse(_viewModel.CanUndo);
+        Assert.IsFalse(_viewModel.CanRedo);
+        Assert.IsFalse(_viewModel.UndoCommand.CanExecute(null));
+        Assert.AreEqual("Deshacer", _viewModel.UndoLabel);
+        Assert.AreEqual("Rehacer", _viewModel.RedoLabel);
+    }
+
+    [TestMethod]
+    public async Task DeshacerYRehacerSiguenElHistorialDelDocumentoActivo()
+    {
+        await ReadyAsync();
+        var document = _viewModel.Documents[0];
+        _engine.Modify("d1", "<svg>1</svg>", "move");
+        Assert.IsTrue(_viewModel.UndoCommand.CanExecute(null));
+        Assert.AreEqual("Deshacer move", _viewModel.UndoLabel);
+        Assert.IsTrue(document.IsModified);
+
+        await _viewModel.UndoAsync();
+
+        Assert.IsTrue(_engine.Commands.Contains("history.undo d1"));
+        Assert.IsFalse(_viewModel.CanUndo);
+        Assert.IsTrue(_viewModel.RedoCommand.CanExecute(null));
+        Assert.AreEqual("Rehacer move", _viewModel.RedoLabel);
+        Assert.IsFalse(document.IsModified, "Deshacer hasta lo guardado deja el documento sin cambios.");
+
+        await _viewModel.RedoAsync();
+
+        Assert.AreEqual("<svg>1</svg>", _engine.DocumentText("d1"));
+        Assert.IsTrue(_viewModel.CanUndo);
+        Assert.IsFalse(_viewModel.CanRedo);
+        Assert.IsTrue(document.IsModified);
+    }
+
+    [TestMethod]
+    public async Task VariasPulsacionesSeguidasDeshacenUnPasoCadaUna()
+    {
+        await ReadyAsync();
+        _engine.Modify("d1", "<svg>1</svg>");
+        _engine.Modify("d1", "<svg>2</svg>");
+        _engine.Modify("d1", "<svg>3</svg>");
+
+        _viewModel.UndoCommand.Execute(null);
+        _viewModel.UndoCommand.Execute(null);
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual("<svg>1</svg>", _engine.DocumentText("d1"));
+        Assert.IsTrue(_viewModel.CanUndo);
+        Assert.IsTrue(_viewModel.CanRedo);
+    }
+
+    [TestMethod]
+    public async Task ElHistorialEsDeCadaPestaña()
+    {
+        await ReadyAsync();
+        _engine.Modify("d1", "<svg>1</svg>", "move");
+        _viewModel.NewDocument();
+        await _viewModel.EngineWork;
+
+        Assert.IsFalse(_viewModel.CanUndo, "La pestaña nueva no tiene historial.");
+        _engine.Commands.Clear();
+        await _viewModel.UndoAsync();
+        Assert.IsFalse(_engine.Commands.Contains("history.undo d1"));
+
+        _viewModel.SelectedDocument = _viewModel.Documents[0];
+        Assert.IsTrue(_viewModel.CanUndo);
+        Assert.AreEqual("Deshacer move", _viewModel.UndoLabel);
+    }
+
+    [TestMethod]
+    public async Task AvisaDelCambioDeLasOrdenesDeDeshacer()
+    {
+        await ReadyAsync();
+        var changed = new List<string?>();
+        _viewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        var canExecuteChanged = 0;
+        _viewModel.UndoCommand.CanExecuteChanged += (_, _) => canExecuteChanged++;
+
+        _engine.Modify("d1", "<svg>1</svg>");
+
+        foreach (var property in (string[])["CanUndo", "CanRedo", "UndoLabel", "RedoLabel"])
+        {
+            CollectionAssert.Contains(changed, property);
+        }
+        Assert.IsGreaterThan(0, canExecuteChanged);
+    }
+
+    [TestMethod]
     public async Task MideLaLatenciaDelPuente()
     {
         _engine.BeforePingResponse = () => _time.Advance(TimeSpan.FromMilliseconds(4));

@@ -36,7 +36,7 @@ Para usar un Chromium ya instalado en el sistema, indica su ruta en `PLAYWRIGHT_
 | Carpeta         | Responsabilidad                                                                                                                               |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/document`  | Carga y serialización SVG, preservación del contenido desconocido, `defs` e identificadores                                                   |
-| `src/history`   | Deshacer y rehacer basado en comandos                                                                                                         |
+| `src/history`   | Deshacer y rehacer a partir de los cambios del DOM ([ADR 0005](../../docs/adr/0005-historial.md))                                             |
 | `src/selection` | Selección simple, múltiple y por marco; grupos                                                                                                |
 | `src/tools`     | Herramientas del lienzo como máquinas de estados sobre eventos de puntero                                                                     |
 | `src/geometry`  | Matrices, trazados, cajas delimitadoras, detección de impacto y ajuste                                                                        |

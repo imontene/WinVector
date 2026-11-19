@@ -60,6 +60,17 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void SinCambiosDeshacerYRehacerEstanDesactivados()
+    {
+        var undo = Session.GetById("UndoButton");
+        var redo = Session.GetById("RedoButton");
+
+        Assert.IsFalse(undo.IsEnabled, "Deshacer está activo en un documento sin cambios.");
+        Assert.IsFalse(redo.IsEnabled, "Rehacer está activo en un documento sin cambios.");
+        Assert.IsFalse(string.IsNullOrEmpty(undo.Name), "El botón Deshacer no tiene nombre accesible.");
+    }
+
+    [TestMethod]
     public void ElMotorCargaYMideLaLatenciaDelPuente()
     {
         var latency = Retry.WhileNull(

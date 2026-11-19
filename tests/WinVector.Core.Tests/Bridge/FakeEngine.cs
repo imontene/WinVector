@@ -11,6 +11,9 @@ internal sealed class FakeEngine
     private readonly FakeBridgeTransport _transport;
     private readonly Dictionary<string, string> _documents = [];
     private readonly Dictionary<string, int> _revisions = [];
+    private readonly Dictionary<string, Stack<Snapshot>> _undo = [];
+    private readonly Dictionary<string, Stack<Snapshot>> _redo = [];
+    private int _lastRevision;
 
     public FakeEngine(FakeBridgeTransport transport)
     {
@@ -30,17 +33,69 @@ internal sealed class FakeEngine
     /// <summary>Se ejecuta justo antes de responder a app.ping, por ejemplo para avanzar el reloj.</summary>
     public Action? BeforePingResponse { get; set; }
 
-    /// <summary>Simula una edición: cambia el texto del documento y avisa con document.changed.</summary>
-    public void Modify(string documentId, string svg)
+    /// <summary>
+    /// Simula una edición: cambia el texto del documento, lo anota en el historial y avisa con
+    /// document.changed y history.changed, como el motor real.
+    /// </summary>
+    public void Modify(string documentId, string svg, string action = "edit")
     {
+        UndoStack(documentId).Push(new Snapshot(_documents[documentId], _revisions.GetValueOrDefault(documentId), action));
+        RedoStack(documentId).Clear();
         _documents[documentId] = svg;
-        var revision = _revisions.GetValueOrDefault(documentId) + 1;
-        _revisions[documentId] = revision;
-        _transport.SendEvent("document.changed", $$"""{"documentId":"{{documentId}}","revision":{{revision}}}""");
+        _revisions[documentId] = ++_lastRevision;
+        SendChanged(documentId);
+        _transport.SendEvent("history.changed", HistoryJson(documentId));
     }
 
     /// <summary>Texto que el motor tiene de un documento.</summary>
     public string DocumentText(string documentId) => _documents[documentId];
+
+    private Stack<Snapshot> UndoStack(string documentId) => Stack(_undo, documentId);
+
+    private Stack<Snapshot> RedoStack(string documentId) => Stack(_redo, documentId);
+
+    private static Stack<Snapshot> Stack(Dictionary<string, Stack<Snapshot>> stacks, string documentId)
+    {
+        if (!stacks.TryGetValue(documentId, out var stack))
+        {
+            stack = new Stack<Snapshot>();
+            stacks[documentId] = stack;
+        }
+
+        return stack;
+    }
+
+    /// <summary>Deshace o rehace: pasa un paso de una pila a la otra y restaura su texto y su revisión.</summary>
+    private void Step(string documentId, Stack<Snapshot> from, Stack<Snapshot> to)
+    {
+        if (!from.TryPop(out var step))
+        {
+            return;
+        }
+
+        to.Push(new Snapshot(_documents[documentId], _revisions.GetValueOrDefault(documentId), step.Action));
+        _documents[documentId] = step.Svg;
+        _revisions[documentId] = step.Revision;
+        SendChanged(documentId);
+        _transport.SendEvent("history.changed", HistoryJson(documentId));
+    }
+
+    private void SendChanged(string documentId) =>
+        _transport.SendEvent("document.changed", $$"""{"documentId":"{{documentId}}","revision":{{_revisions[documentId]}}}""");
+
+    private string HistoryJson(string documentId)
+    {
+        var undo = UndoStack(documentId);
+        var redo = RedoStack(documentId);
+        return JsonSerializer.Serialize(new
+        {
+            documentId,
+            canUndo = undo.Count > 0,
+            canRedo = redo.Count > 0,
+            undoAction = undo.Count > 0 ? undo.Peek().Action : null,
+            redoAction = redo.Count > 0 ? redo.Peek().Action : null,
+        });
+    }
 
     public void Ready() =>
         _transport.SendEvent("engine.ready", $$"""{"engineVersion":"0.0.0","protocolVersion":{{BridgeProtocol.Version}}}""");
@@ -81,10 +136,20 @@ internal sealed class FakeEngine
             case "document.serialize":
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","svg":{{JsonSerializer.Serialize(_documents[documentId!])}},"revision":{{_revisions.GetValueOrDefault(documentId!)}}}""");
                 break;
+            case "history.undo":
+                Step(documentId!, UndoStack(documentId!), RedoStack(documentId!));
+                _transport.RespondOk(id, name, HistoryJson(documentId!));
+                break;
+            case "history.redo":
+                Step(documentId!, RedoStack(documentId!), UndoStack(documentId!));
+                _transport.RespondOk(id, name, HistoryJson(documentId!));
+                break;
             case "app.ping":
                 BeforePingResponse?.Invoke();
                 _transport.RespondOk(id, name, """{"sentAt":0,"receivedAt":0}""");
                 break;
         }
     }
+
+    private sealed record Snapshot(string Svg, int Revision, string Action);
 }

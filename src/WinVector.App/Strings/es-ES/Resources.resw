@@ -67,12 +67,6 @@
   <data name="MenuEdit.Title" xml:space="preserve">
     <value>Editar</value>
   </data>
-  <data name="MenuEditUndo.Text" xml:space="preserve">
-    <value>Deshacer</value>
-  </data>
-  <data name="MenuEditRedo.Text" xml:space="preserve">
-    <value>Rehacer</value>
-  </data>
   <data name="MenuEditCut.Text" xml:space="preserve">
     <value>Cortar</value>
   </data>
@@ -368,5 +362,20 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="NewSizeCreate" xml:space="preserve">
     <value>Crear</value>
+  </data>
+  <data name="UndoCommand" xml:space="preserve">
+    <value>Deshacer</value>
+  </data>
+  <data name="UndoCommandAction" xml:space="preserve">
+    <value>Deshacer {0}</value>
+  </data>
+  <data name="RedoCommand" xml:space="preserve">
+    <value>Rehacer</value>
+  </data>
+  <data name="RedoCommandAction" xml:space="preserve">
+    <value>Rehacer {0}</value>
+  </data>
+  <data name="HistoryActionEdit" xml:space="preserve">
+    <value>edición</value>
   </data>
 </root>

@@ -31,4 +31,13 @@ public interface IShellTexts
 
     /// <summary>Explicación de un fallo del motor al guardar.</summary>
     string EngineUnavailable(string fileName);
+
+    /// <summary>
+    /// Texto de la orden de deshacer con la acción que se desharía ("Deshacer mover"). Con una acción
+    /// null o desconocida, el texto genérico ("Deshacer").
+    /// </summary>
+    string UndoCommand(string? action);
+
+    /// <summary>Texto de la orden de rehacer con la acción que se reharía ("Rehacer mover").</summary>
+    string RedoCommand(string? action);
 }

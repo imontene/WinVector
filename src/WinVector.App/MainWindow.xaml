@@ -144,14 +144,22 @@
                     </MenuBarItem>
 
                     <MenuBarItem x:Uid="MenuEdit">
-                        <MenuFlyoutItem x:Uid="MenuEditUndo" IsEnabled="False">
+                        <!-- Los atajos de deshacer y rehacer solo están aquí: el motor no los atiende, para no deshacer dos veces. -->
+                        <MenuFlyoutItem
+                            AutomationProperties.AutomationId="MenuEditUndo"
+                            Command="{x:Bind ViewModel.UndoCommand}"
+                            Text="{x:Bind ViewModel.UndoLabel, Mode=OneWay}">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="Z" Modifiers="Control" />
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="MenuEditRedo" IsEnabled="False">
+                        <MenuFlyoutItem
+                            AutomationProperties.AutomationId="MenuEditRedo"
+                            Command="{x:Bind ViewModel.RedoCommand}"
+                            Text="{x:Bind ViewModel.RedoLabel, Mode=OneWay}">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="Y" Modifiers="Control" />
+                                <KeyboardAccelerator Key="Z" Modifiers="Control,Shift" />
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
@@ -203,12 +211,16 @@
                     OverflowButtonVisibility="Auto">
                     <AppBarButton
                         x:Uid="CommandUndo"
+                        AutomationProperties.AutomationId="UndoButton"
+                        Command="{x:Bind ViewModel.UndoCommand}"
                         Icon="Undo"
-                        IsEnabled="False" />
+                        ToolTipService.ToolTip="{x:Bind ViewModel.UndoLabel, Mode=OneWay}" />
                     <AppBarButton
                         x:Uid="CommandRedo"
+                        AutomationProperties.AutomationId="RedoButton"
+                        Command="{x:Bind ViewModel.RedoCommand}"
                         Icon="Redo"
-                        IsEnabled="False" />
+                        ToolTipService.ToolTip="{x:Bind ViewModel.RedoLabel, Mode=OneWay}" />
                     <AppBarSeparator />
                     <AppBarButton x:Uid="CommandAlign" IsEnabled="False">
                         <AppBarButton.Icon>

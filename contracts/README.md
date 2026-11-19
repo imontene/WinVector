@@ -63,8 +63,11 @@ Un único motor gestiona los documentos de todas las pestañas ([ADR 0004](../do
 | `document.activate`  | Muestra el documento de la pestaña activa y oculta los demás                                                                                              |
 | `document.serialize` | Devuelve el texto para guardar; sin cambios, es idéntico al que se cargó                                                                                  |
 | `document.close`     | Descarta el documento                                                                                                                                     |
-| `document.changed`   | El motor avisa de cada cambio con la revisión nueva; la aplicación compara con la revisión guardada para saber si hay cambios sin guardar                 |
+| `document.changed`   | El motor avisa de cada cambio con la revisión del estado nuevo; la aplicación la compara con la guardada para saber si hay cambios sin guardar            |
 | `selection.changed`  | Indica a qué documento pertenece la selección; la aplicación ignora la de documentos que no están activos                                                 |
+| `history.undo`       | Deshace el último paso del documento; responde con el estado del historial                                                                                |
+| `history.redo`       | Rehace el último paso deshecho; responde con el estado del historial                                                                                      |
+| `history.changed`    | El historial ha cambiado: si se puede deshacer o rehacer y qué acción (`move`, `edit`…), que la aplicación traduce para el menú ("Deshacer mover")        |
 
 Un comando sobre un documento que no existe responde con el error `unknown-document`. La aplicación encola las órdenes al motor para que lleguen en el orden en que se producen.
 

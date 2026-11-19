@@ -78,7 +78,7 @@ La justificación de la arquitectura está en [ADR 0001](adr/0001-arquitectura-w
 - **Sin framework de UI.** El motor manipula el DOM SVG directamente; la interfaz de usuario está en el shell.
 - **Módulos:**
   - `document`: carga y serialización SVG, preservación de contenido desconocido, gestión de `defs` e identificadores.
-  - `history`: patrón comando, deshacer/rehacer, agrupación de cambios continuos (un arrastre = un paso).
+  - `history`: deshacer/rehacer a partir de los cambios del DOM ([ADR 0005](adr/0005-historial.md)), agrupación de cambios continuos (un arrastre = un paso).
   - `selection`: selección simple, múltiple y por marco; entrada y salida de grupos.
   - `tools`: selección, nodos, pluma, formas, texto, degradado, mano y zoom. Cada herramienta es una máquina de estados sobre eventos de puntero.
   - `geometry`: análisis de `d` (todos los comandos, absolutos y relativos), matrices de transformación, cajas delimitadoras, impacto (hit testing), ajuste a cuadrícula.
