@@ -1,5 +1,5 @@
 import { applyToPoint, corners, union, type Rect } from "../geometry";
-import { localBox, screenBounds, screenMatrix } from "../selection";
+import { HANDLE_SIZE, handlePositions, localBox, screenBounds, screenMatrix } from "../selection";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -11,9 +11,11 @@ export interface OverlayScene {
   readonly scope: Element | null;
   /** Marco de selección mientras se arrastra, o `null`. */
   readonly marquee: Rect | null;
+  /** Caja de la selección en pantalla con sus manejadores, o `null` para no dibujarlos. */
+  readonly handles?: Rect | null;
 }
 
-export const EMPTY_SCENE: OverlayScene = { items: [], scope: null, marquee: null };
+export const EMPTY_SCENE: OverlayScene = { items: [], scope: null, marquee: null, handles: null };
 
 /**
  * Capa SVG por encima del lienzo para la selección, y más adelante manejadores y guías.
@@ -46,6 +48,7 @@ export class Overlay {
       const all = union(scene.items.map(screenBounds).filter((box): box is Rect => box !== null));
       if (all) shapes.push(this.#rect(all, "overlay-bounds"));
     }
+    if (scene.handles) shapes.push(...this.#handles(scene.handles));
     if (scene.marquee) shapes.push(this.#rect(scene.marquee, "overlay-marquee"));
     this.element.replaceChildren(...shapes);
   }
@@ -69,6 +72,42 @@ export class Overlay {
         .join(" "),
     );
     return polygon;
+  }
+
+  /** Ocho cuadrados para escalar y un círculo, unido al borde superior, para girar. */
+  #handles(rect: Rect): SVGElement[] {
+    const doc = this.element.ownerDocument;
+    const shapes: SVGElement[] = [];
+    const positions = handlePositions(rect);
+    const rotate = positions.find((handle) => handle.id === "rotate");
+    if (rotate) {
+      const line = doc.createElementNS(SVG_NS, "line");
+      line.classList.add("overlay-rotate-line");
+      line.setAttribute("x1", String(round(rotate.point.x)));
+      line.setAttribute("y1", String(round(rect.y)));
+      line.setAttribute("x2", String(round(rotate.point.x)));
+      line.setAttribute("y2", String(round(rotate.point.y)));
+      shapes.push(line);
+    }
+    for (const { id, point } of positions) {
+      if (id === "rotate") {
+        const circle = doc.createElementNS(SVG_NS, "circle");
+        circle.classList.add("overlay-handle", "overlay-handle-rotate");
+        circle.setAttribute("cx", String(round(point.x)));
+        circle.setAttribute("cy", String(round(point.y)));
+        circle.setAttribute("r", String(HANDLE_SIZE / 2 + 0.5));
+        shapes.push(circle);
+        continue;
+      }
+      const half = HANDLE_SIZE / 2;
+      const square = this.#rect(
+        { x: point.x - half, y: point.y - half, width: HANDLE_SIZE, height: HANDLE_SIZE },
+        "overlay-handle",
+      );
+      square.dataset.handle = id;
+      shapes.push(square);
+    }
+    return shapes;
   }
 
   #rect(rect: Rect, className: string): SVGElement {

@@ -155,3 +155,47 @@ body[data-cursor="zoom-out"] * {
 .overlay-marquee {
   fill: var(--selection-fill);
 }
+
+.overlay-handle {
+  fill: var(--handle-fill, #fff);
+  stroke-width: 1;
+}
+
+.overlay-rotate-line {
+  stroke-width: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --handle-fill: #1f1f1f;
+  }
+}
+
+/* Cursor sobre los manejadores (src/tools/selectTool.ts). */
+body[data-handle="nw"],
+body[data-handle="se"] {
+  cursor: nwse-resize;
+}
+
+body[data-handle="ne"],
+body[data-handle="sw"] {
+  cursor: nesw-resize;
+}
+
+body[data-handle="n"],
+body[data-handle="s"] {
+  cursor: ns-resize;
+}
+
+body[data-handle="e"],
+body[data-handle="w"] {
+  cursor: ew-resize;
+}
+
+body[data-handle="rotate"] {
+  cursor: crosshair;
+}
+
+body[data-handle="move"] {
+  cursor: move;
+}

@@ -429,4 +429,16 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="ArtboardHint.Text" xml:space="preserve">
     <value>Ancho y alto admiten unidades (210mm, 8.5in). El viewBox fija el sistema de coordenadas del dibujo.</value>
   </data>
+  <data name="HistoryActionMove" xml:space="preserve">
+    <value>mover</value>
+  </data>
+  <data name="HistoryActionScale" xml:space="preserve">
+    <value>escalar</value>
+  </data>
+  <data name="HistoryActionRotate" xml:space="preserve">
+    <value>girar</value>
+  </data>
+  <data name="HistoryActionArtboard" xml:space="preserve">
+    <value>cambiar la mesa de trabajo</value>
+  </data>
 </root>

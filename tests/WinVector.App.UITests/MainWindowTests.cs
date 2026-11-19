@@ -231,6 +231,34 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ArrastrarElSolLoMueveYDeshacerLoDevuelve()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var sun = AppSession.SamplePoint(canvas, 300, 96);
+        var orange = System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47);
+
+        // Doble clic entra en g#fondo y selecciona el sol; arrastrarlo lo mueve 150 px a la izquierda.
+        Mouse.DoubleClick(sun);
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+        Mouse.Drag(sun, new System.Drawing.Point(sun.X - 150, sun.Y));
+
+        Assert.IsTrue(
+            Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(new System.Drawing.Point(sun.X - 150, sun.Y)), orange), EngineTimeout).Result,
+            "El sol no se movió al arrastrarlo.");
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result, "Deshacer no se activó tras mover.");
+
+        undo.Click();
+
+        Assert.IsTrue(
+            Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(sun), orange), EngineTimeout).Result,
+            "Deshacer no devolvió el sol a su sitio.");
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, "Tras deshacer, Deshacer sigue activo.");
+    }
+
+    [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);
