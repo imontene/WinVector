@@ -6,7 +6,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.Windows.ApplicationModel.Resources;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
+using Windows.Storage;
+using WinVector.App.Shell;
+using WinVector.Core.Files;
 using WinVector.Core.Shell;
 
 namespace WinVector.App;
@@ -25,15 +29,17 @@ public sealed partial class MainWindow : Window
     private const double DragRegionExtraWidth = 48;
 
     private readonly ResourceLoader _resources = new();
+    private readonly WinUIShellDialogs _dialogs;
     private IDisposable? _bridgeAttachment;
+    private bool _closeConfirmed;
 
     public MainWindow()
     {
+        _dialogs = new WinUIShellDialogs(this, _resources);
         ViewModel = new MainViewModel(
-            new ShellTexts(
-                UntitledDocument: number => Format("UntitledDocument", number),
-                MultipleSelection: count => Format("SelectionMultiple", count),
-                ProtocolMismatch: (engine, app) => Format("EngineProtocolMismatch", engine, app)),
+            new ResourceShellTexts(_resources),
+            _dialogs,
+            new RecentFiles(new TextFileRecentFilesStore(Path.Combine(AppDataFolder(), "archivos-recientes.txt"))),
             App.Logging.CreateLogger<MainViewModel>());
 
         InitializeComponent();
@@ -53,7 +59,16 @@ public sealed partial class MainWindow : Window
             _bridgeAttachment?.Dispose();
             _bridgeAttachment = ViewModel.AttachBridge(bridge);
         };
-        Closed += (_, _) => _bridgeAttachment?.Dispose();
+        EngineCanvas.FilesDropped += async (_, paths) => await OpenFilesAsync(paths);
+        Closed += (_, _) =>
+        {
+            _bridgeAttachment?.Dispose();
+            _dialogs.Dispose();
+        };
+        AppWindow.Closing += OnAppWindowClosing;
+
+        ViewModel.RecentFiles.Items.CollectionChanged += (_, _) => RebuildRecentFilesMenu();
+        RebuildRecentFilesMenu();
 
 #if DEBUG
         // La latencia del puente solo interesa durante el desarrollo.
@@ -111,13 +126,99 @@ public sealed partial class MainWindow : Window
 
     private void OnAddTabButtonClick(TabView sender, object args) => ViewModel.NewDocument();
 
-    private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) =>
-        ViewModel.CloseDocument(args.Item as DocumentTabViewModel);
+    private async void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) =>
+        await ViewModel.RequestCloseDocumentAsync(args.Item as DocumentTabViewModel);
 
-    private void OnCloseTabClick(object sender, RoutedEventArgs e) =>
-        ViewModel.CloseDocument(ViewModel.SelectedDocument);
+    private async void OnCloseTabClick(object sender, RoutedEventArgs e) =>
+        await ViewModel.RequestCloseDocumentAsync(ViewModel.SelectedDocument);
 
-    private void OnExitClick(object sender, RoutedEventArgs e) => Close();
+    private async void OnExitClick(object sender, RoutedEventArgs e)
+    {
+        if (await ViewModel.RequestCloseAllAsync())
+        {
+            _closeConfirmed = true;
+            Close();
+        }
+    }
+
+    /// <summary>Abre los archivos SVG indicados, por ejemplo los que llegan al arrancar desde el Explorador.</summary>
+    public async Task OpenFilesAsync(IEnumerable<string> paths)
+    {
+        foreach (var path in paths.Where(p => p.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)))
+        {
+            await ViewModel.OpenFileAsync(path);
+        }
+    }
+
+    /// <summary>Al cerrar con cambios sin guardar, pregunta antes por cada documento.</summary>
+    private async void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_closeConfirmed || !ViewModel.Documents.Any(d => d.IsModified))
+        {
+            return;
+        }
+
+        args.Cancel = true;
+        if (await ViewModel.RequestCloseAllAsync())
+        {
+            _closeConfirmed = true;
+            Close();
+        }
+    }
+
+    private void OnDragOver(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(StandardDataFormats.StorageItems))
+        {
+            e.AcceptedOperation = DataPackageOperation.Copy;
+        }
+    }
+
+    private async void OnDrop(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(StandardDataFormats.StorageItems))
+        {
+            var items = await e.DataView.GetStorageItemsAsync();
+            await OpenFilesAsync(items.OfType<StorageFile>().Select(file => file.Path));
+        }
+    }
+
+    /// <summary>Submenú Archivos recientes: un elemento por archivo y la opción de borrar la lista.</summary>
+    private void RebuildRecentFilesMenu()
+    {
+        RecentFilesMenu.Items.Clear();
+        foreach (var path in ViewModel.RecentFiles.Items)
+        {
+            var item = new MenuFlyoutItem { Text = Path.GetFileName(path) };
+            ToolTipService.SetToolTip(item, path);
+            item.Click += async (_, _) => await ViewModel.OpenFileAsync(path);
+            RecentFilesMenu.Items.Add(item);
+        }
+
+        if (ViewModel.RecentFiles.Items.Count == 0)
+        {
+            RecentFilesMenu.Items.Add(new MenuFlyoutItem { Text = _resources.GetString("RecentFilesEmpty"), IsEnabled = false });
+            return;
+        }
+
+        RecentFilesMenu.Items.Add(new MenuFlyoutSeparator());
+        var clear = new MenuFlyoutItem { Text = _resources.GetString("RecentFilesClear") };
+        clear.Click += (_, _) => ViewModel.RecentFiles.Clear();
+        RecentFilesMenu.Items.Add(clear);
+    }
+
+    /// <summary>Carpeta de datos de la aplicación: la del paquete o, sin paquete, una en LocalAppData.</summary>
+    private static string AppDataFolder()
+    {
+        try
+        {
+            return Windows.Storage.ApplicationData.Current.LocalFolder.Path;
+        }
+        catch (InvalidOperationException)
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WinVector");
+        }
+    }
 
     /// <summary>Las herramientas son excluyentes: activar una desactiva las demás.</summary>
     private void OnToolClick(object sender, RoutedEventArgs e)

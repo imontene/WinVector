@@ -114,6 +114,11 @@ public sealed record EngineReady(
     [property: JsonPropertyName("engineVersion")] string EngineVersion,
     [property: JsonPropertyName("protocolVersion")] int ProtocolVersion);
 
+/// <summary>Archivos soltados sobre el lienzo.</summary>
+/// <param name="Count">Número de archivos soltados.</param>
+public sealed record FilesDropped(
+    [property: JsonPropertyName("count")] int Count);
+
 /// <summary>Un elemento SVG seleccionado.</summary>
 /// <param name="Id">Valor del atributo id, o null si el elemento no tiene.</param>
 /// <param name="TagName">Nombre local del elemento, por ejemplo circle o path.</param>
@@ -195,6 +200,9 @@ public static class BridgeEvents
 
     /// <summary>Un documento ha cambiado. La revisión aumenta con cada cambio.</summary>
     public static readonly BridgeEvent<DocumentState> DocumentChanged = new("document.changed");
+
+    /// <summary>El usuario ha soltado archivos sobre el lienzo. Los archivos viajan como objetos adicionales del mensaje de WebView2, con su ruta.</summary>
+    public static readonly BridgeEvent<FilesDropped> FilesDropped = new("files.dropped");
 }
 
 /// <summary>
@@ -215,6 +223,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(DocumentRef))]
 [JsonSerializable(typeof(DocumentState))]
 [JsonSerializable(typeof(EngineReady))]
+[JsonSerializable(typeof(FilesDropped))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]
 public sealed partial class BridgeJsonContext : JsonSerializerContext

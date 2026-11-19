@@ -5,10 +5,7 @@ namespace WinVector.Core.Tests.Shell;
 [TestClass]
 public sealed class MainViewModelTests
 {
-    internal static readonly ShellTexts Texts = new(
-        n => $"Sin título {n}",
-        n => $"{n} objetos",
-        (engine, app) => $"Protocolo {engine}, se esperaba {app}");
+    internal static readonly TestTexts Texts = TestTexts.Instance;
 
     private static MainViewModel Create() => new(Texts);
 

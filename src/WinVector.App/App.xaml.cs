@@ -31,5 +31,22 @@ public partial class App : Application
     {
         _window = new MainWindow();
         _window.Activate();
+        _ = _window.OpenFilesAsync(FilesToOpen(args));
+    }
+
+    /// <summary>
+    /// Archivos con los que se abrió la aplicación: desde el Explorador ("Abrir con" o doble clic, si
+    /// es la aplicación predeterminada) o como argumentos de la línea de comandos.
+    /// </summary>
+    private static IReadOnlyList<string> FilesToOpen(LaunchActivatedEventArgs args)
+    {
+        var activation = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent().GetActivatedEventArgs();
+        if (activation.Kind == Microsoft.Windows.AppLifecycle.ExtendedActivationKind.File
+            && activation.Data is Windows.ApplicationModel.Activation.IFileActivatedEventArgs files)
+        {
+            return [.. files.Files.Select(file => file.Path)];
+        }
+
+        return WinVector.Core.Shell.CommandLine.SplitArguments(args.Arguments);
     }
 }

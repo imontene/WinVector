@@ -10,6 +10,7 @@ internal sealed class FakeEngine
 {
     private readonly FakeBridgeTransport _transport;
     private readonly Dictionary<string, string> _documents = [];
+    private readonly Dictionary<string, int> _revisions = [];
 
     public FakeEngine(FakeBridgeTransport transport)
     {
@@ -28,6 +29,18 @@ internal sealed class FakeEngine
 
     /// <summary>Se ejecuta justo antes de responder a app.ping, por ejemplo para avanzar el reloj.</summary>
     public Action? BeforePingResponse { get; set; }
+
+    /// <summary>Simula una edición: cambia el texto del documento y avisa con document.changed.</summary>
+    public void Modify(string documentId, string svg)
+    {
+        _documents[documentId] = svg;
+        var revision = _revisions.GetValueOrDefault(documentId) + 1;
+        _revisions[documentId] = revision;
+        _transport.SendEvent("document.changed", $$"""{"documentId":"{{documentId}}","revision":{{revision}}}""");
+    }
+
+    /// <summary>Texto que el motor tiene de un documento.</summary>
+    public string DocumentText(string documentId) => _documents[documentId];
 
     public void Ready() =>
         _transport.SendEvent("engine.ready", $$"""{"engineVersion":"0.0.0","protocolVersion":{{BridgeProtocol.Version}}}""");
@@ -52,6 +65,7 @@ internal sealed class FakeEngine
                 else
                 {
                     _documents[documentId!] = svg;
+                    _revisions[documentId!] = 0;
                     _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","loaded":true,"revision":0,"exactMapping":true,"error":null}""");
                 }
 
@@ -65,7 +79,7 @@ internal sealed class FakeEngine
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}"}""");
                 break;
             case "document.serialize":
-                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","svg":{{JsonSerializer.Serialize(_documents[documentId!])}},"revision":0}""");
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","svg":{{JsonSerializer.Serialize(_documents[documentId!])}},"revision":{{_revisions.GetValueOrDefault(documentId!)}}}""");
                 break;
             case "app.ping":
                 BeforePingResponse?.Invoke();

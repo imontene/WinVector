@@ -18,7 +18,11 @@
         fila 2, herramientas, lienzo y propiedades;
         fila 3, barra de estado.
     -->
-    <Grid x:Name="RootGrid">
+    <Grid
+        x:Name="RootGrid"
+        AllowDrop="True"
+        DragOver="OnDragOver"
+        Drop="OnDrop">
         <Grid.Resources>
             <Style x:Key="ToolButtonStyle" TargetType="ToggleButton">
                 <Setter Property="Width" Value="36" />
@@ -77,7 +81,10 @@
             </TabView.TabStripFooter>
             <TabView.TabItemTemplate>
                 <DataTemplate x:DataType="shell:DocumentTabViewModel">
-                    <TabViewItem Header="{x:Bind Title, Mode=OneWay}">
+                    <TabViewItem
+                        AutomationProperties.Name="{x:Bind Header, Mode=OneWay}"
+                        Header="{x:Bind Header, Mode=OneWay}"
+                        ToolTipService.ToolTip="{x:Bind FilePath, Mode=OneWay}">
                         <TabViewItem.IconSource>
                             <SymbolIconSource Symbol="Document" />
                         </TabViewItem.IconSource>
@@ -105,18 +112,24 @@
                                 <KeyboardAccelerator Key="N" Modifiers="Control" />
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="MenuFileOpen" IsEnabled="False">
+                        <MenuFlyoutItem x:Uid="MenuFileNewWithSize" Command="{x:Bind ViewModel.NewDocumentWithSizeCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="N" Modifiers="Control,Shift" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem x:Uid="MenuFileOpen" Command="{x:Bind ViewModel.OpenCommand}">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="O" Modifiers="Control" />
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
+                        <MenuFlyoutSubItem x:Name="RecentFilesMenu" x:Uid="MenuFileRecent" />
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem x:Uid="MenuFileSave" IsEnabled="False">
+                        <MenuFlyoutItem x:Uid="MenuFileSave" Command="{x:Bind ViewModel.SaveCommand}">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="S" Modifiers="Control" />
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="MenuFileSaveAs" IsEnabled="False">
+                        <MenuFlyoutItem x:Uid="MenuFileSaveAs" Command="{x:Bind ViewModel.SaveAsCommand}">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="S" Modifiers="Control,Shift" />
                             </MenuFlyoutItem.KeyboardAccelerators>

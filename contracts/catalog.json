@@ -59,6 +59,12 @@
       "kind": "event",
       "description": "Un documento ha cambiado. La revisión aumenta con cada cambio.",
       "payload": "DocumentState"
+    },
+    {
+      "name": "files.dropped",
+      "kind": "event",
+      "description": "El usuario ha soltado archivos sobre el lienzo. Los archivos viajan como objetos adicionales del mensaje de WebView2, con su ruta.",
+      "payload": "FilesDropped"
     }
   ]
 }

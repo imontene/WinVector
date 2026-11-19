@@ -42,6 +42,9 @@ public sealed partial class EngineCanvasView : UserControl
     /// </summary>
     public event EventHandler<BridgeClient>? BridgeCreated;
 
+    /// <summary>Archivos soltados sobre el lienzo, con su ruta.</summary>
+    public event EventHandler<IReadOnlyList<string>>? FilesDropped;
+
     private WebViewBridgeTransport? _transport;
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -108,6 +111,7 @@ public sealed partial class EngineCanvasView : UserControl
             CoreWebView2HostResourceAccessKind.Deny);
 
         _transport = new WebViewBridgeTransport(core);
+        _transport.FilesDropped += (_, paths) => FilesDropped?.Invoke(this, paths);
         Bridge = new BridgeClient(_transport, App.Logging.CreateLogger<BridgeClient>());
         BridgeCreated?.Invoke(this, Bridge);
 

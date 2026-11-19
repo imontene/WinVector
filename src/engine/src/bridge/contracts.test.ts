@@ -112,6 +112,13 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "event",
+    id: "e5",
+    name: "files.dropped",
+    payload: { count: 2 },
+  },
+  {
+    ...base,
+    kind: "event",
     id: "e4",
     name: "error",
     payload: { code: "unknown-message", message: "Mensaje desconocido", relatedId: null },
@@ -154,6 +161,8 @@ function summarize(message: BridgeMessage): string {
       return `${String(message.payload.items.length)} seleccionados en ${message.payload.documentId}`;
     case "document.changed":
       return `revisión ${String(message.payload.revision)}`;
+    case "files.dropped":
+      return `${String(message.payload.count)} archivos soltados`;
     case "error":
       return `error ${message.payload.code}`;
   }
@@ -182,6 +191,7 @@ describe("contrato del puente", () => {
       "motor 0.0.0",
       "1 seleccionados en d1",
       "revisión 4",
+      "2 archivos soltados",
       "error unknown-message",
     ]);
   });

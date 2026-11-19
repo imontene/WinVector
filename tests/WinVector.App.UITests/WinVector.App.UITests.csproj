@@ -11,6 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- El mismo SVG de ejemplo que usa la aplicación, para las pruebas de abrir y guardar. -->
+    <Content Include="..\..\src\engine\src\sample.svg" Link="Ejemplo.svg" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FlaUI.UIA3" />
     <PackageReference Include="MSTest" />
   </ItemGroup>

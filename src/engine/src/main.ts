@@ -82,6 +82,21 @@ document.addEventListener("pointerdown", (event) => {
   });
 });
 
+// Archivos arrastrados al lienzo: el navegador no debe abrirlos como página. Se pasan a la aplicación,
+// que recibe su ruta real con los objetos adicionales del mensaje de WebView2.
+document.addEventListener("dragover", (event) => {
+  if (event.dataTransfer?.types.includes("Files")) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }
+});
+document.addEventListener("drop", (event) => {
+  const files = [...(event.dataTransfer?.files ?? [])];
+  if (files.length === 0) return;
+  event.preventDefault();
+  bridge.emit("files.dropped", { count: files.length }, files);
+});
+
 // Sin aplicación (npm run dev en un navegador), el motor abre por su cuenta el documento de ejemplo.
 if (!window.chrome?.webview) {
   documents.load("ejemplo", "Ejemplo", sampleSvg);

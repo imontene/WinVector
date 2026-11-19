@@ -87,14 +87,22 @@ export class EngineBridge {
     this.#handlers.set(name, handler as AnyCommandHandler);
   }
 
-  emit<N extends BridgeEventName>(name: N, payload: BridgeEvents[N]): void {
-    this.#send({
-      kind: "event",
-      id: this.#createId(),
-      name,
-      protocolVersion: PROTOCOL_VERSION,
-      payload,
-    } as OutgoingMessage);
+  /** Envía un evento; `additionalObjects` viaja con él (ver `BridgeTransport.send`). */
+  emit<N extends BridgeEventName>(
+    name: N,
+    payload: BridgeEvents[N],
+    additionalObjects?: readonly unknown[],
+  ): void {
+    this.#send(
+      {
+        kind: "event",
+        id: this.#createId(),
+        name,
+        protocolVersion: PROTOCOL_VERSION,
+        payload,
+      } as OutgoingMessage,
+      additionalObjects,
+    );
   }
 
   async #receive(data: unknown): Promise<void> {
@@ -158,8 +166,8 @@ export class EngineBridge {
     this.emit("error", { code, message, relatedId });
   }
 
-  #send(message: OutgoingMessage): void {
-    this.#transport.send(message);
+  #send(message: OutgoingMessage, additionalObjects?: readonly unknown[]): void {
+    this.#transport.send(message, additionalObjects);
   }
 }
 
