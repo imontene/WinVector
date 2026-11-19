@@ -23,6 +23,10 @@ internal sealed class TestTexts : IShellTexts
     public string InvalidSvg(string fileName, string detail) => $"SVG no válido en {fileName}: {detail}";
 
     public string EngineUnavailable(string fileName) => $"Motor no disponible: {fileName}";
+
+    public string UndoCommand(string? action) => action is null ? "Deshacer" : $"Deshacer {action}";
+
+    public string RedoCommand(string? action) => action is null ? "Rehacer" : $"Rehacer {action}";
 }
 
 /// <summary>Diálogos con respuestas preparadas que anotan lo que se les pregunta.</summary>

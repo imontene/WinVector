@@ -14,6 +14,9 @@ const documents = new DocumentManager(workspace, {
   onChanged: (documentId, revision) => {
     bridge.emit("document.changed", { documentId, revision });
   },
+  onHistoryChanged: (documentId, state) => {
+    bridge.emit("history.changed", { documentId, ...state });
+  },
 });
 
 /** Traduce los errores de documento a los códigos del contrato. */
@@ -67,6 +70,22 @@ bridge.handle("document.close", ({ documentId }) =>
   withDocumentErrors(() => {
     documents.close(documentId);
     return { documentId };
+  }),
+);
+
+bridge.handle("history.undo", ({ documentId }) =>
+  withDocumentErrors(() => {
+    const { history } = documents.get(documentId);
+    history.undo();
+    return { documentId, ...history.state };
+  }),
+);
+
+bridge.handle("history.redo", ({ documentId }) =>
+  withDocumentErrors(() => {
+    const { history } = documents.get(documentId);
+    history.redo();
+    return { documentId, ...history.state };
   }),
 );
 

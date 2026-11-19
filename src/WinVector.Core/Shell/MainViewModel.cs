@@ -75,6 +75,18 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private TimeSpan? _bridgeLatency;
 
+    /// <summary>True si el documento activo tiene algún paso que deshacer.</summary>
+    public bool CanUndo => SelectedDocument is { IsLoaded: true, History.CanUndo: true };
+
+    /// <summary>True si el documento activo tiene algún paso que rehacer.</summary>
+    public bool CanRedo => SelectedDocument is { IsLoaded: true, History.CanRedo: true };
+
+    /// <summary>Texto de la orden de deshacer del documento activo ("Deshacer mover").</summary>
+    public string UndoLabel => _texts.UndoCommand(SelectedDocument?.History.UndoAction);
+
+    /// <summary>Texto de la orden de rehacer del documento activo ("Rehacer mover").</summary>
+    public string RedoLabel => _texts.RedoCommand(SelectedDocument?.History.RedoAction);
+
     /// <summary>Última medición de latencia en curso o terminada. Permite esperarla en las pruebas.</summary>
     internal Task LatencyMeasurement { get; private set; } = Task.CompletedTask;
 
@@ -364,6 +376,35 @@ public sealed partial class MainViewModel : ObservableObject
         return await bridge.SendAsync(BridgeCommands.DocumentSerialize, new DocumentRef(document.DocumentId), DocumentCommandTimeout).ConfigureAwait(false);
     }
 
+    /// <summary>Deshace el último paso del documento activo.</summary>
+    /// <remarks>
+    /// Se admiten pulsaciones seguidas antes de que el motor conteste: cada una se encola y deshace un
+    /// paso más; si ya no queda nada, el motor no hace nada.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(CanUndo), AllowConcurrentExecutions = true)]
+    public Task UndoAsync() => StepHistoryAsync(BridgeCommands.HistoryUndo);
+
+    /// <summary>Rehace el último paso deshecho del documento activo.</summary>
+    [RelayCommand(CanExecute = nameof(CanRedo), AllowConcurrentExecutions = true)]
+    public Task RedoAsync() => StepHistoryAsync(BridgeCommands.HistoryRedo);
+
+    private Task StepHistoryAsync(BridgeCommand<DocumentRef, HistoryState> command)
+    {
+        if (SelectedDocument is not { IsLoaded: true } document)
+        {
+            return Task.CompletedTask;
+        }
+
+        Enqueue(async () =>
+        {
+            if (await SendAsync(command, new DocumentRef(document.DocumentId)) is { } state)
+            {
+                OnHistoryChanged(state);
+            }
+        });
+        return _engineWork;
+    }
+
     /// <summary>
     /// Conecta el modelo de vista con el motor. Devuelve un objeto que, al descartarse, deja de
     /// recibir sus eventos.
@@ -377,6 +418,7 @@ public sealed partial class MainViewModel : ObservableObject
             bridge.Subscribe(BridgeEvents.EngineReady, OnEngineReady),
             bridge.Subscribe(BridgeEvents.SelectionChanged, OnSelectionChanged),
             bridge.Subscribe(BridgeEvents.DocumentChanged, OnDocumentChanged),
+            bridge.Subscribe(BridgeEvents.HistoryChanged, OnHistoryChanged),
         };
         return new CompositeSubscription(subscriptions, () =>
         {
@@ -391,6 +433,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedDocumentChanged(DocumentTabViewModel? value)
     {
         SelectionSummary = string.Empty;
+        NotifyHistoryChanged();
         if (value is not null && IsEngineReady)
         {
             Enqueue(() => ActivateAsync(value));
@@ -448,6 +491,12 @@ public sealed partial class MainViewModel : ObservableObject
         document.LoadError = result.Error?.Message;
         document.Revision = result.Revision;
         document.SavedRevision = result.Revision;
+        document.History = DocumentHistory.Empty;
+        if (ReferenceEquals(document, SelectedDocument))
+        {
+            NotifyHistoryChanged();
+        }
+
         if (!result.Loaded)
         {
             LogLoadFailed(document.DocumentId, result.Error?.Message ?? string.Empty);
@@ -541,6 +590,32 @@ public sealed partial class MainViewModel : ObservableObject
         {
             document.Revision = state.Revision;
         }
+    }
+
+    private void OnHistoryChanged(HistoryState state)
+    {
+        var document = Documents.FirstOrDefault(d => d.DocumentId == state.DocumentId);
+        if (document is null)
+        {
+            return;
+        }
+
+        document.History = DocumentHistory.From(state);
+        if (ReferenceEquals(document, SelectedDocument))
+        {
+            NotifyHistoryChanged();
+        }
+    }
+
+    /// <summary>Actualiza las órdenes de deshacer y rehacer con el estado del documento activo.</summary>
+    private void NotifyHistoryChanged()
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+        OnPropertyChanged(nameof(UndoLabel));
+        OnPropertyChanged(nameof(RedoLabel));
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
     }
 
     private static string Describe(SelectedElement element) =>

@@ -1,8 +1,6 @@
 /**
  * Módulo `history`.
  *
- * Historial de deshacer y rehacer basado en comandos; agrupa cambios continuos (un arrastre es un solo paso).
- *
- * Pendiente de implementar; ver docs/PLAN.md, sección 3.2.
+ * Historial de deshacer y rehacer basado en los cambios del DOM del documento. Ver `History`.
  */
-export {};
+export { DEFAULT_ACTION, History, type HistoryHost, type HistoryState } from "./history";

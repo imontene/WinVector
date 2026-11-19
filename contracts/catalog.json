@@ -57,7 +57,7 @@
     {
       "name": "document.changed",
       "kind": "event",
-      "description": "Un documento ha cambiado. La revisión aumenta con cada cambio.",
+      "description": "Un documento ha cambiado. La revisión identifica su estado: cambia con cada edición y, al deshacer o rehacer, vuelve a la de ese estado.",
       "payload": "DocumentState"
     },
     {
@@ -65,6 +65,26 @@
       "kind": "event",
       "description": "El usuario ha soltado archivos sobre el lienzo. Los archivos viajan como objetos adicionales del mensaje de WebView2, con su ruta.",
       "payload": "FilesDropped"
+    },
+    {
+      "name": "history.undo",
+      "kind": "command",
+      "description": "Deshace el último paso del historial de un documento. Si no hay nada que deshacer, no cambia nada.",
+      "payload": "DocumentRef",
+      "response": "HistoryState"
+    },
+    {
+      "name": "history.redo",
+      "kind": "command",
+      "description": "Rehace el último paso deshecho de un documento. Si no hay nada que rehacer, no cambia nada.",
+      "payload": "DocumentRef",
+      "response": "HistoryState"
+    },
+    {
+      "name": "history.changed",
+      "kind": "event",
+      "description": "Ha cambiado el historial de deshacer de un documento.",
+      "payload": "HistoryState"
     }
   ]
 }

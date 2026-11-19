@@ -24,6 +24,35 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string EngineUnavailable(string fileName) => Format("FileErrorEngineUnavailable", fileName);
 
+    public string UndoCommand(string? action) => HistoryCommand("UndoCommand", action);
+
+    public string RedoCommand(string? action) => HistoryCommand("RedoCommand", action);
+
+    /// <summary>
+    /// "Deshacer" o "Deshacer edición". Las acciones del motor (move, edit…) se traducen con los
+    /// recursos HistoryAction&lt;Acción&gt;; una acción sin traducción usa el texto genérico.
+    /// </summary>
+    private string HistoryCommand(string resource, string? action)
+    {
+        var name = action is null ? string.Empty : TryGetString($"HistoryAction{ToPascalCase(action)}");
+        return name.Length == 0 ? resources.GetString(resource) : Format($"{resource}Action", name);
+    }
+
+    private string TryGetString(string resource)
+    {
+        try
+        {
+            return resources.GetString(resource);
+        }
+        catch (Exception ex) when (ex is ArgumentException or System.Runtime.InteropServices.COMException)
+        {
+            return string.Empty;
+        }
+    }
+
+    private static string ToPascalCase(string action) =>
+        string.Concat(action.Split('-', StringSplitOptions.RemoveEmptyEntries).Select(part => char.ToUpperInvariant(part[0]) + part[1..]));
+
     public string Format(string resource, params object[] values) =>
         string.Format(CultureInfo.CurrentCulture, resources.GetString(resource), values);
 }

@@ -15,7 +15,7 @@
     },
     "revision": {
       "type": "integer",
-      "description": "Aumenta con cada cambio del documento."
+      "description": "Identifica el estado del documento: cambia con cada edición y, al deshacer o rehacer, vuelve a la de ese estado."
     }
   }
 }

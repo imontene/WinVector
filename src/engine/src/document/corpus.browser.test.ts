@@ -35,25 +35,6 @@ function load(source: string): SvgDocument {
   return SvgDocument.load(source, host);
 }
 
-/** Fuerza a regenerar todas las etiquetas y textos sin cambiar el contenido. */
-function touchEverything(doc: SvgDocument): void {
-  for (const element of [doc.root, ...doc.root.querySelectorAll("*")]) {
-    const first = element.attributes[0];
-    if (first) {
-      element.setAttributeNS(first.namespaceURI, first.name, first.value);
-    } else {
-      element.setAttribute("data-winvector-tocado", "");
-      element.removeAttribute("data-winvector-tocado");
-    }
-  }
-  const walker = document.createTreeWalker(doc.root, NodeFilter.SHOW_TEXT);
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    const text = node as Text;
-    const value = text.data;
-    text.data = value;
-  }
-}
-
 /** Representación del documento independiente del formato: nombres, atributos ordenados y nodos. */
 function canonical(source: string): unknown {
   const xml = new DOMParser().parseFromString(source.replace(/^\uFEFF/, ""), "image/svg+xml");
@@ -133,9 +114,8 @@ describe("corpus de SVG", () => {
     it("al regenerar todas las etiquetas sigue siendo el mismo documento", async () => {
       const source = await readExact(url);
       const doc = load(source);
-      touchEverything(doc);
       // Con un formato habitual el texto puede salir idéntico: los atributos intactos conservan su texto.
-      expect(canonical(doc.serialize())).toEqual(canonical(source));
+      expect(canonical(doc.serialize({ regenerate: true }))).toEqual(canonical(source));
     });
 
     it("al regenerar todas las etiquetas se ve igual", async ({ skip }) => {
@@ -146,8 +126,8 @@ describe("corpus de SVG", () => {
       if (source.includes("<foreignObject"))
         skip("Chromium no permite leer los píxeles de un SVG con foreignObject");
       const doc = load(source);
-      touchEverything(doc);
-      const [before, after] = await Promise.all([render(source), render(doc.serialize())]);
+      const regenerated = doc.serialize({ regenerate: true });
+      const [before, after] = await Promise.all([render(source), render(regenerated)]);
       expect(differentPixels(before, after)).toBeLessThanOrEqual(0.001);
     });
   });

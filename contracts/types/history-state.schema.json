@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HistoryState",
+  "description": "Estado del historial de deshacer de un documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "canUndo",
+    "canRedo",
+    "undoAction",
+    "redoAction"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "canUndo": {
+      "type": "boolean",
+      "description": "Hay algún paso que deshacer."
+    },
+    "canRedo": {
+      "type": "boolean",
+      "description": "Hay algún paso que rehacer."
+    },
+    "undoAction": {
+      "type": ["string", "null"],
+      "description": "Acción que se desharía (move, edit…); la aplicación la traduce. Null si no hay nada que deshacer."
+    },
+    "redoAction": {
+      "type": ["string", "null"],
+      "description": "Acción que se reharía. Null si no hay nada que rehacer."
+    }
+  }
+}

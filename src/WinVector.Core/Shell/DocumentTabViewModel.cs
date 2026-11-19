@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using WinVector.Core.Bridge;
 using WinVector.Core.Files;
 
 namespace WinVector.Core.Shell;
@@ -68,4 +69,20 @@ public sealed partial class DocumentTabViewModel : ObservableObject
 
     /// <summary>True si hay cambios sin guardar.</summary>
     public bool IsModified => Revision != SavedRevision;
+
+    /// <summary>Estado del historial de deshacer del documento, según el motor.</summary>
+    [ObservableProperty]
+    private DocumentHistory _history = DocumentHistory.Empty;
+}
+
+/// <summary>Estado del historial de deshacer de un documento.</summary>
+/// <param name="UndoAction">Acción que se desharía ("move"), o null si no hay nada que deshacer.</param>
+/// <param name="RedoAction">Acción que se reharía, o null si no hay nada que rehacer.</param>
+public sealed record DocumentHistory(bool CanUndo, bool CanRedo, string? UndoAction, string? RedoAction)
+{
+    /// <summary>Historial sin pasos: el de un documento recién cargado.</summary>
+    public static readonly DocumentHistory Empty = new(false, false, null, null);
+
+    internal static DocumentHistory From(HistoryState state) =>
+        new(state.CanUndo, state.CanRedo, state.UndoAction, state.RedoAction);
 }
