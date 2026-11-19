@@ -1,3 +1,4 @@
+import { History, type HistoryState } from "../history";
 import { scanXml, type ScannedDocument, type SourceElement, type SourceNode } from "./scanner";
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
@@ -18,6 +19,8 @@ export class SvgParseError extends Error {
 export interface SvgDocumentOptions {
   /** Se llama tras cada lote de cambios del documento, con la revisión nueva. */
   readonly onChange?: (revision: number) => void;
+  /** Se llama cuando cambia el estado del historial de deshacer. */
+  readonly onHistoryChange?: (state: HistoryState) => void;
 }
 
 /** Origen de un nodo mostrado: su posición en el texto original y, si es un elemento, sus atributos. */
@@ -68,15 +71,35 @@ export class SvgDocument {
   readonly #dirtyStartTags = new WeakSet<Node>();
   readonly #dirtyChildren = new WeakSet<Node>();
   readonly #dirtyData = new WeakSet<Node>();
+  /** Texto original de los nodos de texto que han cambiado, para saber si han vuelto a él. */
+  readonly #originalData = new WeakMap<Node, string>();
   readonly #reservedIds = new Set<string>();
   readonly #observer: MutationObserver;
   readonly #exactMapping: boolean;
   #revision = 0;
+  #lastRevision = 0;
+  #applyingHistory = false;
+  #regenerating = false;
+
+  /** Historial de deshacer y rehacer del documento. */
+  readonly history: History;
 
   readonly #onChange: ((revision: number) => void) | undefined;
 
   private constructor(source: string, host: HTMLElement, options: SvgDocumentOptions) {
     this.#onChange = options.onChange;
+    this.history = new History(
+      {
+        revision: () => this.#revision,
+        flush: () => {
+          this.#flush();
+        },
+        applyHistory: (apply, revision) => {
+          this.#applyHistory(apply, revision);
+        },
+      },
+      options.onHistoryChange,
+    );
     // DOMParser no admite la marca BOM al principio; se aparta y se conserva en el prólogo.
     const bom = source.startsWith("\uFEFF") ? "\uFEFF" : "";
     const body = source.slice(bom.length);
@@ -111,8 +134,10 @@ export class SvgDocument {
     this.#observer.observe(shown, {
       subtree: true,
       attributes: true,
+      attributeOldValue: true,
       childList: true,
       characterData: true,
+      characterDataOldValue: true,
     });
   }
 
@@ -124,7 +149,10 @@ export class SvgDocument {
     return new SvgDocument(source, host, options);
   }
 
-  /** Aumenta con cada cambio del documento. */
+  /**
+   * Identifica el estado del documento: cambia con cada edición y, al deshacer o rehacer, vuelve a
+   * la revisión de ese estado. Así, deshacer hasta lo guardado deja el documento sin cambios.
+   */
   get revision(): number {
     this.#flush();
     return this.#revision;
@@ -139,9 +167,23 @@ export class SvgDocument {
     return this.#exactMapping;
   }
 
-  /** Texto del documento para guardarlo. Sin cambios, es exactamente el texto original. */
-  serialize(): string {
+  /**
+   * Texto del documento para guardarlo. Sin cambios, es exactamente el texto original; las partes que
+   * no han cambiado (o que han vuelto a su estado original) se copian tal cual.
+   *
+   * `regenerate` genera de nuevo todas las etiquetas y textos en lugar de copiarlos. Solo sirve para
+   * probar el serializador.
+   */
+  serialize(options: { readonly regenerate?: boolean } = {}): string {
     this.#flush();
+    if (options.regenerate) {
+      this.#regenerating = true;
+      try {
+        return this.#prolog + this.#serializeNode(this.root) + this.#epilog;
+      } finally {
+        this.#regenerating = false;
+      }
+    }
     if (this.#revision === 0) return this.#original;
     return this.#prolog + this.#serializeNode(this.root) + this.#epilog;
   }
@@ -213,12 +255,33 @@ export class SvgDocument {
   #record(records: MutationRecord[]): void {
     if (records.length === 0) return;
     for (const record of records) {
-      this.#revision++;
       if (record.type === "attributes") this.#dirtyStartTags.add(record.target);
       else if (record.type === "childList") this.#dirtyChildren.add(record.target);
-      else this.#dirtyData.add(record.target);
+      else {
+        if (!this.#dirtyData.has(record.target))
+          this.#originalData.set(record.target, record.oldValue ?? "");
+        this.#dirtyData.add(record.target);
+      }
     }
+    // Los cambios de deshacer y rehacer no son ediciones nuevas: el historial fija la revisión.
+    if (this.#applyingHistory) return;
+    const before = this.#revision;
+    this.#revision = ++this.#lastRevision;
+    this.history.record(records, before, this.#revision);
     this.#onChange?.(this.#revision);
+  }
+
+  #applyHistory(apply: () => void, revision: number): void {
+    this.#flush();
+    this.#applyingHistory = true;
+    try {
+      apply();
+      this.#flush();
+    } finally {
+      this.#applyingHistory = false;
+    }
+    this.#revision = revision;
+    this.#onChange?.(revision);
   }
 
   #idInUse(id: string): boolean {
@@ -266,12 +329,41 @@ export class SvgDocument {
   }
 
   #isClean(node: Node): boolean {
-    if (!this.#origins.has(node)) return false;
+    if (this.#regenerating || !this.#origins.has(node)) return false;
     if (this.#inertOriginals.has(node)) return true;
-    if (this.#dirtyData.has(node)) return false;
-    if (node.nodeType !== Node.ELEMENT_NODE) return true;
-    if (this.#dirtyStartTags.has(node) || this.#dirtyChildren.has(node)) return false;
+    if (node.nodeType !== Node.ELEMENT_NODE) return this.#dataUnchanged(node);
+    const element = node as Element;
+    if (!this.#startTagUnchanged(element) || !this.#childrenUnchanged(element)) return false;
     return [...node.childNodes].every((child) => this.#isClean(child));
+  }
+
+  // Un nodo modificado puede haber vuelto a su estado original, por ejemplo al deshacer. Entonces se
+  // copia del texto original como si no se hubiera tocado.
+
+  #dataUnchanged(node: Node): boolean {
+    return (
+      !this.#dirtyData.has(node) || (node as CharacterData).data === this.#originalData.get(node)
+    );
+  }
+
+  #startTagUnchanged(element: Element): boolean {
+    if (this.#regenerating) return false;
+    if (!this.#dirtyStartTags.has(element)) return true;
+    const original = this.#origins.get(element)?.attributes;
+    if (original?.size !== element.attributes.length) return false;
+    return [...element.attributes].every(
+      (attribute) => original.get(attribute.name) === attribute.value,
+    );
+  }
+
+  #childrenUnchanged(element: Element): boolean {
+    if (!this.#dirtyChildren.has(element)) return true;
+    const source = this.#origins.get(element)?.source;
+    if (source?.kind !== "element" || source.children.length !== element.childNodes.length)
+      return false;
+    return source.children.every(
+      (child, index) => this.#origins.get(element.childNodes[index] as Node)?.source === child,
+    );
   }
 
   #slice(source: { start: number; end: number }): string {
@@ -313,7 +405,7 @@ export class SvgDocument {
 
     let startTag: string;
     let selfClosing: boolean;
-    if (source && origin && !this.#dirtyStartTags.has(element)) {
+    if (source && origin && this.#startTagUnchanged(element)) {
       const original = this.#source.slice(source.start, source.startTagEnd);
       if (!source.selfClosing) {
         startTag = original;

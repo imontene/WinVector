@@ -90,7 +90,7 @@ export interface DocumentRef {
 export interface DocumentState {
   /** Identificador del documento, asignado por la aplicación. */
   readonly documentId: string;
-  /** Aumenta con cada cambio del documento. */
+  /** Identifica el estado del documento: cambia con cada edición y, al deshacer o rehacer, vuelve a la de ese estado. */
   readonly revision: number;
 }
 
@@ -106,6 +106,20 @@ export interface EngineReady {
 export interface FilesDropped {
   /** Número de archivos soltados. */
   readonly count: number;
+}
+
+/** Estado del historial de deshacer de un documento. */
+export interface HistoryState {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Hay algún paso que deshacer. */
+  readonly canUndo: boolean;
+  /** Hay algún paso que rehacer. */
+  readonly canRedo: boolean;
+  /** Acción que se desharía (move, edit…); la aplicación la traduce. Null si no hay nada que deshacer. */
+  readonly undoAction: string | null;
+  /** Acción que se reharía. Null si no hay nada que rehacer. */
+  readonly redoAction: string | null;
 }
 
 /** Un elemento SVG seleccionado. */
@@ -142,6 +156,10 @@ export interface BridgeCommands {
   readonly "document.activate": { readonly payload: DocumentRef; readonly response: DocumentState };
   /** Descarta un documento del motor. */
   readonly "document.close": { readonly payload: DocumentRef; readonly response: DocumentRef };
+  /** Deshace el último paso del historial de un documento. Si no hay nada que deshacer, no cambia nada. */
+  readonly "history.undo": { readonly payload: DocumentRef; readonly response: HistoryState };
+  /** Rehace el último paso deshecho de un documento. Si no hay nada que rehacer, no cambia nada. */
+  readonly "history.redo": { readonly payload: DocumentRef; readonly response: HistoryState };
 }
 
 /** Eventos que el motor envía a la aplicación, con el tipo de su payload. */
@@ -152,10 +170,12 @@ export interface BridgeEvents {
   readonly "selection.changed": SelectionChanged;
   /** El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno. */
   readonly error: BridgeError;
-  /** Un documento ha cambiado. La revisión aumenta con cada cambio. */
+  /** Un documento ha cambiado. La revisión identifica su estado: cambia con cada edición y, al deshacer o rehacer, vuelve a la de ese estado. */
   readonly "document.changed": DocumentState;
   /** El usuario ha soltado archivos sobre el lienzo. Los archivos viajan como objetos adicionales del mensaje de WebView2, con su ruta. */
   readonly "files.dropped": FilesDropped;
+  /** Ha cambiado el historial de deshacer de un documento. */
+  readonly "history.changed": HistoryState;
 }
 
 export type BridgeCommandName = keyof BridgeCommands;
@@ -167,6 +187,8 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "document.serialize",
   "document.activate",
   "document.close",
+  "history.undo",
+  "history.redo",
 ];
 export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "engine.ready",
@@ -174,6 +196,7 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "error",
   "document.changed",
   "files.dropped",
+  "history.changed",
 ];
 
 /** Campos comunes a todos los mensajes. */

@@ -102,7 +102,7 @@ public sealed record DocumentRef(
 
 /// <summary>Estado de un documento.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
-/// <param name="Revision">Aumenta con cada cambio del documento.</param>
+/// <param name="Revision">Identifica el estado del documento: cambia con cada edición y, al deshacer o rehacer, vuelve a la de ese estado.</param>
 public sealed record DocumentState(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("revision")] int Revision);
@@ -118,6 +118,19 @@ public sealed record EngineReady(
 /// <param name="Count">Número de archivos soltados.</param>
 public sealed record FilesDropped(
     [property: JsonPropertyName("count")] int Count);
+
+/// <summary>Estado del historial de deshacer de un documento.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="CanUndo">Hay algún paso que deshacer.</param>
+/// <param name="CanRedo">Hay algún paso que rehacer.</param>
+/// <param name="UndoAction">Acción que se desharía (move, edit…); la aplicación la traduce. Null si no hay nada que deshacer.</param>
+/// <param name="RedoAction">Acción que se reharía. Null si no hay nada que rehacer.</param>
+public sealed record HistoryState(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("canUndo")] bool CanUndo,
+    [property: JsonPropertyName("canRedo")] bool CanRedo,
+    [property: JsonPropertyName("undoAction")] string? UndoAction,
+    [property: JsonPropertyName("redoAction")] string? RedoAction);
 
 /// <summary>Un elemento SVG seleccionado.</summary>
 /// <param name="Id">Valor del atributo id, o null si el elemento no tiene.</param>
@@ -184,6 +197,12 @@ public static class BridgeCommands
 
     /// <summary>Descarta un documento del motor.</summary>
     public static readonly BridgeCommand<DocumentRef, DocumentRef> DocumentClose = new("document.close");
+
+    /// <summary>Deshace el último paso del historial de un documento. Si no hay nada que deshacer, no cambia nada.</summary>
+    public static readonly BridgeCommand<DocumentRef, HistoryState> HistoryUndo = new("history.undo");
+
+    /// <summary>Rehace el último paso deshecho de un documento. Si no hay nada que rehacer, no cambia nada.</summary>
+    public static readonly BridgeCommand<DocumentRef, HistoryState> HistoryRedo = new("history.redo");
 }
 
 /// <summary>Eventos que el motor envía a la aplicación.</summary>
@@ -198,11 +217,14 @@ public static class BridgeEvents
     /// <summary>El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno.</summary>
     public static readonly BridgeEvent<BridgeError> Error = new("error");
 
-    /// <summary>Un documento ha cambiado. La revisión aumenta con cada cambio.</summary>
+    /// <summary>Un documento ha cambiado. La revisión identifica su estado: cambia con cada edición y, al deshacer o rehacer, vuelve a la de ese estado.</summary>
     public static readonly BridgeEvent<DocumentState> DocumentChanged = new("document.changed");
 
     /// <summary>El usuario ha soltado archivos sobre el lienzo. Los archivos viajan como objetos adicionales del mensaje de WebView2, con su ruta.</summary>
     public static readonly BridgeEvent<FilesDropped> FilesDropped = new("files.dropped");
+
+    /// <summary>Ha cambiado el historial de deshacer de un documento.</summary>
+    public static readonly BridgeEvent<HistoryState> HistoryChanged = new("history.changed");
 }
 
 /// <summary>
@@ -224,6 +246,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(DocumentState))]
 [JsonSerializable(typeof(EngineReady))]
 [JsonSerializable(typeof(FilesDropped))]
+[JsonSerializable(typeof(HistoryState))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]
 public sealed partial class BridgeJsonContext : JsonSerializerContext

@@ -118,6 +118,40 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c6",
+    name: "history.undo",
+    payload: { documentId: "d1" },
+  },
+  {
+    ...base,
+    kind: "response",
+    id: "c7",
+    name: "history.redo",
+    ok: true,
+    payload: {
+      documentId: "d1",
+      canUndo: true,
+      canRedo: false,
+      undoAction: "move",
+      redoAction: null,
+    },
+  },
+  {
+    ...base,
+    kind: "event",
+    id: "e6",
+    name: "history.changed",
+    payload: {
+      documentId: "d1",
+      canUndo: false,
+      canRedo: true,
+      undoAction: null,
+      redoAction: "move",
+    },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e4",
     name: "error",
@@ -140,6 +174,9 @@ function summarize(message: BridgeMessage): string {
         return `activo en la revisión ${String(message.payload.revision)}`;
       case "document.close":
         return `cerrado ${message.payload.documentId}`;
+      case "history.undo":
+      case "history.redo":
+        return `deshacer: ${String(message.payload.undoAction)}`;
     }
   }
   if (message.kind === "command") {
@@ -151,6 +188,8 @@ function summarize(message: BridgeMessage): string {
       case "document.serialize":
       case "document.activate":
       case "document.close":
+      case "history.undo":
+      case "history.redo":
         return `${message.name} ${message.payload.documentId}`;
     }
   }
@@ -163,6 +202,8 @@ function summarize(message: BridgeMessage): string {
       return `revisión ${String(message.payload.revision)}`;
     case "files.dropped":
       return `${String(message.payload.count)} archivos soltados`;
+    case "history.changed":
+      return `se puede deshacer: ${String(message.payload.canUndo)}`;
     case "error":
       return `error ${message.payload.code}`;
   }
@@ -192,6 +233,9 @@ describe("contrato del puente", () => {
       "1 seleccionados en d1",
       "revisión 4",
       "2 archivos soltados",
+      "history.undo d1",
+      "deshacer: move",
+      "se puede deshacer: false",
       "error unknown-message",
     ]);
   });

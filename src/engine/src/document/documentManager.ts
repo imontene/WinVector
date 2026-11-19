@@ -1,3 +1,4 @@
+import type { HistoryState } from "../history";
 import { SvgDocument } from "./svgDocument";
 
 /** No hay ningún documento abierto con ese identificador. */
@@ -24,6 +25,8 @@ interface Entry extends OpenDocument {
 export interface DocumentManagerOptions {
   /** Se llama cuando cambia cualquier documento abierto. */
   readonly onChanged?: (documentId: string, revision: number) => void;
+  /** Se llama cuando cambia el historial de deshacer de cualquier documento abierto. */
+  readonly onHistoryChanged?: (documentId: string, state: HistoryState) => void;
 }
 
 /**
@@ -66,6 +69,7 @@ export class DocumentManager {
     try {
       document = SvgDocument.load(svg, host, {
         onChange: (revision) => this.#options.onChanged?.(id, revision),
+        onHistoryChange: (state) => this.#options.onHistoryChanged?.(id, state),
       });
     } catch (error) {
       host.remove();
