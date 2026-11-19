@@ -36,6 +36,9 @@ internal sealed class FakeEngine
 
     public string? ActiveDocument { get; private set; }
 
+    /// <summary>Número de app.ping a los que el motor no responde, antes de responder a los siguientes.</summary>
+    public int DroppedPings { get; set; }
+
     /// <summary>Se ejecuta justo antes de responder a app.ping, por ejemplo para avanzar el reloj.</summary>
     public Action? BeforePingResponse { get; set; }
 
@@ -174,6 +177,10 @@ internal sealed class FakeEngine
             case "history.redo":
                 Step(documentId!, RedoStack(documentId!), UndoStack(documentId!));
                 _transport.RespondOk(id, name, HistoryJson(documentId!));
+                break;
+            case "app.ping" when DroppedPings > 0:
+                // Simula un ping perdido: no responde.
+                DroppedPings--;
                 break;
             case "app.ping":
                 BeforePingResponse?.Invoke();
