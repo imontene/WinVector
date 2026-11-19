@@ -4,12 +4,21 @@
   "description": "Estado completo de la selección tras un cambio.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["items"],
+  "required": [
+    "documentId",
+    "items"
+  ],
   "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Documento al que pertenece la selección."
+    },
     "items": {
       "type": "array",
       "description": "Elementos seleccionados, en orden de documento. Vacío si no hay selección.",
-      "items": { "$ref": "./selected-element.schema.json" }
+      "items": {
+        "$ref": "./selected-element.schema.json"
+      }
     }
   }
 }

@@ -10,6 +10,7 @@ on:
   pull_request:
     paths:
       - "tools/TabsBenchmark/**"
+      - "contracts/**"
       - ".github/workflows/tabs-benchmark.yml"
 
 permissions:
@@ -77,6 +78,16 @@ jobs:
             }
           }
           $rows | Format-Table -AutoSize | Out-String -Width 200 | Write-Host
+
+          # Tamaño de los mensajes: document.load y document.serialize con documentos grandes.
+          $out = Join-Path $results "messages.json"
+          $p = Start-Process -FilePath $exe -ArgumentList @('--mode', 'messages', '--output', "`"$out`"") -PassThru -Wait
+          if ($p.ExitCode -ne 0) {
+            Get-Content "$out.error.txt" -ErrorAction SilentlyContinue | Write-Host
+            throw "Falló la medición de mensajes"
+          }
+          Write-Host "messages :: $(Get-Content $out -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 5 -Compress)"
+          (Get-Content $out -Raw | ConvertFrom-Json).documents | Format-Table -AutoSize | Out-String -Width 200 | Write-Host
 
       - name: Publicar los resultados
         if: always()

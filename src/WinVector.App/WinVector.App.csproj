@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <Content Include="Assets\*.png" />
+    <!-- El documento de ejemplo es el mismo que usa el motor en su página de desarrollo. -->
+    <Content Include="..\engine\src\sample.svg" Link="Assets\Sample.svg" CopyToOutputDirectory="PreserveNewest" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 

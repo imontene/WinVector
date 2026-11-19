@@ -9,6 +9,20 @@ import {
 } from "./generated/contracts";
 import type { BridgeTransport, OutgoingMessage } from "./transport";
 
+/**
+ * Error que un manejador puede lanzar para responder con un código concreto del contrato en lugar
+ * de `internal`.
+ */
+export class BridgeCommandError extends Error {
+  readonly code: BridgeErrorCode;
+
+  constructor(code: BridgeErrorCode, message: string) {
+    super(message);
+    this.name = "BridgeCommandError";
+    this.code = code;
+  }
+}
+
 export type CommandHandler<N extends BridgeCommandName> = (
   payload: BridgeCommands[N]["payload"],
 ) => BridgeCommands[N]["response"] | Promise<BridgeCommands[N]["response"]>;
@@ -116,11 +130,15 @@ export class EngineBridge {
         payload: result,
       } as OutgoingMessage);
     } catch (error) {
-      this.#respondError(
-        command,
-        "internal",
-        error instanceof Error ? error.message : String(error),
-      );
+      if (error instanceof BridgeCommandError) {
+        this.#respondError(command, error.code, error.message);
+      } else {
+        this.#respondError(
+          command,
+          "internal",
+          error instanceof Error ? error.message : String(error),
+        );
+      }
     }
   }
 

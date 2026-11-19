@@ -14,7 +14,14 @@ internal sealed class FakeBridgeTransport : IBridgeTransport
 
     public event EventHandler<BridgeTransportMessage>? MessageReceived;
 
-    public void PostJson(string json) => Posted.Add(json);
+    /// <summary>Si se indica, se llama con cada mensaje enviado (para simular el motor).</summary>
+    public Action<string>? OnPosted { get; set; }
+
+    public void PostJson(string json)
+    {
+        Posted.Add(json);
+        OnPosted?.Invoke(json);
+    }
 
     public void Receive(string json, string? source = null) =>
         MessageReceived?.Invoke(this, new BridgeTransportMessage(source ?? EngineSource, json));
@@ -22,9 +29,9 @@ internal sealed class FakeBridgeTransport : IBridgeTransport
     public JsonElement LastPosted() => JsonDocument.Parse(Posted[^1]).RootElement.Clone();
 
     public void RespondOk(string id, string name, string payloadJson) => Receive(
-        $$"""{"kind":"response","id":"{{id}}","name":"{{name}}","protocolVersion":1,"ok":true,"payload":{{payloadJson}}}""");
+        $$"""{"kind":"response","id":"{{id}}","name":"{{name}}","protocolVersion":{{BridgeProtocol.Version}},"ok":true,"payload":{{payloadJson}}}""");
 
-    public void SendEvent(string name, string payloadJson, int protocolVersion = 1) => Receive(
+    public void SendEvent(string name, string payloadJson, int protocolVersion = BridgeProtocol.Version) => Receive(
         $$"""{"kind":"event","id":"e1","name":"{{name}}","protocolVersion":{{protocolVersion}},"payload":{{payloadJson}}}""");
 }
 

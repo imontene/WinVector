@@ -135,6 +135,12 @@ public sealed partial class MainWindow : Window
         ToolStatusText.Text = tool is null ? string.Empty : ToolTipService.GetToolTip(tool) as string ?? string.Empty;
     }
 
+    private void OnOpenSampleClick(object sender, RoutedEventArgs e)
+    {
+        var svg = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets", "Sample.svg"));
+        ViewModel.OpenDocument(_resources.GetString("SampleDocumentTitle"), svg);
+    }
+
     private async void OnAboutClick(object sender, RoutedEventArgs e)
     {
         var version = typeof(App).Assembly

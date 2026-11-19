@@ -35,9 +35,9 @@ internal sealed record Options(string Mode, int Tabs, int Objects, int Switches,
         }
 
         var mode = Get("--mode", "per-tab");
-        if (mode is not ("per-tab" or "shared"))
+        if (mode is not ("per-tab" or "shared" or "messages"))
         {
-            throw new ArgumentException("--mode debe ser per-tab o shared");
+            throw new ArgumentException("--mode debe ser per-tab, shared o messages");
         }
 
         return new Options(
@@ -88,6 +88,11 @@ internal sealed class BenchmarkForm : Form
 
     private async Task<Dictionary<string, object>> MeasureAsync()
     {
+        if (_options.Mode == "messages")
+        {
+            return await MeasureMessagesAsync();
+        }
+
         var userData = Path.Combine(Path.GetTempPath(), $"winvector-bench-{Guid.NewGuid():N}");
         var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: userData);
         var engineFolder = Path.Combine(AppContext.BaseDirectory, "Engine");
@@ -154,6 +159,90 @@ internal sealed class BenchmarkForm : Form
             ["switchMsMax"] = switches.Count == 0 ? 0 : Math.Round(switches.Max(), 1),
             ["memory"] = memory,
         };
+    }
+
+    /// <summary>
+    /// Mide el puente real con documentos grandes: document.load y document.serialize con el
+    /// protocolo de contracts/, hasta recibir la respuesta del motor.
+    /// </summary>
+    private async Task<Dictionary<string, object>> MeasureMessagesAsync()
+    {
+        var userData = Path.Combine(Path.GetTempPath(), $"winvector-bench-{Guid.NewGuid():N}");
+        var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: userData);
+        var view = new WebView2 { Dock = DockStyle.Fill };
+        Controls.Add(view);
+        await view.EnsureCoreWebView2Async(environment);
+        var core = view.CoreWebView2;
+        core.SetVirtualHostNameToFolderMapping(HostName, Path.Combine(AppContext.BaseDirectory, "Engine"), CoreWebView2HostResourceAccessKind.Deny);
+
+        var pending = new Dictionary<string, TaskCompletionSource<JsonElement>>();
+        var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        core.WebMessageReceived += (_, e) =>
+        {
+            using var message = JsonDocument.Parse(e.WebMessageAsJson);
+            var root = message.RootElement;
+            var kind = root.GetProperty("kind").GetString();
+            if (kind == "event" && root.GetProperty("name").GetString() == "engine.ready")
+            {
+                ready.TrySetResult();
+            }
+            else if (kind == "response" && pending.Remove(root.GetProperty("id").GetString() ?? string.Empty, out var completion))
+            {
+                completion.TrySetResult(root.Clone());
+            }
+        };
+
+        core.Navigate($"https://{HostName}/index.html");
+        await ready.Task.WaitAsync(TimeSpan.FromSeconds(30));
+
+        var counter = 0;
+        async Task<(JsonElement Response, double Ms)> SendAsync(string name, object payload)
+        {
+            var id = $"m{++counter}";
+            var completion = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
+            pending[id] = completion;
+            var json = JsonSerializer.Serialize(new { kind = "command", id, name, protocolVersion = 2, payload });
+            var watch = Stopwatch.StartNew();
+            core.PostWebMessageAsJson(json);
+            var response = await completion.Task.WaitAsync(TimeSpan.FromMinutes(2));
+            return (response, Math.Round(watch.Elapsed.TotalMilliseconds, 1));
+        }
+
+        var results = new List<object>();
+        foreach (var megabytes in new[] { 1, 5, 20, 50 })
+        {
+            var svg = GenerateDocumentOfSize(megabytes * 1024 * 1024);
+            var documentId = $"grande-{megabytes}";
+            var (load, loadMs) = await SendAsync("document.load", new { documentId, name = "grande.svg", svg });
+            var loaded = load.GetProperty("ok").GetBoolean() && load.GetProperty("payload").GetProperty("loaded").GetBoolean();
+            var (serialized, serializeMs) = await SendAsync("document.serialize", new { documentId });
+            var identical = serialized.GetProperty("ok").GetBoolean()
+                && serialized.GetProperty("payload").GetProperty("svg").GetString() == svg;
+            await SendAsync("document.close", new { documentId });
+            results.Add(new { megabytes, characters = svg.Length, loaded, identical, loadMs, serializeMs });
+        }
+
+        view.Dispose();
+        return new Dictionary<string, object>
+        {
+            ["mode"] = "messages",
+            ["webView2Version"] = environment.BrowserVersionString,
+            ["documents"] = results,
+        };
+    }
+
+    /// <summary>SVG de aproximadamente el tamaño indicado, en caracteres.</summary>
+    private static string GenerateDocumentOfSize(int characters)
+    {
+        var svg = new StringBuilder("""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 2000">""");
+        var random = new Random(7);
+        for (var i = 0; svg.Length < characters; i++)
+        {
+            svg.Append(CultureInfo.InvariantCulture, $"""<rect id="r{i}" x="{random.Next(2000)}" y="{random.Next(2000)}" width="8" height="8" fill="#{random.Next(0x1000000):x6}"/>""");
+            svg.Append('\n');
+        }
+
+        return svg.Append("</svg>").ToString();
     }
 
     private static async Task NavigateAsync(WebView2 view, string uri)

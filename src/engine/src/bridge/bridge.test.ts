@@ -86,7 +86,10 @@ describe("EngineBridge", () => {
 
   it("emite eventos con identificadores nuevos", () => {
     const { bridge, sent } = createBridge();
-    bridge.emit("selection.changed", { items: [{ id: "sol", tagName: "circle" }] });
+    bridge.emit("selection.changed", {
+      documentId: "d1",
+      items: [{ id: "sol", tagName: "circle" }],
+    });
     expect(sent.at(-1)).toMatchObject({ kind: "event", id: "e2", name: "selection.changed" });
   });
 

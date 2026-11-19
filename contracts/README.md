@@ -4,13 +4,13 @@ Mensajes que intercambian la aplicación (C#) y el motor de edición (TypeScript
 
 ## Archivos
 
-| Archivo | Contenido |
-|---|---|
-| `catalog.json` | Versión del protocolo y lista de mensajes: nombre, tipo (comando o evento), descripción y tipos de su payload y su respuesta |
-| `envelope.schema.json` | Sobre común de todos los mensajes |
-| `types/*.schema.json` | Un JSON Schema por cada tipo de datos |
-| `tools/generate.mjs` | Generador de tipos |
-| `tools/generate.test.mjs` | Pruebas del generador |
+| Archivo                   | Contenido                                                                                                                    |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `catalog.json`            | Versión del protocolo y lista de mensajes: nombre, tipo (comando o evento), descripción y tipos de su payload y su respuesta |
+| `envelope.schema.json`    | Sobre común de todos los mensajes                                                                                            |
+| `types/*.schema.json`     | Un JSON Schema por cada tipo de datos                                                                                        |
+| `tools/generate.mjs`      | Generador de tipos                                                                                                           |
+| `tools/generate.test.mjs` | Pruebas del generador                                                                                                        |
 
 Archivos generados (no se editan a mano):
 
@@ -33,19 +33,51 @@ Ejemplo de comando y su respuesta:
 Ejemplo de evento:
 
 ```json
-{ "kind": "event", "id": "e7", "name": "selection.changed", "protocolVersion": 1, "payload": { "items": [{ "id": "sol", "tagName": "circle" }] } }
+{
+  "kind": "event",
+  "id": "e7",
+  "name": "selection.changed",
+  "protocolVersion": 1,
+  "payload": { "items": [{ "id": "sol", "tagName": "circle" }] }
+}
 ```
 
 ## Implementación
 
-| Lado | Código | Qué hace |
-|---|---|---|
-| Motor | `src/engine/src/bridge/bridge.ts` | `EngineBridge`: valida el sobre de los comandos, responde con el mismo `id` y emite eventos. Ante un mensaje mal formado emite el evento `error` |
-| Motor | `src/engine/src/bridge/transport.ts` | Transporte sobre `window.chrome.webview` y un sustituto que escribe en la consola en `npm run dev` |
-| Aplicación | `src/WinVector.Core/Bridge/BridgeClient.cs` | `BridgeClient`: envía comandos y espera la respuesta (5 s como máximo), reparte los eventos y solo acepta mensajes de la página del motor |
-| Aplicación | `src/WinVector.App/Controls/WebViewBridgeTransport.cs` | Transporte sobre `PostWebMessageAsJson` y `WebMessageReceived` |
+| Lado       | Código                                                 | Qué hace                                                                                                                                         |
+| ---------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Motor      | `src/engine/src/bridge/bridge.ts`                      | `EngineBridge`: valida el sobre de los comandos, responde con el mismo `id` y emite eventos. Ante un mensaje mal formado emite el evento `error` |
+| Motor      | `src/engine/src/bridge/transport.ts`                   | Transporte sobre `window.chrome.webview` y un sustituto que escribe en la consola en `npm run dev`                                               |
+| Aplicación | `src/WinVector.Core/Bridge/BridgeClient.cs`            | `BridgeClient`: envía comandos y espera la respuesta (5 s como máximo), reparte los eventos y solo acepta mensajes de la página del motor        |
+| Aplicación | `src/WinVector.App/Controls/WebViewBridgeTransport.cs` | Transporte sobre `PostWebMessageAsJson` y `WebMessageReceived`                                                                                   |
 
 Al cargar, el motor envía `engine.ready` y la aplicación comprueba que la versión del protocolo coincide; si no, lo indica en la barra de estado. Después mide la latencia del puente con `app.ping`.
+
+### Documentos
+
+Un único motor gestiona los documentos de todas las pestañas ([ADR 0004](../docs/adr/0004-pestanas-y-motores.md)). La aplicación asigna a cada documento un `documentId` (`d1`, `d2`…) que acompaña a todos los mensajes que se refieren a él:
+
+| Mensaje              | Uso                                                                                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `document.load`      | Entrega un SVG al motor. Si no es válido, la respuesta es correcta pero lleva `loaded: false` y el error con línea y columna, para mostrárselo al usuario |
+| `document.activate`  | Muestra el documento de la pestaña activa y oculta los demás                                                                                              |
+| `document.serialize` | Devuelve el texto para guardar; sin cambios, es idéntico al que se cargó                                                                                  |
+| `document.close`     | Descarta el documento                                                                                                                                     |
+| `document.changed`   | El motor avisa de cada cambio con la revisión nueva; la aplicación compara con la revisión guardada para saber si hay cambios sin guardar                 |
+| `selection.changed`  | Indica a qué documento pertenece la selección; la aplicación ignora la de documentos que no están activos                                                 |
+
+Un comando sobre un documento que no existe responde con el error `unknown-document`. La aplicación encola las órdenes al motor para que lleguen en el orden en que se producen.
+
+**Tamaño de los documentos.** El texto completo del SVG viaja dentro del mensaje. Medición con el puente real de WebView2 (workflow **Medición de pestañas**, `tools/TabsBenchmark --mode messages`, WebView2 156 en el runner de Windows de la CI):
+
+| Documento | `document.load` | `document.serialize` | Texto devuelto idéntico |
+| --------- | --------------- | -------------------- | ----------------------- |
+| 1 MB      | 0,3 s           | 12 ms                | Sí                      |
+| 5 MB      | 1,5 s           | 89 ms                | Sí                      |
+| 20 MB     | 6,9 s           | 232 ms               | Sí                      |
+| 50 MB     | 16,8 s          | 542 ms               | Sí                      |
+
+Casi todo el tiempo de `document.load` es crear el documento en el motor, no transmitir el mensaje. Por eso los comandos que llevan un documento completo esperan hasta 2 minutos (`MainViewModel.DocumentCommandTimeout`) en lugar de los 5 s del resto. El límite práctico no lo pone el puente sino la velocidad de carga, que se medirá con documentos grandes en el issue #34.
 
 ## Añadir un mensaje
 
@@ -73,17 +105,17 @@ El generador solo admite lo que sabe traducir a los dos lenguajes. Si un esquema
 
 **Propiedades** de un objeto:
 
-| Esquema | TypeScript | C# |
-|---|---|---|
-| `"type": "string"` | `string` | `string` |
-| `"type": "number"` | `number` | `double` |
-| `"type": "integer"` | `number` | `int` |
-| `"type": "boolean"` | `boolean` | `bool` |
-| `"type": "array"`, `"items": …` | `readonly T[]` | `IReadOnlyList<T>` |
-| `"$ref": "./otro.schema.json"` | `Otro` | `Otro` |
-| `"type": ["string", "null"]` | `string \| null` | `string?` |
-| `"anyOf": [{ "$ref": … }, { "type": "null" }]` | `Otro \| null` | `Otro?` |
-| Propiedad fuera de `required` | `prop?: T` | `T? Prop = null`, se omite al escribir si es null |
+| Esquema                                        | TypeScript       | C#                                                |
+| ---------------------------------------------- | ---------------- | ------------------------------------------------- |
+| `"type": "string"`                             | `string`         | `string`                                          |
+| `"type": "number"`                             | `number`         | `double`                                          |
+| `"type": "integer"`                            | `number`         | `int`                                             |
+| `"type": "boolean"`                            | `boolean`        | `bool`                                            |
+| `"type": "array"`, `"items": …`                | `readonly T[]`   | `IReadOnlyList<T>`                                |
+| `"$ref": "./otro.schema.json"`                 | `Otro`           | `Otro`                                            |
+| `"type": ["string", "null"]`                   | `string \| null` | `string?`                                         |
+| `"anyOf": [{ "$ref": … }, { "type": "null" }]` | `Otro \| null`   | `Otro?`                                           |
+| Propiedad fuera de `required`                  | `prop?: T`       | `T? Prop = null`, se omite al escribir si es null |
 
 Reglas adicionales:
 
@@ -106,10 +138,10 @@ Usa siempre este contexto para leer y escribir mensajes del puente.
 
 Desde `src/engine`:
 
-| Comando | Qué hace |
-|---|---|
+| Comando                      | Qué hace                                               |
+| ---------------------------- | ------------------------------------------------------ |
 | `npm run contracts:generate` | Regenera los tipos de TypeScript y C# y les da formato |
-| `npm run contracts:test` | Ejecuta las pruebas del generador |
+| `npm run contracts:test`     | Ejecuta las pruebas del generador                      |
 
 Las pruebas del C# generado están en `tests/WinVector.Core.Tests/Bridge`. Desde la raíz del repositorio, con el SDK de .NET instalado:
 

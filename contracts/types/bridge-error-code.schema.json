@@ -3,5 +3,12 @@
   "title": "BridgeErrorCode",
   "description": "Categoría del error del puente.",
   "type": "string",
-  "enum": ["invalid-message", "unknown-message", "protocol-mismatch", "timeout", "internal"]
+  "enum": [
+    "invalid-message",
+    "unknown-message",
+    "protocol-mismatch",
+    "unknown-document",
+    "timeout",
+    "internal"
+  ]
 }

@@ -2,6 +2,12 @@
  * Módulo `document`.
  *
  * Carga y serialización SVG, preservación del contenido desconocido, gestión de `defs` e
- * identificadores. Ver `SvgDocument`.
+ * identificadores (`SvgDocument`), y documentos abiertos en el motor (`DocumentManager`).
  */
-export { SvgDocument, SvgParseError, SVG_NS } from "./svgDocument";
+export { SvgDocument, SvgParseError, SVG_NS, type SvgDocumentOptions } from "./svgDocument";
+export {
+  DocumentManager,
+  UnknownDocumentError,
+  type DocumentManagerOptions,
+  type OpenDocument,
+} from "./documentManager";

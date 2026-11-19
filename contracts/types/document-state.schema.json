@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentState",
+  "description": "Estado de un documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "revision"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "revision": {
+      "type": "integer",
+      "description": "Aumenta con cada cambio del documento."
+    }
+  }
+}

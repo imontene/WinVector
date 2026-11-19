@@ -119,6 +119,49 @@ internal sealed class AppSession : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Busca un elemento por AutomationId en todas las ventanas de la aplicación, incluidas las de
+    /// los menús desplegables, que pueden ser ventanas propias.
+    /// </summary>
+    public AutomationElement? FindInApp(string automationId)
+    {
+        var inWindow = FindById(automationId);
+        if (inWindow is not null)
+        {
+            return inWindow;
+        }
+
+        var processId = Application.ProcessId;
+        foreach (var window in Automation.GetDesktop().FindAllChildren(cf => cf.ByProcessId(processId)))
+        {
+            var found = window.FindFirstDescendant(cf => cf.ByAutomationId(automationId));
+            if (found is not null)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Abre el documento de ejemplo desde el menú Ayuda y espera a que se muestre.</summary>
+    public void OpenSample()
+    {
+        GetById("HelpMenu").Patterns.ExpandCollapse.Pattern.Expand();
+        var item = Retry.WhileNull(() => FindInApp("OpenSampleMenuItem"), TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException("No aparece Ayuda > Abrir el documento de ejemplo.");
+        item.Patterns.Invoke.Pattern.Invoke();
+
+        if (Retry.WhileNull(() => FindSampleText(), TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(250)).Result is null)
+        {
+            throw new AssertFailedException("El documento de ejemplo no aparece en el lienzo.");
+        }
+    }
+
+    /// <summary>El texto "WinVector" del documento de ejemplo dentro del lienzo, si está visible.</summary>
+    public AutomationElement? FindSampleText() =>
+        FindById("EngineCanvas")?.FindFirstDescendant(cf => cf.ByName("WinVector").And(cf.ByControlType(FlaUI.Core.Definitions.ControlType.Text)));
+
     public AutomationElement GetById(string automationId) =>
         FindById(automationId) ?? throw new AssertFailedException($"No se encuentra el elemento con AutomationId '{automationId}'.");
 
@@ -171,6 +214,19 @@ internal sealed class AppSession : IDisposable
             // Ya terminó.
         }
     }
+
+    /// <summary>Color del píxel de la pantalla en un punto.</summary>
+    public static Color ColorAt(Point point)
+    {
+        using var image = FlaUI.Core.Capturing.Capture.Rectangle(new Rectangle(point.X, point.Y, 1, 1));
+        return image.Bitmap.GetPixel(0, 0);
+    }
+
+    /// <summary>True si dos colores se parecen, canal a canal, dentro de una tolerancia.</summary>
+    public static bool IsClose(Color actual, Color expected, int tolerance = 24) =>
+        Math.Abs(actual.R - expected.R) <= tolerance
+        && Math.Abs(actual.G - expected.G) <= tolerance
+        && Math.Abs(actual.B - expected.B) <= tolerance;
 
     /// <summary>Punto de la pantalla que corresponde a unas coordenadas del SVG de ejemplo.</summary>
     /// <remarks>
