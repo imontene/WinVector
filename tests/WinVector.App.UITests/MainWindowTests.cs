@@ -101,6 +101,9 @@ public sealed class MainWindowTests
         Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
         using (Keyboard.Pressing(VirtualKeyShort.CONTROL))
         {
+            // El teclado llega a la página por WebView2 y el ratón por WinUI: si el clic sale en el
+            // mismo instante, puede adelantarse a la tecla. Una persona pulsa Ctrl antes de hacer clic.
+            Thread.Sleep(300);
             Mouse.Click(AppSession.SamplePoint(canvas, 100, 87));
         }
 
