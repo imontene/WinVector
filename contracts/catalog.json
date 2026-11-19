@@ -28,6 +28,13 @@
       "response": "DocumentRef"
     },
     {
+      "name": "selection.setGeometry",
+      "kind": "command",
+      "description": "Mueve, redimensiona o gira la selección hasta los valores del panel de propiedades, en un paso que se puede deshacer.",
+      "payload": "SelectionGeometry",
+      "response": "DocumentRef"
+    },
+    {
       "name": "error",
       "kind": "event",
       "description": "El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno.",

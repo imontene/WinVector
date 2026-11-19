@@ -328,6 +328,92 @@ public sealed class MainViewModelBridgeTests : IDisposable
         Assert.HasCount(2, _viewModel.Documents);
     }
 
+    private void SelectSun(double? rotation = 12.346)
+    {
+        var rotationJson = rotation is { } r ? $",\"rotation\":{r.ToString(System.Globalization.CultureInfo.InvariantCulture)}" : string.Empty;
+        _transport.SendEvent(
+            "selection.changed",
+            $$"""{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}],"bounds":{"x":248.004,"y":44,"width":104,"height":52.5},"scope":null{{rotationJson}}}""");
+    }
+
+    [TestMethod]
+    public async Task ElPanelMuestraLaCajaYElGiroDeLaSeleccion()
+    {
+        await ReadyAsync();
+        Assert.IsTrue(double.IsNaN(_viewModel.SelectionX));
+
+        SelectSun();
+
+        Assert.AreEqual(248, _viewModel.SelectionX);
+        Assert.AreEqual(44, _viewModel.SelectionY);
+        Assert.AreEqual(104, _viewModel.SelectionWidth);
+        Assert.AreEqual(52.5, _viewModel.SelectionHeight);
+        Assert.AreEqual(12.35, _viewModel.SelectionRotation);
+        Assert.IsTrue(_viewModel.CanRotateSelection);
+
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"a","tagName":"rect"},{"id":"b","tagName":"rect"}],"bounds":{"x":0,"y":0,"width":10,"height":10},"scope":null}""");
+        Assert.IsFalse(_viewModel.CanRotateSelection, "Con varios objetos no se gira desde el panel.");
+
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[],"bounds":null,"scope":null}""");
+        Assert.IsTrue(double.IsNaN(_viewModel.SelectionWidth));
+    }
+
+    [TestMethod]
+    public async Task CambiarUnValorEnviaSoloEseCampo()
+    {
+        await ReadyAsync();
+        SelectSun();
+
+        Assert.IsTrue(_viewModel.SetSelectionGeometry(GeometryField.X, 100));
+        Assert.IsTrue(_viewModel.SetSelectionGeometry(GeometryField.Rotation, 45));
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual(
+            """{"documentId":"d1","x":100,"y":null,"width":null,"height":null,"rotation":null}""" + " | "
+            + """{"documentId":"d1","x":null,"y":null,"width":null,"height":null,"rotation":45}""",
+            string.Join(" | ", _engine.GeometriesSet));
+    }
+
+    [TestMethod]
+    public async Task ConLaProporcionBloqueadaCambianAnchoYAlto()
+    {
+        await ReadyAsync();
+        SelectSun();
+        _viewModel.LockAspectRatio = true;
+
+        Assert.IsTrue(_viewModel.SetSelectionGeometry(GeometryField.Width, 208));
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual("""{"documentId":"d1","x":null,"y":null,"width":208,"height":105,"rotation":null}""", _engine.GeometriesSet.Single());
+    }
+
+    [TestMethod]
+    [DataRow(GeometryField.X, 248)]
+    [DataRow(GeometryField.Width, 0)]
+    [DataRow(GeometryField.Height, -5)]
+    [DataRow(GeometryField.Y, double.NaN)]
+    public async Task UnValorIgualONoValidoNoCambiaNada(GeometryField field, double value)
+    {
+        await ReadyAsync();
+        SelectSun();
+        var refreshed = new List<string?>();
+        _viewModel.PropertyChanged += (_, e) => refreshed.Add(e.PropertyName);
+
+        Assert.IsFalse(_viewModel.SetSelectionGeometry(field, value));
+        await _viewModel.EngineWork;
+
+        Assert.IsEmpty(_engine.GeometriesSet);
+        CollectionAssert.Contains(refreshed, "SelectionX", "El panel debe volver a mostrar el valor actual.");
+    }
+
+    [TestMethod]
+    public async Task SinUnSoloObjetoNoSeGira()
+    {
+        await ReadyAsync();
+        SelectSun(rotation: null);
+        Assert.IsFalse(_viewModel.SetSelectionGeometry(GeometryField.Rotation, 30));
+    }
+
     [TestMethod]
     public async Task MideLaLatenciaDelPuente()
     {

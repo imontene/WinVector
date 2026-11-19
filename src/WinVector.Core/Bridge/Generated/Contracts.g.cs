@@ -177,11 +177,28 @@ public sealed record SelectedElement(
 /// <param name="Items">Elementos seleccionados, en orden de documento. Vacío si no hay selección.</param>
 /// <param name="Bounds">Caja que rodea todo lo seleccionado, en unidades de usuario del elemento raíz del documento (las del viewBox). Null si no hay selección o no se puede medir.</param>
 /// <param name="Scope">Grupo en el que ha entrado el usuario con doble clic; la selección con un clic elige entre sus hijos. Null en el nivel superior del documento.</param>
+/// <param name="Rotation">Giro del objeto seleccionado respecto al documento, en grados entre -180 y 180. Solo cuando hay un único objeto seleccionado.</param>
 public sealed record SelectionChanged(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items,
     [property: JsonPropertyName("bounds")] Rect? Bounds,
-    [property: JsonPropertyName("scope")] SelectedElement? Scope);
+    [property: JsonPropertyName("scope")] SelectedElement? Scope,
+    [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null);
+
+/// <summary>Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="X">Borde izquierdo de la caja de la selección.</param>
+/// <param name="Y">Borde superior de la caja de la selección.</param>
+/// <param name="Width">Ancho de la caja de la selección; mayor que 0.</param>
+/// <param name="Height">Alto de la caja de la selección; mayor que 0.</param>
+/// <param name="Rotation">Giro en grados. Solo se aplica con un único objeto seleccionado.</param>
+public sealed record SelectionGeometry(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("x")] double? X,
+    [property: JsonPropertyName("y")] double? Y,
+    [property: JsonPropertyName("width")] double? Width,
+    [property: JsonPropertyName("height")] double? Height,
+    [property: JsonPropertyName("rotation")] double? Rotation);
 
 /// <summary>Herramienta del lienzo que ya implementa el motor.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ToolName>))]
@@ -280,6 +297,9 @@ public static class BridgeCommands
     /// <summary>Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno.</summary>
     public static readonly BridgeCommand<DocumentRef, DocumentRef> SelectionSelectAll = new("selection.selectAll");
 
+    /// <summary>Mueve, redimensiona o gira la selección hasta los valores del panel de propiedades, en un paso que se puede deshacer.</summary>
+    public static readonly BridgeCommand<SelectionGeometry, DocumentRef> SelectionSetGeometry = new("selection.setGeometry");
+
     /// <summary>Carga un documento SVG en el motor con el identificador que le asigna la aplicación.</summary>
     public static readonly BridgeCommand<DocumentLoad, DocumentLoadResult> DocumentLoad = new("document.load");
 
@@ -370,6 +390,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(Rect))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]
+[JsonSerializable(typeof(SelectionGeometry))]
 [JsonSerializable(typeof(ToolState))]
 [JsonSerializable(typeof(ViewOptions))]
 [JsonSerializable(typeof(ViewportChanged))]

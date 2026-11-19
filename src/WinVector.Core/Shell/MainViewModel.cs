@@ -79,6 +79,37 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasSelection;
 
+    /// <summary>Caja exacta de la selección según el motor, en unidades del documento.</summary>
+    private Rect? _selectionBounds;
+
+    /// <summary>Borde izquierdo de la selección (redondeado a centésimas), o NaN sin selección.</summary>
+    [ObservableProperty]
+    private double _selectionX = double.NaN;
+
+    /// <summary>Borde superior de la selección, o NaN sin selección.</summary>
+    [ObservableProperty]
+    private double _selectionY = double.NaN;
+
+    /// <summary>Ancho de la selección, o NaN sin selección.</summary>
+    [ObservableProperty]
+    private double _selectionWidth = double.NaN;
+
+    /// <summary>Alto de la selección, o NaN sin selección.</summary>
+    [ObservableProperty]
+    private double _selectionHeight = double.NaN;
+
+    /// <summary>Giro en grados del objeto seleccionado, o NaN si no hay exactamente uno.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanRotateSelection))]
+    private double _selectionRotation = double.NaN;
+
+    /// <summary>Mantiene la proporción entre ancho y alto al cambiar uno de los dos en el panel.</summary>
+    [ObservableProperty]
+    private bool _lockAspectRatio;
+
+    /// <summary>True si se puede girar desde el panel: hay exactamente un objeto seleccionado.</summary>
+    public bool CanRotateSelection => !double.IsNaN(SelectionRotation);
+
     /// <summary>Muestra las reglas del lienzo.</summary>
     [ObservableProperty]
     private bool _showRulers = true;
@@ -565,6 +596,71 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Cambia un valor del panel de propiedades: mueve, redimensiona o gira la selección en el motor,
+    /// en un paso que se puede deshacer. Solo se envía el campo que cambia (y el alto o el ancho con
+    /// la proporción bloqueada), para que el redondeo de los demás no mueva nada.
+    /// </summary>
+    /// <returns>False si el valor no es válido o no cambia nada; el panel vuelve a mostrar el actual.</returns>
+    public bool SetSelectionGeometry(GeometryField field, double value)
+    {
+        var current = field switch
+        {
+            GeometryField.X => SelectionX,
+            GeometryField.Y => SelectionY,
+            GeometryField.Width => SelectionWidth,
+            GeometryField.Height => SelectionHeight,
+            _ => SelectionRotation,
+        };
+        var invalid = !double.IsFinite(value)
+            || double.IsNaN(current)
+            || (field is GeometryField.Width or GeometryField.Height && value <= 0);
+        if (invalid || Math.Abs(value - current) < 1e-9
+            || SelectedDocument is not { IsLoaded: true } document || _selectionBounds is not { } bounds)
+        {
+            RefreshGeometry();
+            return false;
+        }
+
+        double? width = field == GeometryField.Width ? value : null;
+        double? height = field == GeometryField.Height ? value : null;
+        if (LockAspectRatio && bounds.Width > 0 && bounds.Height > 0)
+        {
+            height ??= width * bounds.Height / bounds.Width;
+            width ??= height * bounds.Width / bounds.Height;
+        }
+
+        var geometry = new SelectionGeometry(
+            document.DocumentId,
+            field == GeometryField.X ? value : null,
+            field == GeometryField.Y ? value : null,
+            width,
+            height,
+            field == GeometryField.Rotation ? value : null);
+        Enqueue(() => SendAsync(BridgeCommands.SelectionSetGeometry, geometry));
+        return true;
+    }
+
+    /// <summary>Vuelve a anunciar los valores del panel, para que descarte lo escrito.</summary>
+    private void RefreshGeometry()
+    {
+        OnPropertyChanged(nameof(SelectionX));
+        OnPropertyChanged(nameof(SelectionY));
+        OnPropertyChanged(nameof(SelectionWidth));
+        OnPropertyChanged(nameof(SelectionHeight));
+        OnPropertyChanged(nameof(SelectionRotation));
+    }
+
+    private void ShowGeometry(Rect? bounds, double? rotation)
+    {
+        _selectionBounds = bounds;
+        SelectionX = bounds is null ? double.NaN : Math.Round(bounds.X, 2);
+        SelectionY = bounds is null ? double.NaN : Math.Round(bounds.Y, 2);
+        SelectionWidth = bounds is null ? double.NaN : Math.Round(bounds.Width, 2);
+        SelectionHeight = bounds is null ? double.NaN : Math.Round(bounds.Height, 2);
+        SelectionRotation = rotation is { } degrees ? Math.Round(degrees, 2) : double.NaN;
+    }
+
     private Task StepHistoryAsync(BridgeCommand<DocumentRef, HistoryState> command)
     {
         if (SelectedDocument is not { IsLoaded: true } document)
@@ -615,6 +711,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         SelectionSummary = string.Empty;
         HasSelection = false;
+        ShowGeometry(null, null);
         OnPropertyChanged(nameof(ZoomText));
         OnPropertyChanged(nameof(CurrentArtboard));
         NotifyEditCommandsChanged();
@@ -767,6 +864,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         HasSelection = selection.Items.Count > 0;
+        ShowGeometry(selection.Bounds, selection.Items.Count == 1 ? selection.Rotation : null);
         var items = selection.Items.Count switch
         {
             0 => string.Empty,
@@ -909,4 +1007,14 @@ public sealed partial class MainViewModel : ObservableObject
             onDispose();
         }
     }
+}
+
+/// <summary>Campo del panel de propiedades de la selección.</summary>
+public enum GeometryField
+{
+    X,
+    Y,
+    Width,
+    Height,
+    Rotation,
 }

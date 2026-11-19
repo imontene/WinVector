@@ -259,6 +259,37 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var sun = AppSession.SamplePoint(canvas, 300, 96);
+        var orange = System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47);
+        Mouse.DoubleClick(sun);
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+
+        // La caja del sol empieza en x = 248 (cx 300, r 52). Con x = 148 se mueve 100 unidades a la izquierda.
+        var x = Retry.WhileNull(() => Session.FindById("SelectionX"), EngineTimeout).Result
+            ?? throw new AssertFailedException("No aparece el campo X del panel de propiedades.");
+        Assert.IsTrue(Retry.WhileFalse(() => Math.Abs(x.Patterns.RangeValue.Pattern.Value - 248) < 0.01, EngineTimeout).Result, "El panel no muestra la X del sol.");
+        x.Patterns.RangeValue.Pattern.SetValue(148);
+
+        var moved = AppSession.SamplePoint(canvas, 200, 96);
+        Assert.IsTrue(
+            Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(moved), orange), EngineTimeout).Result,
+            "El sol no se movió al cambiar X en el panel.");
+
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result, "Deshacer no se activó.");
+        undo.Click();
+        Assert.IsTrue(
+            Retry.WhileFalse(() => Math.Abs(x.Patterns.RangeValue.Pattern.Value - 248) < 0.01, EngineTimeout).Result,
+            "Deshacer no devolvió la X del sol a 248.");
+        Assert.IsTrue(Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(sun), orange), EngineTimeout).Result);
+    }
+
+    [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);

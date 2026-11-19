@@ -380,11 +380,87 @@
                 Style="{StaticResource PaneBorderStyle}">
                 <StackPanel Padding="16,12" Spacing="8">
                     <TextBlock x:Uid="PropertiesTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                    <TextBlock
-                        x:Uid="PropertiesEmpty"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="Wrap"
-                        Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                    <!-- Con algo seleccionado: posición, tamaño y giro, en unidades del documento. -->
+                    <StackPanel Spacing="8" Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}">
+                        <TextBlock x:Uid="GeometryTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <Grid ColumnSpacing="8" RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <NumberBox
+                                x:Uid="SelectionX"
+                                AutomationProperties.AutomationId="SelectionX"
+                                LargeChange="10"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Compact"
+                                Tag="X"
+                                ValueChanged="OnGeometryValueChanged"
+                                Value="{x:Bind ViewModel.SelectionX, Mode=OneWay}" />
+                            <NumberBox
+                                x:Uid="SelectionY"
+                                Grid.Column="1"
+                                AutomationProperties.AutomationId="SelectionY"
+                                LargeChange="10"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Compact"
+                                Tag="Y"
+                                ValueChanged="OnGeometryValueChanged"
+                                Value="{x:Bind ViewModel.SelectionY, Mode=OneWay}" />
+                            <NumberBox
+                                x:Uid="SelectionWidth"
+                                Grid.Row="1"
+                                AutomationProperties.AutomationId="SelectionWidth"
+                                LargeChange="10"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Compact"
+                                Tag="Width"
+                                ValueChanged="OnGeometryValueChanged"
+                                Value="{x:Bind ViewModel.SelectionWidth, Mode=OneWay}" />
+                            <NumberBox
+                                x:Uid="SelectionHeight"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                AutomationProperties.AutomationId="SelectionHeight"
+                                LargeChange="10"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Compact"
+                                Tag="Height"
+                                ValueChanged="OnGeometryValueChanged"
+                                Value="{x:Bind ViewModel.SelectionHeight, Mode=OneWay}" />
+                            <ToggleButton
+                                x:Uid="LockAspectRatio"
+                                Grid.Row="1"
+                                Grid.Column="2"
+                                VerticalAlignment="Bottom"
+                                AutomationProperties.AutomationId="LockAspectRatio"
+                                IsChecked="{x:Bind ViewModel.LockAspectRatio, Mode=TwoWay}">
+                                <FontIcon FontSize="14" Glyph="&#xE72E;" />
+                            </ToggleButton>
+                            <NumberBox
+                                x:Uid="SelectionRotation"
+                                Grid.Row="2"
+                                AutomationProperties.AutomationId="SelectionRotation"
+                                IsEnabled="{x:Bind ViewModel.CanRotateSelection, Mode=OneWay}"
+                                LargeChange="15"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Compact"
+                                Tag="Rotation"
+                                ValueChanged="OnGeometryValueChanged"
+                                Value="{x:Bind ViewModel.SelectionRotation, Mode=OneWay}" />
+                        </Grid>
+                        <TextBlock
+                            x:Uid="GeometryHint"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
 
                     <!-- Sin nada seleccionado, el panel edita la mesa de trabajo. -->
                     <StackPanel Spacing="8" Visibility="{x:Bind app:BindingFunctions.VisibleUnless(ViewModel.HasSelection), Mode=OneWay}">

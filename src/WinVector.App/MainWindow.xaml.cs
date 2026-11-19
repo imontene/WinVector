@@ -126,6 +126,18 @@ public sealed partial class MainWindow : Window
 
     private void OnArtboardLostFocus(object sender, RoutedEventArgs e) => ApplyArtboard();
 
+    /// <summary>
+    /// Un campo del panel de propiedades ha cambiado (Intro, salir del campo o las flechas). Si el
+    /// cambio viene de la propia selección, el valor coincide y no se envía nada.
+    /// </summary>
+    private void OnGeometryValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (sender.Tag is string tag && Enum.TryParse<GeometryField>(tag, out var field) && !double.IsNaN(args.NewValue))
+        {
+            ViewModel.SetSelectionGeometry(field, args.NewValue);
+        }
+    }
+
     private void ApplyArtboard()
     {
         if (!ViewModel.ApplyArtboard(ArtboardWidthBox.Text, ArtboardHeightBox.Text, ArtboardViewBoxBox.Text))

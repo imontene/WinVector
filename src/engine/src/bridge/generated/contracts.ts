@@ -176,6 +176,24 @@ export interface SelectionChanged {
   readonly bounds: Rect | null;
   /** Grupo en el que ha entrado el usuario con doble clic; la selección con un clic elige entre sus hijos. Null en el nivel superior del documento. */
   readonly scope: SelectedElement | null;
+  /** Giro del objeto seleccionado respecto al documento, en grados entre -180 y 180. Solo cuando hay un único objeto seleccionado. */
+  readonly rotation?: number;
+}
+
+/** Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia. */
+export interface SelectionGeometry {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Borde izquierdo de la caja de la selección. */
+  readonly x: number | null;
+  /** Borde superior de la caja de la selección. */
+  readonly y: number | null;
+  /** Ancho de la caja de la selección; mayor que 0. */
+  readonly width: number | null;
+  /** Alto de la caja de la selección; mayor que 0. */
+  readonly height: number | null;
+  /** Giro en grados. Solo se aplica con un único objeto seleccionado. */
+  readonly rotation: number | null;
 }
 
 /** Herramienta del lienzo que ya implementa el motor. */
@@ -222,6 +240,11 @@ export interface BridgeCommands {
   readonly "app.ping": { readonly payload: AppPing; readonly response: AppPong };
   /** Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno. */
   readonly "selection.selectAll": { readonly payload: DocumentRef; readonly response: DocumentRef };
+  /** Mueve, redimensiona o gira la selección hasta los valores del panel de propiedades, en un paso que se puede deshacer. */
+  readonly "selection.setGeometry": {
+    readonly payload: SelectionGeometry;
+    readonly response: DocumentRef;
+  };
   /** Carga un documento SVG en el motor con el identificador que le asigna la aplicación. */
   readonly "document.load": {
     readonly payload: DocumentLoad;
@@ -280,6 +303,7 @@ export type BridgeEventName = keyof BridgeEvents;
 export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "app.ping",
   "selection.selectAll",
+  "selection.setGeometry",
   "document.load",
   "document.serialize",
   "document.activate",

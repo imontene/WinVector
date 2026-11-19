@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SelectionGeometry",
+  "description": "Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "x",
+    "y",
+    "width",
+    "height",
+    "rotation"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "x": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Borde izquierdo de la caja de la selección."
+    },
+    "y": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Borde superior de la caja de la selección."
+    },
+    "width": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Ancho de la caja de la selección; mayor que 0."
+    },
+    "height": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Alto de la caja de la selección; mayor que 0."
+    },
+    "rotation": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Giro en grados. Solo se aplica con un único objeto seleccionado."
+    }
+  }
+}
