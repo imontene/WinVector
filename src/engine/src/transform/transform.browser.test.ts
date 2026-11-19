@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { applyToPoint, corners, multiply, type Matrix, type Point } from "../geometry";
 import { SvgDocument } from "../document";
-import { localBox, selectableChildren } from "../selection";
+import { localBox, selectableChildren, selectionBounds } from "../selection";
 import {
   applyTransform,
   elementToRoot,
@@ -9,7 +9,9 @@ import {
   rotateAround,
   rotationOf,
   scaleAround,
+  setGeometry,
   TransformSession,
+  type GeometryTarget,
 } from ".";
 
 const hosts: HTMLElement[] = [];
@@ -282,4 +284,67 @@ describe("corpus: mover, escalar y girar cada objeto da lo esperado y se deshace
       expect(doc.serialize()).toBe(source);
     },
   );
+});
+
+describe("posición, tamaño y giro exactos", () => {
+  const target = (values: Partial<GeometryTarget>): GeometryTarget => ({
+    x: null,
+    y: null,
+    width: null,
+    height: null,
+    rotation: null,
+    ...values,
+  });
+
+  it("mueve y redimensiona la caja de la selección", () => {
+    const doc = load(
+      svg(
+        `<rect id="a" x="10" y="20" width="30" height="40"/><rect id="b" x="50" y="20" width="10" height="10"/>`,
+      ),
+    );
+    const items = [byId(doc, "a"), byId(doc, "b")];
+    expect(setGeometry(items, doc.root, doc.history, target({ x: 0, width: 100 }))).toBe(true);
+    const bounds = selectionBounds(items, doc.root);
+    expect(bounds?.x).toBeCloseTo(0);
+    expect(bounds?.y).toBeCloseTo(20);
+    expect(bounds?.width).toBeCloseTo(100);
+    expect(bounds?.height).toBeCloseTo(40);
+    expect(doc.history.state.undoAction).toBe("scale");
+  });
+
+  it("solo mover se llama mover, y un valor igual no cambia nada", () => {
+    const source = svg(`<rect id="a" x="10" y="20" width="30" height="40"/>`);
+    const doc = load(source);
+    const items = [byId(doc, "a")];
+    expect(setGeometry(items, doc.root, doc.history, target({ x: 10, width: 30 }))).toBe(false);
+    setGeometry(items, doc.root, doc.history, target({ y: 0 }));
+    expect(byId(doc, "a").getAttribute("y")).toBe("0");
+    expect(doc.history.state.undoAction).toBe("move");
+    doc.history.undo();
+    expect(doc.serialize()).toBe(source);
+  });
+
+  it("gira un único objeto alrededor de su centro hasta el ángulo pedido", () => {
+    const doc = load(
+      svg(`<rect id="a" x="10" y="20" width="30" height="40" transform="rotate(10 25 40)"/>`),
+    );
+    const rect = byId(doc, "a");
+    setGeometry([rect], doc.root, doc.history, target({ rotation: -80 }));
+    expect(rotationOf(rect, doc.root)).toBeCloseTo(-80);
+    expect(doc.history.state.undoAction).toBe("rotate");
+  });
+
+  it("con varios objetos no gira", () => {
+    const doc = load(
+      svg(`<rect id="a" width="5" height="5"/><rect id="b" x="10" width="5" height="5"/>`),
+    );
+    expect(
+      setGeometry(
+        [byId(doc, "a"), byId(doc, "b")],
+        doc.root,
+        doc.history,
+        target({ rotation: 45 }),
+      ),
+    ).toBe(false);
+  });
 });

@@ -5,3 +5,4 @@
  */
 export * from "./apply";
 export * from "./operations";
+export * from "./geometry";

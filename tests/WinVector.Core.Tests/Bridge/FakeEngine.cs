@@ -25,6 +25,9 @@ internal sealed class FakeEngine
     /// <summary>Comandos recibidos, como "document.load d1".</summary>
     public List<string> Commands { get; } = [];
 
+    /// <summary>Payloads de selection.setGeometry recibidos, tal cual.</summary>
+    public List<string> GeometriesSet { get; } = [];
+
     /// <summary>Payloads de artboard.set recibidos, tal cual.</summary>
     public List<string> ArtboardsSet { get; } = [];
 
@@ -159,6 +162,10 @@ internal sealed class FakeEngine
             case "artboard.set":
                 ArtboardsSet.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, payload.GetRawText());
+                break;
+            case "selection.setGeometry":
+                GeometriesSet.Add(payload.GetRawText());
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}"}""");
                 break;
             case "selection.selectAll":
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}"}""");

@@ -26,6 +26,7 @@ import {
   installShortcuts,
   trackModifiers,
 } from "./tools";
+import { rotationOf, setGeometry } from "./transform";
 import { gridSpacing, Guides, type Viewport } from "./viewport";
 
 const workspace = document.getElementById("workspace");
@@ -70,11 +71,13 @@ const documents = new DocumentManager(workspace, {
 function emitSelection(documentId: string): void {
   const { document: target, selection } = documents.open(documentId);
   const { items, scope } = selection.state;
+  const [single] = items;
   bridge.emit("selection.changed", {
     documentId,
     items: items.map(describeElement),
     bounds: selectionBounds(items, target.root),
     scope: scope ? describeElement(scope) : null,
+    ...(single && items.length === 1 ? { rotation: rotationOf(single, target.root) } : {}),
   });
 }
 
@@ -202,6 +205,14 @@ bridge.handle("document.close", ({ documentId }) =>
 bridge.handle("selection.selectAll", ({ documentId }) =>
   withDocumentErrors(() => {
     documents.open(documentId).selection.selectAll();
+    return { documentId };
+  }),
+);
+
+bridge.handle("selection.setGeometry", ({ documentId, ...target }) =>
+  withDocumentErrors(() => {
+    const { document: doc, selection } = documents.open(documentId);
+    setGeometry(selection.items, doc.root, doc.history, target);
     return { documentId };
   }),
 );

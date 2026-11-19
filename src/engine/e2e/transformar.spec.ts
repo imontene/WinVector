@@ -174,3 +174,43 @@ test("con el ajuste a la cuadrícula, mover deja la esquina sobre la cuadrícula
   expect(left % spacing).toBe(0);
   expect(top % spacing).toBe(0);
 });
+
+test("selection.setGeometry coloca la selección y selection.changed da su giro", async ({
+  page,
+}) => {
+  await selectSun(page);
+  const lastSelection = async () =>
+    (await sent(page)).filter((m) => m.name === "selection.changed").at(-1)?.payload as
+      { bounds: { x: number; width: number } | null; rotation?: number } | undefined;
+  expect(await lastSelection()).toMatchObject({ rotation: 0, bounds: { x: 248, width: 104 } });
+
+  await hostSend(
+    page,
+    command("c-geo", "selection.setGeometry", {
+      documentId: "d1",
+      x: 100,
+      y: null,
+      width: 52,
+      height: null,
+      rotation: null,
+    }),
+  );
+  await expect.poll(() => lastSent(page)).toMatchObject({ id: "c-geo", ok: true });
+  await expect
+    .poll(async () => (await lastSelection())?.bounds)
+    .toMatchObject({ x: 100, width: 52 });
+
+  await hostSend(
+    page,
+    command("c-rot", "selection.setGeometry", {
+      documentId: "d1",
+      x: null,
+      y: null,
+      width: null,
+      height: null,
+      rotation: 30,
+    }),
+  );
+  await expect.poll(async () => (await lastSelection())?.rotation).toBeCloseTo(30, 4);
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "rotate" });
+});

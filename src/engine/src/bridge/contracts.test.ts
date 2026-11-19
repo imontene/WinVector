@@ -233,6 +233,13 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c13",
+    name: "selection.setGeometry",
+    payload: { documentId: "d1", x: 10, y: null, width: null, height: null, rotation: 45 },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e4",
     name: "error",
@@ -255,6 +262,7 @@ function summarize(message: BridgeMessage): string {
         return `activo en la revisión ${String(message.payload.revision)}`;
       case "document.close":
       case "selection.selectAll":
+      case "selection.setGeometry":
         return `${message.name} ${message.payload.documentId}`;
       case "history.undo":
       case "history.redo":
@@ -282,6 +290,8 @@ function summarize(message: BridgeMessage): string {
       case "history.undo":
       case "history.redo":
         return `${message.name} ${message.payload.documentId}`;
+      case "selection.setGeometry":
+        return `geometría x=${String(message.payload.x)}`;
       case "view.zoom":
         return `zoom ${message.payload.action}`;
       case "view.setOptions":
@@ -353,6 +363,7 @@ describe("contrato del puente", () => {
       "herramienta zoom",
       "alto 100",
       "atajo Ctrl+s",
+      "geometría x=10",
       "error unknown-message",
     ]);
   });

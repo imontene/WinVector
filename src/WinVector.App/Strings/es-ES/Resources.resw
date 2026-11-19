@@ -196,9 +196,6 @@
   <data name="PropertiesTitle.Text" xml:space="preserve">
     <value>Propiedades</value>
   </data>
-  <data name="PropertiesEmpty.Text" xml:space="preserve">
-    <value>Selecciona un objeto para ver y cambiar sus propiedades.</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Acerca de WinVector</value>
   </data>
@@ -440,5 +437,35 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="HistoryActionArtboard" xml:space="preserve">
     <value>cambiar la mesa de trabajo</value>
+  </data>
+  <data name="HistoryActionTransform" xml:space="preserve">
+    <value>transformar</value>
+  </data>
+  <data name="GeometryTitle.Text" xml:space="preserve">
+    <value>Posición y tamaño</value>
+  </data>
+  <data name="SelectionX.Header" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="SelectionY.Header" xml:space="preserve">
+    <value>Y</value>
+  </data>
+  <data name="SelectionWidth.Header" xml:space="preserve">
+    <value>Ancho</value>
+  </data>
+  <data name="SelectionHeight.Header" xml:space="preserve">
+    <value>Alto</value>
+  </data>
+  <data name="SelectionRotation.Header" xml:space="preserve">
+    <value>Giro (°)</value>
+  </data>
+  <data name="LockAspectRatio.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Mantener la proporción</value>
+  </data>
+  <data name="LockAspectRatio.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Mantener la proporción</value>
+  </data>
+  <data name="GeometryHint.Text" xml:space="preserve">
+    <value>En unidades del documento (las del viewBox). Intro aplica el valor; las flechas lo suben y lo bajan. Con varios objetos, los valores son los del conjunto.</value>
   </data>
 </root>
