@@ -48,6 +48,20 @@ public sealed class MainViewModelBridgeTests : IDisposable
     }
 
     [TestMethod]
+    public async Task UnDocumentoAbiertoAntesDeQueCargueElMotorSeCargaYSeActivaAlCargar()
+    {
+        _viewModel.OpenDocument("Ejemplo", "<svg/>");
+
+        await ReadyAsync();
+
+        // El ping se envía en paralelo; su posición depende de cuándo responde el motor.
+        Assert.AreEqual(
+            "document.load d1 | document.load d2 | document.activate d2",
+            string.Join(" | ", _engine.Commands.Where(c => c != "app.ping")));
+        Assert.AreEqual("d2", _engine.ActiveDocument);
+    }
+
+    [TestMethod]
     public async Task UnaPestañaNuevaSeCargaYSeActiva()
     {
         await ReadyAsync();

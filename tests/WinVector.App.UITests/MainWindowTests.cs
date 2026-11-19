@@ -148,6 +148,12 @@ public sealed class MainWindowTests
             TestContext.WriteLine($"Pestañas: {Tabs().Length}");
             TestContext.WriteLine($"Latencia (motor listo): '{Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault}'");
             TestContext.WriteLine($"Con una conexión nueva de UI Automation, el texto {(freshText is null ? "tampoco aparece" : "sí aparece")}");
+            var tabs = Tabs();
+            TestContext.WriteLine("Pestañas seleccionadas: " + string.Join(", ", tabs.Select(t =>
+                $"{t.Name}={t.Patterns.SelectionItem.PatternOrDefault?.IsSelected.ValueOrDefault}")));
+            tabs[^1].Click();
+            var afterClick = Retry.WhileNull(() => Session.FindSampleText(), TimeSpan.FromSeconds(5)).Result;
+            TestContext.WriteLine($"Tras pulsar la pestaña del ejemplo, el texto {(afterClick is null ? "sigue sin aparecer" : "aparece")}");
         }
 
         Assert.IsNotNull(shown, "El documento abierto antes de cargar el motor no se muestra.");
