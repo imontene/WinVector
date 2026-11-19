@@ -154,6 +154,17 @@ public sealed class MainWindowTests
             tabs[^1].Click();
             var afterClick = Retry.WhileNull(() => Session.FindSampleText(), TimeSpan.FromSeconds(5)).Result;
             TestContext.WriteLine($"Tras pulsar la pestaña del ejemplo, el texto {(afterClick is null ? "sigue sin aparecer" : "aparece")}");
+
+            // TEMPORAL: captura reducida en el registro para ver si el documento se pinta.
+            using var screen = FlaUI.Core.Capturing.Capture.Screen().Bitmap;
+            using var small = new System.Drawing.Bitmap(screen, screen.Width * 3 / 4, screen.Height * 3 / 4);
+            using var stream = new MemoryStream();
+            small.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+            var base64 = Convert.ToBase64String(stream.ToArray());
+            for (var i = 0; i < base64.Length; i += 4000)
+            {
+                TestContext.WriteLine($"CAPTURA:{base64.AsSpan(i, Math.Min(4000, base64.Length - i))}");
+            }
         }
 
         Assert.IsNotNull(shown, "El documento abierto antes de cargar el motor no se muestra.");
