@@ -9,3 +9,4 @@
 export * from "./selectTool";
 export * from "./modifiers";
 export * from "./navigation";
+export * from "./shortcuts";

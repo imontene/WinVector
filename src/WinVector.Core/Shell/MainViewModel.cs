@@ -506,6 +506,50 @@ public sealed partial class MainViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>
+    /// Ejecuta un atajo de teclado que el motor ha recibido con el lienzo enfocado. Con el lienzo
+    /// enfocado, los aceleradores de los menús no se disparan; el motor atiende los suyos (deshacer,
+    /// zoom, seleccionar todo) y envía aquí los de la ventana.
+    /// </summary>
+    /// <returns>False si el atajo no corresponde a ninguna orden.</returns>
+    public async Task<bool> HandleShortcutAsync(KeyboardShortcut shortcut)
+    {
+        ArgumentNullException.ThrowIfNull(shortcut);
+        if (!shortcut.CtrlKey || shortcut.AltKey)
+        {
+            return false;
+        }
+
+        switch (shortcut.Key, shortcut.ShiftKey)
+        {
+            case ("n", false):
+                NewDocument();
+                break;
+            case ("n", true):
+                await NewDocumentWithSizeAsync();
+                break;
+            case ("o", false):
+                await OpenAsync();
+                break;
+            case ("s", false):
+                await SaveAsync();
+                break;
+            case ("s", true):
+                await SaveAsAsync();
+                break;
+            case ("w", false):
+                await RequestCloseDocumentAsync(SelectedDocument);
+                break;
+            case ("r", false):
+                ShowRulers = !ShowRulers;
+                break;
+            default:
+                return false;
+        }
+
+        return true;
+    }
+
     partial void OnShowRulersChanged(bool value) => SendViewOptions();
 
     partial void OnShowGridChanged(bool value) => SendViewOptions();
@@ -555,6 +599,7 @@ public sealed partial class MainViewModel : ObservableObject
             bridge.Subscribe(BridgeEvents.ViewportChanged, OnViewportChanged),
             bridge.Subscribe(BridgeEvents.ToolChanged, OnToolChanged),
             bridge.Subscribe(BridgeEvents.ArtboardChanged, OnArtboardChanged),
+            bridge.Subscribe(BridgeEvents.KeyboardShortcut, shortcut => _ = HandleShortcutAsync(shortcut)),
         };
         return new CompositeSubscription(subscriptions, () =>
         {

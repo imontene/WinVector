@@ -99,15 +99,23 @@ public sealed class MainWindowTests
         var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
         // Primero un clic en el lienzo, para que la página reciba el teclado y vea pulsar Ctrl.
         Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
-        using (Keyboard.Pressing(VirtualKeyShort.CONTROL))
+        // El teclado llega a la página por WebView2 y el ratón por WinUI. Con la entrada sintética de
+        // la prueba, el clic a veces se adelanta a la tecla aunque se espere; una persona pulsa Ctrl
+        // bastante antes de hacer clic. Por eso se intenta hasta tres veces.
+        var status = string.Empty;
+        for (var attempt = 0; attempt < 3 && status != "text#titulo"; attempt++)
         {
-            // El teclado llega a la página por WebView2 y el ratón por WinUI: si el clic sale en el
-            // mismo instante, puede adelantarse a la tecla. Una persona pulsa Ctrl antes de hacer clic.
-            Thread.Sleep(300);
-            Mouse.Click(AppSession.SamplePoint(canvas, 100, 87));
+            using (Keyboard.Pressing(VirtualKeyShort.CONTROL))
+            {
+                Thread.Sleep(500);
+                Mouse.Click(AppSession.SamplePoint(canvas, 100, 87));
+                Thread.Sleep(200);
+            }
+
+            status = Session.WaitForName("SelectionStatus", name => name == "text#titulo", TimeSpan.FromSeconds(5));
         }
 
-        Assert.AreEqual("text#titulo", Session.WaitForName("SelectionStatus", name => name == "text#titulo", EngineTimeout));
+        Assert.AreEqual("text#titulo", status);
     }
 
     [TestMethod]

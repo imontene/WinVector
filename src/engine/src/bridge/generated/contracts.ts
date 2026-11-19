@@ -134,6 +134,18 @@ export interface HistoryState {
   readonly redoAction: string | null;
 }
 
+/** Atajo de teclado pulsado con el lienzo enfocado que el motor no atiende. */
+export interface KeyboardShortcut {
+  /** Tecla, como KeyboardEvent.key en minúsculas ("s", "n", "f4"). */
+  readonly key: string;
+  /** Ctrl pulsado. */
+  readonly ctrlKey: boolean;
+  /** Mayús pulsado. */
+  readonly shiftKey: boolean;
+  /** Alt pulsado. */
+  readonly altKey: boolean;
+}
+
 /** Rectángulo alineado con los ejes. */
 export interface Rect {
   /** Borde izquierdo. */
@@ -258,6 +270,8 @@ export interface BridgeEvents {
   readonly "tool.changed": ToolState;
   /** El tamaño de la mesa de trabajo de un documento es nuevo o ha cambiado (también al cargarlo). */
   readonly "artboard.changed": Artboard;
+  /** Con el lienzo enfocado, WebView2 entrega el teclado a la página y los atajos de la ventana no se disparan: el motor atiende los suyos (deshacer, zoom, seleccionar todo) y envía los demás a la aplicación. */
+  readonly "keyboard.shortcut": KeyboardShortcut;
 }
 
 export type BridgeCommandName = keyof BridgeCommands;
@@ -287,6 +301,7 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "viewport.changed",
   "tool.changed",
   "artboard.changed",
+  "keyboard.shortcut",
 ];
 
 /** Campos comunes a todos los mensajes. */

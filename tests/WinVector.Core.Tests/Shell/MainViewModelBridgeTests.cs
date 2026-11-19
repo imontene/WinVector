@@ -313,6 +313,22 @@ public sealed class MainViewModelBridgeTests : IDisposable
     }
 
     [TestMethod]
+    public async Task LosAtajosQueEnviaElLienzoEjecutanLasOrdenesDeLaVentana()
+    {
+        await ReadyAsync();
+
+        _transport.SendEvent("keyboard.shortcut", """{"key":"n","ctrlKey":true,"shiftKey":false,"altKey":false}""");
+        Assert.HasCount(2, _viewModel.Documents);
+
+        _transport.SendEvent("keyboard.shortcut", """{"key":"r","ctrlKey":true,"shiftKey":false,"altKey":false}""");
+        Assert.IsFalse(_viewModel.ShowRulers);
+
+        Assert.IsFalse(await _viewModel.HandleShortcutAsync(new KeyboardShortcut("q", true, false, false)));
+        Assert.IsFalse(await _viewModel.HandleShortcutAsync(new KeyboardShortcut("n", false, false, false)));
+        Assert.HasCount(2, _viewModel.Documents);
+    }
+
+    [TestMethod]
     public async Task MideLaLatenciaDelPuente()
     {
         _engine.BeforePingResponse = () => _time.Advance(TimeSpan.FromMilliseconds(4));

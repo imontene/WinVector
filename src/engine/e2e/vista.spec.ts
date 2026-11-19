@@ -212,3 +212,79 @@ test("navegar no cambia el documento", async ({ page }) => {
     .poll(() => lastSent(page))
     .toMatchObject({ id: "c-ser", payload: { svg: sample, revision: 0 } });
 });
+
+test("con el lienzo enfocado, el motor atiende el zoom y deshacer y envía los demás atajos", async ({
+  page,
+}) => {
+  await page.locator("#sol").click();
+
+  await page.keyboard.press("Control+1");
+  await expect.poll(() => lastZoom(page)).toBe(1);
+  await page.keyboard.press("Control+=");
+  await expect.poll(() => lastZoom(page)).toBe(1.5);
+  await page.keyboard.press("Control+-");
+  await expect.poll(() => lastZoom(page)).toBe(1);
+
+  await hostSend(
+    page,
+    command("c-ab", "artboard.set", {
+      documentId: "d1",
+      width: "100",
+      height: "600",
+      viewBox: null,
+    }),
+  );
+  await expect.poll(() => lastSent(page)).toMatchObject({ id: "c-ab", ok: true });
+  await page.keyboard.press("Control+Z");
+  await expect
+    .poll(
+      async () => (await sent(page)).filter((m) => m.name === "artboard.changed").at(-1)?.payload,
+    )
+    .toMatchObject({ width: "800" });
+  await page.keyboard.press("Control+Shift+Z");
+  await expect
+    .poll(
+      async () => (await sent(page)).filter((m) => m.name === "artboard.changed").at(-1)?.payload,
+    )
+    .toMatchObject({ width: "100" });
+
+  await page.keyboard.press("Control+S");
+  await page.keyboard.press("Control+Shift+N");
+  await page.keyboard.press("F1");
+  await page.keyboard.press("Control+A");
+  await page.keyboard.press("s");
+  const forwarded = (await sent(page))
+    .filter((m) => m.name === "keyboard.shortcut")
+    .map((m) => m.payload);
+  expect(forwarded).toEqual([
+    { key: "s", ctrlKey: true, shiftKey: false, altKey: false },
+    { key: "n", ctrlKey: true, shiftKey: true, altKey: false },
+    { key: "f1", ctrlKey: false, shiftKey: false, altKey: false },
+  ]);
+});
+
+test("un arrastre sin movimientos intermedios termina en la posición del pointerup", async ({
+  page,
+}) => {
+  // En WebView2, los pointermove de un arrastre rápido pueden no llegar; el pointerup sí.
+  await hostSend(page, command("c-hand", "tool.select", { tool: "hand" }));
+  await expect.poll(() => lastSent(page)).toMatchObject({ id: "c-hand", ok: true });
+  const before = await artboard(page);
+  await page.evaluate(() => {
+    const target = document.getElementById("workspace");
+    const event = (type: string, x: number) =>
+      new PointerEvent(type, {
+        clientX: x,
+        clientY: 300,
+        button: 0,
+        buttons: type === "pointerup" ? 0 : 1,
+        pointerId: 1,
+        pointerType: "mouse",
+        bubbles: true,
+        composed: true,
+      });
+    target?.dispatchEvent(event("pointerdown", 500));
+    target?.dispatchEvent(event("pointerup", 380));
+  });
+  expect((await artboard(page)).x - before.x).toBeCloseTo(-120, 0);
+});

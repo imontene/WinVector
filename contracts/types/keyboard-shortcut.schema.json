@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KeyboardShortcut",
+  "description": "Atajo de teclado pulsado con el lienzo enfocado que el motor no atiende.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "key",
+    "ctrlKey",
+    "shiftKey",
+    "altKey"
+  ],
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Tecla, como KeyboardEvent.key en minúsculas (\"s\", \"n\", \"f4\")."
+    },
+    "ctrlKey": {
+      "type": "boolean",
+      "description": "Ctrl pulsado."
+    },
+    "shiftKey": {
+      "type": "boolean",
+      "description": "Mayús pulsado."
+    },
+    "altKey": {
+      "type": "boolean",
+      "description": "Alt pulsado."
+    }
+  }
+}

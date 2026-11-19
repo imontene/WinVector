@@ -1,5 +1,11 @@
 import { version as engineVersion } from "../package.json";
-import { BridgeCommandError, EngineBridge, detectTransport, type ToolName } from "./bridge";
+import {
+  BridgeCommandError,
+  EngineBridge,
+  detectTransport,
+  type ToolName,
+  type ZoomAction,
+} from "./bridge";
 import {
   applyArtboard,
   DocumentManager,
@@ -13,8 +19,14 @@ import type { Rect } from "./geometry";
 import { EMPTY_SCENE, Overlay } from "./overlay";
 import sampleSvg from "./sample.svg?raw";
 import { describeElement, selectionBounds } from "./selection";
-import { cursorForTool, installNavigation, installSelectTool, trackModifiers } from "./tools";
-import { Guides } from "./viewport";
+import {
+  cursorForTool,
+  installNavigation,
+  installSelectTool,
+  installShortcuts,
+  trackModifiers,
+} from "./tools";
+import { Guides, type Viewport } from "./viewport";
 
 const workspace = document.getElementById("workspace");
 if (!workspace) {
@@ -203,13 +215,17 @@ bridge.handle("history.redo", ({ documentId }) =>
   }),
 );
 
+function zoom(viewport: Viewport, action: ZoomAction): void {
+  if (action === "in") viewport.zoomIn();
+  else if (action === "out") viewport.zoomOut();
+  else if (action === "fit") viewport.fit();
+  else viewport.actualSize();
+}
+
 bridge.handle("view.zoom", ({ documentId, action }) =>
   withDocumentErrors(() => {
     const { viewport } = documents.open(documentId);
-    if (action === "in") viewport.zoomIn();
-    else if (action === "out") viewport.zoomOut();
-    else if (action === "fit") viewport.fit();
-    else viewport.actualSize();
+    zoom(viewport, action);
     return { documentId, zoom: viewport.zoom };
   }),
 );
@@ -237,6 +253,17 @@ bridge.handle("artboard.set", ({ documentId, width, height, viewBox }) =>
 );
 
 trackModifiers(window);
+installShortcuts(window, {
+  undo: () => documents.active?.document.history.undo(),
+  redo: () => documents.active?.document.history.redo(),
+  zoom: (action) => {
+    const viewport = documents.active?.viewport;
+    if (viewport) zoom(viewport, action);
+  },
+  forward: (shortcut) => {
+    bridge.emit("keyboard.shortcut", shortcut);
+  },
+});
 installNavigation(window, {
   viewport: () => documents.active?.viewport ?? null,
   tool: () => activeTool,

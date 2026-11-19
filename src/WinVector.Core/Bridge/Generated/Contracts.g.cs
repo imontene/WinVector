@@ -143,6 +143,17 @@ public sealed record HistoryState(
     [property: JsonPropertyName("undoAction")] string? UndoAction,
     [property: JsonPropertyName("redoAction")] string? RedoAction);
 
+/// <summary>Atajo de teclado pulsado con el lienzo enfocado que el motor no atiende.</summary>
+/// <param name="Key">Tecla, como KeyboardEvent.key en minúsculas ("s", "n", "f4").</param>
+/// <param name="CtrlKey">Ctrl pulsado.</param>
+/// <param name="ShiftKey">Mayús pulsado.</param>
+/// <param name="AltKey">Alt pulsado.</param>
+public sealed record KeyboardShortcut(
+    [property: JsonPropertyName("key")] string Key,
+    [property: JsonPropertyName("ctrlKey")] bool CtrlKey,
+    [property: JsonPropertyName("shiftKey")] bool ShiftKey,
+    [property: JsonPropertyName("altKey")] bool AltKey);
+
 /// <summary>Rectángulo alineado con los ejes.</summary>
 /// <param name="X">Borde izquierdo.</param>
 /// <param name="Y">Borde superior.</param>
@@ -329,6 +340,9 @@ public static class BridgeEvents
 
     /// <summary>El tamaño de la mesa de trabajo de un documento es nuevo o ha cambiado (también al cargarlo).</summary>
     public static readonly BridgeEvent<Artboard> ArtboardChanged = new("artboard.changed");
+
+    /// <summary>Con el lienzo enfocado, WebView2 entrega el teclado a la página y los atajos de la ventana no se disparan: el motor atiende los suyos (deshacer, zoom, seleccionar todo) y envía los demás a la aplicación.</summary>
+    public static readonly BridgeEvent<KeyboardShortcut> KeyboardShortcut = new("keyboard.shortcut");
 }
 
 /// <summary>
@@ -352,6 +366,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(EngineReady))]
 [JsonSerializable(typeof(FilesDropped))]
 [JsonSerializable(typeof(HistoryState))]
+[JsonSerializable(typeof(KeyboardShortcut))]
 [JsonSerializable(typeof(Rect))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]

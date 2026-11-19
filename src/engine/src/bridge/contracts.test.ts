@@ -227,6 +227,13 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "event",
+    id: "e10",
+    name: "keyboard.shortcut",
+    payload: { key: "s", ctrlKey: true, shiftKey: false, altKey: false },
+  },
+  {
+    ...base,
+    kind: "event",
     id: "e4",
     name: "error",
     payload: { code: "unknown-message", message: "Mensaje desconocido", relatedId: null },
@@ -302,6 +309,8 @@ function summarize(message: BridgeMessage): string {
       return `herramienta ${message.payload.tool}`;
     case "artboard.changed":
       return `alto ${String(message.payload.height)}`;
+    case "keyboard.shortcut":
+      return `atajo ${message.payload.ctrlKey ? "Ctrl+" : ""}${message.payload.key}`;
     case "error":
       return `error ${message.payload.code}`;
   }
@@ -343,6 +352,7 @@ describe("contrato del puente", () => {
       "zoom 2",
       "herramienta zoom",
       "alto 100",
+      "atajo Ctrl+s",
       "error unknown-message",
     ]);
   });

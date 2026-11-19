@@ -92,7 +92,9 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     host.showMarquee(press.marquee);
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (event: PointerEvent) => {
+    // La posición final llega siempre con el pointerup, aunque se hayan perdido movimientos.
+    onPointerMove(event);
     const current = press;
     press = null;
     const active = host.active();

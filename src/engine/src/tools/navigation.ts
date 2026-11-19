@@ -166,6 +166,9 @@ export function installNavigation(target: Window, host: NavigationHost): () => v
   };
 
   const onPointerUp = (event: PointerEvent) => {
+    // La posición final llega siempre con el pointerup, aunque se hayan perdido movimientos (el
+    // navegador agrupa los pointermove por fotograma y un gesto rápido puede acabar entre dos).
+    if (gesture && gesture.kind !== "pinch") onPointerMove(event);
     touches.delete(event.pointerId);
     const current = gesture;
     if (!current) return;
