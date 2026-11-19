@@ -35,3 +35,45 @@ body {
 }
 
 /* La mesa de trabajo se dibuja dentro del shadow root del documento (src/document). */
+
+/* Capa de superposición (src/overlay): fuera del documento y transparente al puntero. */
+:root {
+  --selection: #0067c0;
+  --selection-fill: rgb(0 103 192 / 10%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --selection: #4cc2ff;
+    --selection-fill: rgb(76 194 255 / 12%);
+  }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--selection);
+  stroke-width: 1;
+}
+
+.overlay-item {
+  stroke-width: 1.5;
+}
+
+.overlay-bounds {
+  stroke-dasharray: 4 3;
+}
+
+.overlay-scope {
+  stroke-dasharray: 2 4;
+  opacity: 0.7;
+}
+
+.overlay-marquee {
+  fill: var(--selection-fill);
+}

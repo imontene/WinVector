@@ -80,7 +80,7 @@ public sealed class MainViewModelBridgeTests : IDisposable
         await ReadyAsync();
         _viewModel.NewDocument();
         await _viewModel.EngineWork;
-        _transport.SendEvent("selection.changed", """{"documentId":"d2","items":[{"id":"sol","tagName":"circle"}]}""");
+        _transport.SendEvent("selection.changed", """{"documentId":"d2","items":[{"id":"sol","tagName":"circle"}],"bounds":null,"scope":null}""");
 
         _viewModel.SelectedDocument = _viewModel.Documents[0];
         await _viewModel.EngineWork;
@@ -234,6 +234,19 @@ public sealed class MainViewModelBridgeTests : IDisposable
     }
 
     [TestMethod]
+    public async Task SeleccionarTodoLoPideAlMotorParaElDocumentoActivo()
+    {
+        Assert.IsFalse(_viewModel.SelectAllCommand.CanExecute(null), "Sin motor no hay nada que seleccionar.");
+        await ReadyAsync();
+        _engine.Commands.Clear();
+
+        Assert.IsTrue(_viewModel.SelectAllCommand.CanExecute(null));
+        await _viewModel.SelectAllAsync();
+
+        Assert.AreEqual("selection.selectAll d1", string.Join(" | ", _engine.Commands));
+    }
+
+    [TestMethod]
     public async Task MideLaLatenciaDelPuente()
     {
         _engine.BeforePingResponse = () => _time.Advance(TimeSpan.FromMilliseconds(4));
@@ -266,14 +279,16 @@ public sealed class MainViewModelBridgeTests : IDisposable
     }
 
     [TestMethod]
-    [DataRow("""{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}]}""", "circle#sol")]
-    [DataRow("""{"documentId":"d1","items":[{"id":null,"tagName":"path"}]}""", "path")]
-    [DataRow("""{"documentId":"d1","items":[{"id":"a","tagName":"rect"},{"id":"b","tagName":"rect"}]}""", "2 objetos")]
-    [DataRow("""{"documentId":"d1","items":[]}""", "")]
-    [DataRow("""{"documentId":"otro","items":[{"id":"x","tagName":"rect"}]}""", "previo")]
+    [DataRow("""{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}],"bounds":null,"scope":null}""", "circle#sol")]
+    [DataRow("""{"documentId":"d1","items":[{"id":null,"tagName":"path"}],"bounds":null,"scope":null}""", "path")]
+    [DataRow("""{"documentId":"d1","items":[{"id":"a","tagName":"rect"},{"id":"b","tagName":"rect"}],"bounds":null,"scope":null}""", "2 objetos")]
+    [DataRow("""{"documentId":"d1","items":[],"bounds":null,"scope":null}""", "")]
+    [DataRow("""{"documentId":"otro","items":[{"id":"x","tagName":"rect"}],"bounds":null,"scope":null}""", "previo")]
+    [DataRow("""{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}],"bounds":{"x":1,"y":2,"width":3,"height":4},"scope":{"id":"fondo","tagName":"g"}}""", "circle#sol en g#fondo")]
+    [DataRow("""{"documentId":"d1","items":[],"bounds":null,"scope":{"id":null,"tagName":"g"}}""", "En g")]
     public void ResumeLaSeleccionDelDocumentoActivo(string payload, string expected)
     {
-        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"previo","tagName":"g"}]}""");
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"previo","tagName":"g"}],"bounds":null,"scope":null}""");
         _transport.SendEvent("selection.changed", payload);
 
         Assert.AreEqual(expected == "previo" ? "g#previo" : expected, _viewModel.SelectionSummary);
@@ -283,7 +298,7 @@ public sealed class MainViewModelBridgeTests : IDisposable
     public void AlDesconectarseDejaDeActualizarse()
     {
         _attachment.Dispose();
-        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}]}""");
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}],"bounds":null,"scope":null}""");
 
         Assert.AreEqual(string.Empty, _viewModel.SelectionSummary);
         Assert.IsFalse(_viewModel.IsEngineReady);

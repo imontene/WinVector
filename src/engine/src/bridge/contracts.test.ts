@@ -100,7 +100,12 @@ const examples: readonly BridgeMessage[] = [
     kind: "event",
     id: "e2",
     name: "selection.changed",
-    payload: { documentId: "d1", items: [{ id: "sol", tagName: "circle" }] },
+    payload: {
+      documentId: "d1",
+      items: [{ id: "sol", tagName: "circle" }],
+      bounds: { x: 248, y: 44, width: 104, height: 104 },
+      scope: { id: "fondo", tagName: "g" },
+    },
   },
   {
     ...base,
@@ -115,6 +120,13 @@ const examples: readonly BridgeMessage[] = [
     id: "e5",
     name: "files.dropped",
     payload: { count: 2 },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c8",
+    name: "selection.selectAll",
+    payload: { documentId: "d1" },
   },
   {
     ...base,
@@ -173,7 +185,8 @@ function summarize(message: BridgeMessage): string {
       case "document.activate":
         return `activo en la revisión ${String(message.payload.revision)}`;
       case "document.close":
-        return `cerrado ${message.payload.documentId}`;
+      case "selection.selectAll":
+        return `${message.name} ${message.payload.documentId}`;
       case "history.undo":
       case "history.redo":
         return `deshacer: ${String(message.payload.undoAction)}`;
@@ -188,6 +201,7 @@ function summarize(message: BridgeMessage): string {
       case "document.serialize":
       case "document.activate":
       case "document.close":
+      case "selection.selectAll":
       case "history.undo":
       case "history.redo":
         return `${message.name} ${message.payload.documentId}`;
@@ -197,7 +211,7 @@ function summarize(message: BridgeMessage): string {
     case "engine.ready":
       return `motor ${message.payload.engineVersion}`;
     case "selection.changed":
-      return `${String(message.payload.items.length)} seleccionados en ${message.payload.documentId}`;
+      return `${String(message.payload.items.length)} seleccionados en ${message.payload.documentId}, dentro de ${String(message.payload.scope?.id)}`;
     case "document.changed":
       return `revisión ${String(message.payload.revision)}`;
     case "files.dropped":
@@ -230,9 +244,10 @@ describe("contrato del puente", () => {
       "document.close d1",
       "document.close falló: unknown-document",
       "motor 0.0.0",
-      "1 seleccionados en d1",
+      "1 seleccionados en d1, dentro de fondo",
       "revisión 4",
       "2 archivos soltados",
+      "selection.selectAll d1",
       "history.undo d1",
       "deshacer: move",
       "se puede deshacer: false",

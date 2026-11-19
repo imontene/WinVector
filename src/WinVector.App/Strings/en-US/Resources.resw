@@ -376,4 +376,10 @@ Licensed under the Apache License 2.0.</value>
   <data name="HistoryActionEdit" xml:space="preserve">
     <value>edit</value>
   </data>
+  <data name="SelectionInGroup" xml:space="preserve">
+    <value>{0} in {1}</value>
+  </data>
+  <data name="SelectionInsideGroup" xml:space="preserve">
+    <value>In {0}</value>
+  </data>
 </root>

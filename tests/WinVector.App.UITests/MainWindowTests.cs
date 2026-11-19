@@ -83,26 +83,85 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
-    public void ClicEnElSolLoSelecciona()
+    public void ClicEnElSolSeleccionaSuGrupo()
     {
+        // Un clic selecciona el objeto de nivel superior: el sol está dentro de g#fondo.
         ClickSample(300, 96);
 
-        Assert.AreEqual("circle#sol", Session.WaitForName("SelectionStatus", name => name == "circle#sol", EngineTimeout));
+        Assert.AreEqual("g#fondo", Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout));
     }
 
     [TestMethod]
-    public void ClicEnElTituloSeleccionaElTextoEntero()
+    public void CtrlClicEnElTituloSeleccionaElTextoEntero()
     {
-        ClickSample(100, 87);
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        // Primero un clic en el lienzo, para que la página reciba el teclado y vea pulsar Ctrl.
+        Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
+        // El teclado llega a la página por WebView2 y el ratón por WinUI. Con la entrada sintética de
+        // la prueba, el clic a veces se adelanta a la tecla aunque se espere; una persona pulsa Ctrl
+        // bastante antes de hacer clic. Por eso se intenta hasta tres veces.
+        var status = string.Empty;
+        for (var attempt = 0; attempt < 3 && status != "text#titulo"; attempt++)
+        {
+            using (Keyboard.Pressing(VirtualKeyShort.CONTROL))
+            {
+                Thread.Sleep(500);
+                Mouse.Click(AppSession.SamplePoint(canvas, 100, 87));
+                Thread.Sleep(200);
+            }
 
-        Assert.AreEqual("text#titulo", Session.WaitForName("SelectionStatus", name => name == "text#titulo", EngineTimeout));
+            status = Session.WaitForName("SelectionStatus", name => name == "text#titulo", TimeSpan.FromSeconds(5));
+        }
+
+        Assert.AreEqual("text#titulo", status);
+    }
+
+    [TestMethod]
+    public void DobleClicEntraEnElGrupoYEscSale()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.DoubleClick(AppSession.SamplePoint(canvas, 300, 96));
+
+        // "circle#sol en g#fondo": el texto que une los dos depende del idioma.
+        static bool InsideGroup(string name) =>
+            name.StartsWith("circle#sol", StringComparison.Ordinal) && name.EndsWith("g#fondo", StringComparison.Ordinal);
+        var inside = Session.WaitForName("SelectionStatus", InsideGroup, EngineTimeout);
+        Assert.IsTrue(InsideGroup(inside), $"El doble clic no entró en el grupo: {inside}");
+
+        // Esc deselecciona y sigue dentro del grupo ("En g#fondo")...
+        Keyboard.Press(VirtualKeyShort.ESCAPE);
+        static bool OnlyGroup(string name) =>
+            !name.StartsWith("circle#sol", StringComparison.Ordinal) && name.EndsWith(" g#fondo", StringComparison.Ordinal);
+        var deselected = Session.WaitForName("SelectionStatus", OnlyGroup, EngineTimeout);
+        Assert.IsTrue(OnlyGroup(deselected), $"El primer Esc no deseleccionó: {deselected}");
+
+        // ...y otro Esc sale del grupo y lo selecciona.
+        Keyboard.Press(VirtualKeyShort.ESCAPE);
+        Assert.AreEqual("g#fondo", Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout));
+    }
+
+    [TestMethod]
+    public void CtrlAEnElLienzoSeleccionaTodo()
+    {
+        ClickSample(300, 96);
+        Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout);
+
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
+
+        // "2 objetos": g#fondo y g#contenido.
+        var all = Session.WaitForName("SelectionStatus", name => name.StartsWith('2'), EngineTimeout);
+        Assert.StartsWith("2", all, "Ctrl+A no seleccionó los dos grupos del ejemplo.");
     }
 
     [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);
-        Session.WaitForName("SelectionStatus", name => name == "circle#sol", EngineTimeout);
+        Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout);
 
         var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
         Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));

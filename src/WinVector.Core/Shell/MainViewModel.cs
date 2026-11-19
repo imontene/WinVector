@@ -388,6 +388,26 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanRedo), AllowConcurrentExecutions = true)]
     public Task RedoAsync() => StepHistoryAsync(BridgeCommands.HistoryRedo);
 
+    /// <summary>Selecciona todos los objetos del grupo actual del documento activo.</summary>
+    /// <remarks>
+    /// Con el lienzo enfocado, el motor atiende Ctrl+A por su cuenta; el menú no lleva el atajo para
+    /// no quitárselo a los cuadros de texto de la ventana.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(CanSelectAll))]
+    public Task SelectAllAsync()
+    {
+        if (SelectedDocument is not { IsLoaded: true } document)
+        {
+            return Task.CompletedTask;
+        }
+
+        Enqueue(() => SendAsync(BridgeCommands.SelectionSelectAll, new DocumentRef(document.DocumentId)));
+        return _engineWork;
+    }
+
+    /// <summary>True si el documento activo está cargado en el motor.</summary>
+    public bool CanSelectAll => SelectedDocument is { IsLoaded: true };
+
     private Task StepHistoryAsync(BridgeCommand<DocumentRef, HistoryState> command)
     {
         if (SelectedDocument is not { IsLoaded: true } document)
@@ -433,7 +453,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedDocumentChanged(DocumentTabViewModel? value)
     {
         SelectionSummary = string.Empty;
-        NotifyHistoryChanged();
+        NotifyEditCommandsChanged();
         if (value is not null && IsEngineReady)
         {
             Enqueue(() => ActivateAsync(value));
@@ -494,7 +514,7 @@ public sealed partial class MainViewModel : ObservableObject
         document.History = DocumentHistory.Empty;
         if (ReferenceEquals(document, SelectedDocument))
         {
-            NotifyHistoryChanged();
+            NotifyEditCommandsChanged();
         }
 
         if (!result.Loaded)
@@ -575,12 +595,13 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        SelectionSummary = selection.Items.Count switch
+        var items = selection.Items.Count switch
         {
             0 => string.Empty,
             1 => Describe(selection.Items[0]),
             var count => _texts.MultipleSelection(count),
         };
+        SelectionSummary = selection.Scope is { } group ? _texts.SelectionInGroup(items, Describe(group)) : items;
     }
 
     private void OnDocumentChanged(DocumentState state)
@@ -603,19 +624,21 @@ public sealed partial class MainViewModel : ObservableObject
         document.History = DocumentHistory.From(state);
         if (ReferenceEquals(document, SelectedDocument))
         {
-            NotifyHistoryChanged();
+            NotifyEditCommandsChanged();
         }
     }
 
-    /// <summary>Actualiza las órdenes de deshacer y rehacer con el estado del documento activo.</summary>
-    private void NotifyHistoryChanged()
+    /// <summary>Actualiza las órdenes del menú Editar con el estado del documento activo.</summary>
+    private void NotifyEditCommandsChanged()
     {
         OnPropertyChanged(nameof(CanUndo));
         OnPropertyChanged(nameof(CanRedo));
         OnPropertyChanged(nameof(UndoLabel));
         OnPropertyChanged(nameof(RedoLabel));
+        OnPropertyChanged(nameof(CanSelectAll));
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
+        SelectAllCommand.NotifyCanExecuteChanged();
     }
 
     private static string Describe(SelectedElement element) =>

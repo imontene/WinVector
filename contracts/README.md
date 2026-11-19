@@ -26,8 +26,8 @@ Archivos generados (no se editan a mano):
 Ejemplo de comando y su respuesta:
 
 ```json
-{ "kind": "command", "id": "c1", "name": "app.ping", "protocolVersion": 1, "payload": { "sentAt": 1234.5 } }
-{ "kind": "response", "id": "c1", "name": "app.ping", "protocolVersion": 1, "ok": true, "payload": { "sentAt": 1234.5, "receivedAt": 1236 } }
+{ "kind": "command", "id": "c1", "name": "app.ping", "protocolVersion": 3, "payload": { "sentAt": 1234.5 } }
+{ "kind": "response", "id": "c1", "name": "app.ping", "protocolVersion": 3, "ok": true, "payload": { "sentAt": 1234.5, "receivedAt": 1236 } }
 ```
 
 Ejemplo de evento:
@@ -37,8 +37,13 @@ Ejemplo de evento:
   "kind": "event",
   "id": "e7",
   "name": "selection.changed",
-  "protocolVersion": 1,
-  "payload": { "items": [{ "id": "sol", "tagName": "circle" }] }
+  "protocolVersion": 3,
+  "payload": {
+    "documentId": "d1",
+    "items": [{ "id": "sol", "tagName": "circle" }],
+    "bounds": { "x": 248, "y": 44, "width": 104, "height": 104 },
+    "scope": { "id": "fondo", "tagName": "g" }
+  }
 }
 ```
 
@@ -57,17 +62,18 @@ Al cargar, el motor envía `engine.ready` y la aplicación comprueba que la vers
 
 Un único motor gestiona los documentos de todas las pestañas ([ADR 0004](../docs/adr/0004-pestanas-y-motores.md)). La aplicación asigna a cada documento un `documentId` (`d1`, `d2`…) que acompaña a todos los mensajes que se refieren a él:
 
-| Mensaje              | Uso                                                                                                                                                       |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `document.load`      | Entrega un SVG al motor. Si no es válido, la respuesta es correcta pero lleva `loaded: false` y el error con línea y columna, para mostrárselo al usuario |
-| `document.activate`  | Muestra el documento de la pestaña activa y oculta los demás                                                                                              |
-| `document.serialize` | Devuelve el texto para guardar; sin cambios, es idéntico al que se cargó                                                                                  |
-| `document.close`     | Descarta el documento                                                                                                                                     |
-| `document.changed`   | El motor avisa de cada cambio con la revisión del estado nuevo; la aplicación la compara con la guardada para saber si hay cambios sin guardar            |
-| `selection.changed`  | Indica a qué documento pertenece la selección; la aplicación ignora la de documentos que no están activos                                                 |
-| `history.undo`       | Deshace el último paso del documento; responde con el estado del historial                                                                                |
-| `history.redo`       | Rehace el último paso deshecho; responde con el estado del historial                                                                                      |
-| `history.changed`    | El historial ha cambiado: si se puede deshacer o rehacer y qué acción (`move`, `edit`…), que la aplicación traduce para el menú ("Deshacer mover")        |
+| Mensaje               | Uso                                                                                                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `document.load`       | Entrega un SVG al motor. Si no es válido, la respuesta es correcta pero lleva `loaded: false` y el error con línea y columna, para mostrárselo al usuario                                                                 |
+| `document.activate`   | Muestra el documento de la pestaña activa y oculta los demás                                                                                                                                                              |
+| `document.serialize`  | Devuelve el texto para guardar; sin cambios, es idéntico al que se cargó                                                                                                                                                  |
+| `document.close`      | Descarta el documento                                                                                                                                                                                                     |
+| `document.changed`    | El motor avisa de cada cambio con la revisión del estado nuevo; la aplicación la compara con la guardada para saber si hay cambios sin guardar                                                                            |
+| `selection.changed`   | Selección de un documento: los elementos, la caja que los rodea (en unidades del viewBox) y el grupo en el que ha entrado el usuario, si ha entrado en alguno. La aplicación ignora la de documentos que no están activos |
+| `selection.selectAll` | Selecciona todos los objetos del grupo actual (menú Editar)                                                                                                                                                               |
+| `history.undo`        | Deshace el último paso del documento; responde con el estado del historial                                                                                                                                                |
+| `history.redo`        | Rehace el último paso deshecho; responde con el estado del historial                                                                                                                                                      |
+| `history.changed`     | El historial ha cambiado: si se puede deshacer o rehacer y qué acción (`move`, `edit`…), que la aplicación traduce para el menú ("Deshacer mover")                                                                        |
 
 Un comando sobre un documento que no existe responde con el error `unknown-document`. La aplicación encola las órdenes al motor para que lleguen en el orden en que se producen.
 

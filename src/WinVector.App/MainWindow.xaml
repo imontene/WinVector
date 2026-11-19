@@ -168,7 +168,12 @@
                         <MenuFlyoutItem x:Uid="MenuEditPaste" IsEnabled="False" />
                         <MenuFlyoutItem x:Uid="MenuEditDelete" IsEnabled="False" />
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem x:Uid="MenuEditSelectAll" IsEnabled="False" />
+                        <!-- Sin acelerador: Ctrl+A lo atiende el lienzo, y así no se quita a los cuadros de texto. -->
+                        <MenuFlyoutItem
+                            x:Uid="MenuEditSelectAll"
+                            AutomationProperties.AutomationId="MenuEditSelectAll"
+                            Command="{x:Bind ViewModel.SelectAllCommand}"
+                            KeyboardAcceleratorTextOverride="Ctrl+A" />
                     </MenuBarItem>
 
                     <MenuBarItem x:Uid="MenuObject">

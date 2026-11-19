@@ -1,89 +1,46 @@
 import { readFileSync } from "node:fs";
-import { expect, test, type Page } from "@playwright/test";
-
-const sample = readFileSync(new URL("../src/sample.svg", import.meta.url), "utf8");
+import { expect, test } from "@playwright/test";
+import { command, hostSend, lastSent, openWithFakeHost, PROTOCOL, sample, sent } from "./host";
 
 const { version } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
 ) as { version: string };
 
-/**
- * Simula el objeto chrome.webview que WebView2 inyecta en la página, para probar el puente con el
- * bundle real: guarda lo que el motor envía y permite enviarle mensajes como lo haría la aplicación.
- */
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    type Listener = (event: { data: unknown }) => void;
-    const listeners: Listener[] = [];
-    const host = window as unknown as Record<string, unknown>;
-    host.__sent = [];
-    host.__hostSend = (data: unknown) => {
-      listeners.forEach((listener) => {
-        listener({ data });
-      });
-    };
-    host.chrome = {
-      webview: {
-        postMessage: (message: unknown) => {
-          (host.__sent as unknown[]).push(JSON.parse(JSON.stringify(message)));
-        },
-        addEventListener: (_: string, listener: Listener) => listeners.push(listener),
-        removeEventListener: () => undefined,
-      },
-    };
-  });
-  await page.goto("/");
-  // Con aplicación, el motor espera a que esta le entregue los documentos.
-  await hostSend(
-    page,
-    command("c-load", "document.load", { documentId: "d1", name: "Ejemplo", svg: sample }),
-  );
-  await hostSend(page, command("c-activate", "document.activate", { documentId: "d1" }));
-  await expect(page.locator("#workspace svg").first()).toBeVisible();
+  await openWithFakeHost(page);
 });
-
-const command = (id: string, name: string, payload: unknown) => ({
-  kind: "command",
-  id,
-  name,
-  protocolVersion: 2,
-  payload,
-});
-
-const sent = (page: Page) =>
-  page.evaluate(() => (window as unknown as { __sent: Record<string, unknown>[] }).__sent);
-
-const hostSend = (page: Page, data: unknown) =>
-  page.evaluate((d) => {
-    (window as unknown as { __hostSend: (d: unknown) => void }).__hostSend(d);
-  }, data);
-
-const lastSent = async (page: Page) => (await sent(page)).at(-1);
 
 test("anuncia engine.ready al cargar", async ({ page }) => {
   const [first] = await sent(page);
   expect(first).toMatchObject({
     kind: "event",
     name: "engine.ready",
-    protocolVersion: 2,
-    payload: { engineVersion: version, protocolVersion: 2 },
+    protocolVersion: PROTOCOL,
+    payload: { engineVersion: version, protocolVersion: PROTOCOL },
   });
 });
 
-test("al hacer clic en un elemento envía selection.changed", async ({ page }) => {
+test("al hacer clic en un elemento envía selection.changed con su caja", async ({ page }) => {
+  // Un clic selecciona el grupo de nivel superior que contiene el punto (ver seleccion.spec.ts).
   await page.locator("#sol").click();
   expect(await lastSent(page)).toMatchObject({
     name: "selection.changed",
-    payload: { documentId: "d1", items: [{ id: "sol", tagName: "circle" }] },
+    payload: {
+      documentId: "d1",
+      items: [{ id: "fondo", tagName: "g" }],
+      bounds: { x: 0, y: 0, width: 400, height: 300 },
+      scope: null,
+    },
   });
 
-  await page.locator("#titulo").click();
+  await page.locator("#titulo").click({ modifiers: ["Control"] });
   expect(await lastSent(page)).toMatchObject({
     payload: { items: [{ id: "titulo", tagName: "text" }] },
   });
 });
 
 test("al hacer clic fuera del documento vacía la selección", async ({ page }) => {
+  await page.locator("#sol").click();
   await page.mouse.click(5, 5);
   expect(await lastSent(page)).toMatchObject({
     name: "selection.changed",
@@ -96,7 +53,7 @@ test("responde a app.ping", async ({ page }) => {
     kind: "command",
     id: "c1",
     name: "app.ping",
-    protocolVersion: 2,
+    protocolVersion: PROTOCOL,
     payload: { sentAt: 1000 },
   });
   await expect

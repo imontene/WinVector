@@ -16,6 +16,9 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string MultipleSelection(int count) => Format("SelectionMultiple", count);
 
+    public string SelectionInGroup(string selection, string group) =>
+        selection.Length == 0 ? Format("SelectionInsideGroup", group) : Format("SelectionInGroup", selection, group);
+
     public string ProtocolMismatch(int engineProtocol, int appProtocol) => Format("EngineProtocolMismatch", engineProtocol, appProtocol);
 
     public string FileError(FileErrorKind kind, string fileName) => Format($"FileError{kind}", fileName);

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rect",
+  "description": "Rectángulo alineado con los ejes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "x",
+    "y",
+    "width",
+    "height"
+  ],
+  "properties": {
+    "x": {
+      "type": "number",
+      "description": "Borde izquierdo."
+    },
+    "y": {
+      "type": "number",
+      "description": "Borde superior."
+    },
+    "width": {
+      "type": "number",
+      "description": "Ancho."
+    },
+    "height": {
+      "type": "number",
+      "description": "Alto."
+    }
+  }
+}

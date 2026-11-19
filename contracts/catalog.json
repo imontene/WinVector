@@ -1,5 +1,5 @@
 {
-  "protocolVersion": 2,
+  "protocolVersion": 3,
   "messages": [
     {
       "name": "engine.ready",
@@ -19,6 +19,13 @@
       "kind": "event",
       "description": "La selección del documento ha cambiado.",
       "payload": "SelectionChanged"
+    },
+    {
+      "name": "selection.selectAll",
+      "kind": "command",
+      "description": "Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno.",
+      "payload": "DocumentRef",
+      "response": "DocumentRef"
     },
     {
       "name": "error",

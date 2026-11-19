@@ -14,7 +14,7 @@ namespace WinVector.Core.Bridge;
 /// <summary>Versión del protocolo del puente. Debe coincidir en la aplicación y en el motor.</summary>
 public static class BridgeProtocol
 {
-    public const int Version = 2;
+    public const int Version = 3;
 }
 
 /// <summary>Comando de comprobación enviado por la aplicación.</summary>
@@ -132,6 +132,17 @@ public sealed record HistoryState(
     [property: JsonPropertyName("undoAction")] string? UndoAction,
     [property: JsonPropertyName("redoAction")] string? RedoAction);
 
+/// <summary>Rectángulo alineado con los ejes.</summary>
+/// <param name="X">Borde izquierdo.</param>
+/// <param name="Y">Borde superior.</param>
+/// <param name="Width">Ancho.</param>
+/// <param name="Height">Alto.</param>
+public sealed record Rect(
+    [property: JsonPropertyName("x")] double X,
+    [property: JsonPropertyName("y")] double Y,
+    [property: JsonPropertyName("width")] double Width,
+    [property: JsonPropertyName("height")] double Height);
+
 /// <summary>Un elemento SVG seleccionado.</summary>
 /// <param name="Id">Valor del atributo id, o null si el elemento no tiene.</param>
 /// <param name="TagName">Nombre local del elemento, por ejemplo circle o path.</param>
@@ -142,9 +153,13 @@ public sealed record SelectedElement(
 /// <summary>Estado completo de la selección tras un cambio.</summary>
 /// <param name="DocumentId">Documento al que pertenece la selección.</param>
 /// <param name="Items">Elementos seleccionados, en orden de documento. Vacío si no hay selección.</param>
+/// <param name="Bounds">Caja que rodea todo lo seleccionado, en unidades de usuario del elemento raíz del documento (las del viewBox). Null si no hay selección o no se puede medir.</param>
+/// <param name="Scope">Grupo en el que ha entrado el usuario con doble clic; la selección con un clic elige entre sus hijos. Null en el nivel superior del documento.</param>
 public sealed record SelectionChanged(
     [property: JsonPropertyName("documentId")] string DocumentId,
-    [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items);
+    [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items,
+    [property: JsonPropertyName("bounds")] Rect? Bounds,
+    [property: JsonPropertyName("scope")] SelectedElement? Scope);
 
 /// <summary>Tipo de mensaje del puente.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<BridgeMessageKind>))]
@@ -185,6 +200,9 @@ public static class BridgeCommands
 {
     /// <summary>Comprueba que el motor responde y mide la latencia del puente.</summary>
     public static readonly BridgeCommand<AppPing, AppPong> AppPing = new("app.ping");
+
+    /// <summary>Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno.</summary>
+    public static readonly BridgeCommand<DocumentRef, DocumentRef> SelectionSelectAll = new("selection.selectAll");
 
     /// <summary>Carga un documento SVG en el motor con el identificador que le asigna la aplicación.</summary>
     public static readonly BridgeCommand<DocumentLoad, DocumentLoadResult> DocumentLoad = new("document.load");
@@ -247,6 +265,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(EngineReady))]
 [JsonSerializable(typeof(FilesDropped))]
 [JsonSerializable(typeof(HistoryState))]
+[JsonSerializable(typeof(Rect))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]
 public sealed partial class BridgeJsonContext : JsonSerializerContext

@@ -136,6 +136,9 @@ internal sealed class FakeEngine
             case "document.serialize":
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","svg":{{JsonSerializer.Serialize(_documents[documentId!])}},"revision":{{_revisions.GetValueOrDefault(documentId!)}}}""");
                 break;
+            case "selection.selectAll":
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}"}""");
+                break;
             case "history.undo":
                 Step(documentId!, UndoStack(documentId!), RedoStack(documentId!));
                 _transport.RespondOk(id, name, HistoryJson(documentId!));

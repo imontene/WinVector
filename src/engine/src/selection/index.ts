@@ -1,7 +1,9 @@
 /**
  * Módulo `selection`.
  *
- * Selección simple, múltiple y por marco; entrada y salida de grupos.
- * Por ahora solo la selección simple con un clic (Fase 0).
+ * Qué se selecciona con un clic (entrando y saliendo de grupos), el estado de la selección de cada
+ * documento y las medidas de lo seleccionado.
  */
+export * from "./bounds";
 export * from "./hitTest";
+export * from "./selection";
