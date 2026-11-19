@@ -11,6 +11,12 @@ public sealed class MainWindowTests
 {
     private static readonly TimeSpan EngineTimeout = TimeSpan.FromSeconds(20);
 
+    /// <summary>
+    /// Espera a que arranque el motor. En un equipo recién creado de la CI, el primer WebView2 de la
+    /// sesión puede tardar más de 20 s en arrancar; las demás esperas siguen en 20 s.
+    /// </summary>
+    private static readonly TimeSpan EngineStartTimeout = TimeSpan.FromSeconds(60);
+
     private AppSession? _session;
 
     public TestContext TestContext { get; set; } = null!;
@@ -75,7 +81,7 @@ public sealed class MainWindowTests
     {
         var latency = Retry.WhileNull(
             () => NullIfEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault),
-            EngineTimeout,
+            EngineStartTimeout,
             TimeSpan.FromMilliseconds(250)).Result;
 
         Assert.IsNotNull(latency, "La barra de estado no muestra la latencia del puente: el motor no se anunció.");
@@ -426,7 +432,7 @@ public sealed class MainWindowTests
 
     private void WaitForEngine() =>
         Assert.IsTrue(
-            Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineTimeout).Result,
+            Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineStartTimeout).Result,
             "El motor no terminó de cargar.");
 
     private void InvokeMenu(string menu, string automationId)
