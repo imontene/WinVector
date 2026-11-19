@@ -6,3 +6,4 @@
  */
 export * from "./matrix";
 export * from "./rect";
+export * from "./snap";

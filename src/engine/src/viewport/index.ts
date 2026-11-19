@@ -1,8 +1,7 @@
 /**
  * Módulo `viewport`.
  *
- * Zoom y desplazamiento del lienzo.
- *
- * Pendiente de implementar; ver docs/PLAN.md, sección 3.2.
+ * Zoom y desplazamiento de cada documento, reglas y cuadrícula.
  */
-export {};
+export * from "./guides";
+export * from "./viewport";

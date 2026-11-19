@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Artboard",
+  "description": "Tamaño de la mesa de trabajo: los atributos width, height y viewBox del elemento raíz.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "width",
+    "height",
+    "viewBox"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "width": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Atributo width tal cual, con sus unidades (\"210mm\"). Null si no lo tiene."
+    },
+    "height": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Atributo height tal cual. Null si no lo tiene."
+    },
+    "viewBox": {
+      "anyOf": [
+        {
+          "$ref": "./rect.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "viewBox. Null si no lo tiene o no es válido."
+    }
+  }
+}

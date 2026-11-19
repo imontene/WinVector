@@ -31,19 +31,27 @@ interface NodeOrigin {
 }
 
 /**
- * Presentación de la mesa de trabajo dentro del shadow root. Las variables (--artboard-*) vienen de
- * la página del motor y atraviesan el límite del shadow root.
+ * Presentación de la mesa de trabajo dentro del shadow root. La posición y el tamaño en pantalla
+ * (--artboard-x, -y, -width, -height) los fija el viewport sobre el contenedor `.artboard`, nunca
+ * sobre el documento. El resto de variables vienen de la página del motor.
  */
 const ARTBOARD_STYLES = `
   :host { display: contents; }
   :host([hidden]) { display: none; }
-  .artboard { display: contents; }
-  .artboard > svg {
-    width: min(90vw, calc(90vh * var(--artboard-ratio, 1)));
-    height: auto;
-    max-height: 90vh;
+  .artboard {
+    position: absolute;
+    left: var(--artboard-x, 0px);
+    top: var(--artboard-y, 0px);
+    width: var(--artboard-width, 300px);
+    height: var(--artboard-height, 150px);
     background: #fff;
     box-shadow: 0 1px 4px var(--artboard-shadow, rgb(0 0 0 / 18%));
+  }
+  .artboard > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 `;
 
@@ -84,6 +92,12 @@ export class SvgDocument {
   /** Historial de deshacer y rehacer del documento. */
   readonly history: History;
 
+  /**
+   * Contenedor de la mesa de trabajo en el shadow root: el viewport lo coloca y le da tamaño. No
+   * forma parte del documento.
+   */
+  readonly artboard: HTMLElement;
+
   readonly #onChange: ((revision: number) => void) | undefined;
 
   private constructor(source: string, host: HTMLElement, options: SvgDocumentOptions) {
@@ -122,10 +136,8 @@ export class SvgDocument {
     style.textContent = ARTBOARD_STYLES;
     const artboard = host.ownerDocument.createElement("div");
     artboard.className = "artboard";
-    const { width, height } = shown.viewBox.baseVal;
-    if (width > 0 && height > 0)
-      artboard.style.setProperty("--artboard-ratio", String(width / height));
     artboard.append(shown);
+    this.artboard = artboard;
     shadow.replaceChildren(style, artboard);
 
     this.#observer = new MutationObserver((records) => {

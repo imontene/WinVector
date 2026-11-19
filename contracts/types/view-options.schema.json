@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ViewOptions",
+  "description": "Guías del lienzo; valen para todos los documentos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "showRulers",
+    "showGrid",
+    "snapToGrid"
+  ],
+  "properties": {
+    "showRulers": {
+      "type": "boolean",
+      "description": "Muestra las reglas en las unidades del documento."
+    },
+    "showGrid": {
+      "type": "boolean",
+      "description": "Muestra la cuadrícula sobre la mesa de trabajo."
+    },
+    "snapToGrid": {
+      "type": "boolean",
+      "description": "Ajusta a la cuadrícula visible al dibujar y mover."
+    }
+  }
+}

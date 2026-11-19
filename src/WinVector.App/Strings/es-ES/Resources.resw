@@ -384,4 +384,49 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="SelectionInsideGroup" xml:space="preserve">
     <value>En {0}</value>
   </data>
+  <data name="ZoomPercent" xml:space="preserve">
+    <value>{0} %</value>
+  </data>
+  <data name="MenuViewActualSize.Text" xml:space="preserve">
+    <value>Tamaño real</value>
+  </data>
+  <data name="MenuViewRulers.Text" xml:space="preserve">
+    <value>Reglas</value>
+  </data>
+  <data name="MenuViewGrid.Text" xml:space="preserve">
+    <value>Cuadrícula</value>
+  </data>
+  <data name="MenuViewSnapToGrid.Text" xml:space="preserve">
+    <value>Ajustar a la cuadrícula</value>
+  </data>
+  <data name="ToolHand.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Mano (H): arrastra para desplazar el lienzo</value>
+  </data>
+  <data name="ToolHand.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Mano</value>
+  </data>
+  <data name="ArtboardTitle.Text" xml:space="preserve">
+    <value>Mesa de trabajo</value>
+  </data>
+  <data name="ArtboardWidth.Header" xml:space="preserve">
+    <value>Ancho</value>
+  </data>
+  <data name="ArtboardHeight.Header" xml:space="preserve">
+    <value>Alto</value>
+  </data>
+  <data name="ArtboardViewBox.Header" xml:space="preserve">
+    <value>viewBox</value>
+  </data>
+  <data name="ArtboardWidth.PlaceholderText" xml:space="preserve">
+    <value>Automático</value>
+  </data>
+  <data name="ArtboardHeight.PlaceholderText" xml:space="preserve">
+    <value>Automático</value>
+  </data>
+  <data name="ArtboardViewBox.PlaceholderText" xml:space="preserve">
+    <value>x y ancho alto</value>
+  </data>
+  <data name="ArtboardHint.Text" xml:space="preserve">
+    <value>Ancho y alto admiten unidades (210mm, 8.5in). El viewBox fija el sistema de coordenadas del dibujo.</value>
+  </data>
 </root>

@@ -1,5 +1,6 @@
 import type { HistoryState } from "../history";
 import { Selection, type SelectionState } from "../selection";
+import { Viewport, type Insets, type ViewportState } from "../viewport";
 import { SvgDocument } from "./svgDocument";
 
 /** No hay ningún documento abierto con ese identificador. */
@@ -19,6 +20,8 @@ export interface OpenDocument {
   readonly document: SvgDocument;
   /** Selección del documento; cada documento conserva la suya al cambiar de pestaña. */
   readonly selection: Selection;
+  /** Zoom y desplazamiento del documento; también se conservan al cambiar de pestaña. */
+  readonly viewport: Viewport;
 }
 
 interface Entry extends OpenDocument {
@@ -32,6 +35,10 @@ export interface DocumentManagerOptions {
   readonly onHistoryChanged?: (documentId: string, state: HistoryState) => void;
   /** Se llama cuando cambia la selección de cualquier documento abierto. */
   readonly onSelectionChanged?: (documentId: string, state: SelectionState) => void;
+  /** Se llama cuando cambia el zoom o el desplazamiento de cualquier documento abierto. */
+  readonly onViewportChanged?: (documentId: string, state: ViewportState) => void;
+  /** Espacio que ocupan las reglas en el lienzo. */
+  readonly insets?: () => Insets;
 }
 
 /**
@@ -75,7 +82,10 @@ export class DocumentManager {
       document = SvgDocument.load(svg, host, {
         onChange: (revision) => {
           // Un cambio puede quitar elementos seleccionados (por ejemplo, al deshacer su creación).
-          this.#entries.get(id)?.selection.prune();
+          const entry = this.#entries.get(id);
+          entry?.selection.prune();
+          // El tamaño de la mesa de trabajo puede haber cambiado.
+          entry?.viewport.refresh();
           this.#options.onChanged?.(id, revision);
         },
         onHistoryChange: (state) => this.#options.onHistoryChanged?.(id, state),
@@ -88,9 +98,14 @@ export class DocumentManager {
       this.#options.onSelectionChanged?.(id, state);
     });
 
+    const viewport = new Viewport(document.artboard, document.root, this.#container, {
+      ...(this.#options.insets ? { insets: this.#options.insets } : {}),
+      onChange: (state) => this.#options.onViewportChanged?.(id, state),
+    });
+
     const wasActive = this.#activeId === id;
     if (this.#entries.has(id)) this.close(id);
-    this.#entries.set(id, { id, name, document, selection, host });
+    this.#entries.set(id, { id, name, document, selection, viewport, host });
     if (wasActive) this.activate(id);
     return document;
   }
@@ -110,6 +125,8 @@ export class DocumentManager {
     const entry = this.#entry(id);
     for (const other of this.#entries.values()) other.host.hidden = other !== entry;
     this.#activeId = id;
+    // Ya visible, el lienzo tiene tamaño: la primera vez se ajusta a la ventana.
+    entry.viewport.show();
     return entry.document;
   }
 

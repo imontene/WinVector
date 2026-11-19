@@ -192,10 +192,53 @@
                         <MenuFlyoutItem x:Uid="MenuTextFont" IsEnabled="False" />
                     </MenuBarItem>
 
-                    <MenuBarItem x:Uid="MenuView">
-                        <MenuFlyoutItem x:Uid="MenuViewZoomIn" IsEnabled="False" />
-                        <MenuFlyoutItem x:Uid="MenuViewZoomOut" IsEnabled="False" />
-                        <MenuFlyoutItem x:Uid="MenuViewFit" IsEnabled="False" />
+                    <MenuBarItem x:Name="ViewMenu" x:Uid="MenuView">
+                        <!-- Los atajos de zoom se añaden en el código: Ctrl++ y Ctrl+- no tienen nombre en VirtualKey. -->
+                        <MenuFlyoutItem
+                            x:Name="ZoomInMenuItem"
+                            x:Uid="MenuViewZoomIn"
+                            AutomationProperties.AutomationId="MenuViewZoomIn"
+                            Command="{x:Bind ViewModel.ZoomInCommand}"
+                            KeyboardAcceleratorTextOverride="Ctrl++" />
+                        <MenuFlyoutItem
+                            x:Name="ZoomOutMenuItem"
+                            x:Uid="MenuViewZoomOut"
+                            AutomationProperties.AutomationId="MenuViewZoomOut"
+                            Command="{x:Bind ViewModel.ZoomOutCommand}"
+                            KeyboardAcceleratorTextOverride="Ctrl+-" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuViewFit"
+                            AutomationProperties.AutomationId="MenuViewFit"
+                            Command="{x:Bind ViewModel.ZoomFitCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="Number0" Modifiers="Control" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            x:Uid="MenuViewActualSize"
+                            AutomationProperties.AutomationId="MenuViewActualSize"
+                            Command="{x:Bind ViewModel.ZoomActualCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="Number1" Modifiers="Control" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator />
+                        <ToggleMenuFlyoutItem
+                            x:Uid="MenuViewRulers"
+                            AutomationProperties.AutomationId="MenuViewRulers"
+                            IsChecked="{x:Bind ViewModel.ShowRulers, Mode=TwoWay}">
+                            <ToggleMenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="R" Modifiers="Control" />
+                            </ToggleMenuFlyoutItem.KeyboardAccelerators>
+                        </ToggleMenuFlyoutItem>
+                        <ToggleMenuFlyoutItem
+                            x:Uid="MenuViewGrid"
+                            AutomationProperties.AutomationId="MenuViewGrid"
+                            IsChecked="{x:Bind ViewModel.ShowGrid, Mode=TwoWay}" />
+                        <ToggleMenuFlyoutItem
+                            x:Uid="MenuViewSnapToGrid"
+                            AutomationProperties.AutomationId="MenuViewSnapToGrid"
+                            IsChecked="{x:Bind ViewModel.SnapToGrid, Mode=TwoWay}" />
                     </MenuBarItem>
 
                     <MenuBarItem x:Name="HelpMenu" x:Uid="MenuHelp">
@@ -266,9 +309,11 @@
                     Spacing="2">
                     <ToggleButton
                         x:Uid="ToolSelect"
+                        AutomationProperties.AutomationId="ToolSelect"
                         Click="OnToolClick"
                         IsChecked="True"
-                        Style="{StaticResource ToolButtonStyle}">
+                        Style="{StaticResource ToolButtonStyle}"
+                        Tag="select">
                         <PathIcon Data="M3,2 L13,8.5 L8.6,9.6 L6.6,14 Z" />
                     </ToggleButton>
                     <ToggleButton
@@ -308,9 +353,19 @@
                         <PathIcon Data="M2,2 L14,2 L14,14 L2,14 Z M3.5,3.5 L3.5,12.5 L12.5,3.5 Z" />
                     </ToggleButton>
                     <ToggleButton
-                        x:Uid="ToolZoom"
+                        x:Uid="ToolHand"
+                        AutomationProperties.AutomationId="ToolHand"
                         Click="OnToolClick"
-                        Style="{StaticResource ToolButtonStyle}">
+                        Style="{StaticResource ToolButtonStyle}"
+                        Tag="hand">
+                        <PathIcon Data="M5,6 L5,2.5 A1,1 0 0 1 7,2.5 L7,6 L7,1.5 A1,1 0 0 1 9,1.5 L9,6 L9,2.5 A1,1 0 0 1 11,2.5 L11,7 L11,5 A1,1 0 0 1 13,5 L13,10 C13,13 11,15 8.5,15 C6,15 5,14 3.5,12 L1.8,9.3 A1,1 0 0 1 3.4,8.2 L5,10 Z" />
+                    </ToggleButton>
+                    <ToggleButton
+                        x:Uid="ToolZoom"
+                        AutomationProperties.AutomationId="ToolZoom"
+                        Click="OnToolClick"
+                        Style="{StaticResource ToolButtonStyle}"
+                        Tag="zoom">
                         <PathIcon Data="M6.5,1.5 A5,5 0 1 0 6.5,11.5 A5,5 0 1 0 6.5,1.5 Z M6.5,3 A3.5,3.5 0 1 1 6.5,10 A3.5,3.5 0 1 1 6.5,3 Z M10.4,11.4 L11.4,10.4 L15,14 L14,15 Z" />
                     </ToggleButton>
                 </StackPanel>
@@ -327,7 +382,46 @@
                     <TextBlock
                         x:Uid="PropertiesEmpty"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="Wrap" />
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+
+                    <!-- Sin nada seleccionado, el panel edita la mesa de trabajo. -->
+                    <StackPanel Spacing="8" Visibility="{x:Bind VisibleUnless(ViewModel.HasSelection), Mode=OneWay}">
+                        <TextBlock x:Uid="ArtboardTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                x:Name="ArtboardWidthBox"
+                                x:Uid="ArtboardWidth"
+                                AutomationProperties.AutomationId="ArtboardWidth"
+                                KeyDown="OnArtboardKeyDown"
+                                LostFocus="OnArtboardLostFocus"
+                                Text="{x:Bind ArtboardWidthText(ViewModel.CurrentArtboard), Mode=OneWay}" />
+                            <TextBox
+                                x:Name="ArtboardHeightBox"
+                                x:Uid="ArtboardHeight"
+                                Grid.Column="1"
+                                AutomationProperties.AutomationId="ArtboardHeight"
+                                KeyDown="OnArtboardKeyDown"
+                                LostFocus="OnArtboardLostFocus"
+                                Text="{x:Bind ArtboardHeightText(ViewModel.CurrentArtboard), Mode=OneWay}" />
+                        </Grid>
+                        <TextBox
+                            x:Name="ArtboardViewBoxBox"
+                            x:Uid="ArtboardViewBox"
+                            AutomationProperties.AutomationId="ArtboardViewBox"
+                            KeyDown="OnArtboardKeyDown"
+                            LostFocus="OnArtboardLostFocus"
+                            Text="{x:Bind ArtboardViewBoxText(ViewModel.CurrentArtboard), Mode=OneWay}" />
+                        <TextBlock
+                            x:Uid="ArtboardHint"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
@@ -382,9 +476,11 @@
                 <TextBlock
                     Grid.Column="5"
                     VerticalAlignment="Center"
+                    AutomationProperties.AutomationId="ZoomStatus"
+                    AutomationProperties.Name="{x:Bind ViewModel.ZoomText, Mode=OneWay}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="100 %" />
+                    Text="{x:Bind ViewModel.ZoomText, Mode=OneWay}" />
             </Grid>
         </Border>
     </Grid>

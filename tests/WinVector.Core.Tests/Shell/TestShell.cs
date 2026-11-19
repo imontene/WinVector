@@ -30,6 +30,8 @@ internal sealed class TestTexts : IShellTexts
     public string UndoCommand(string? action) => action is null ? "Deshacer" : $"Deshacer {action}";
 
     public string RedoCommand(string? action) => action is null ? "Rehacer" : $"Rehacer {action}";
+
+    public string ZoomPercent(double zoom) => $"{Math.Round(zoom * 100)} %";
 }
 
 /// <summary>Diálogos con respuestas preparadas que anotan lo que se les pregunta.</summary>

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ViewportChanged",
+  "description": "Zoom de un documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "zoom"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "zoom": {
+      "type": "number",
+      "description": "1 es el 100 %: una unidad de tamaño del documento ocupa un píxel."
+    }
+  }
+}

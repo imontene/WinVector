@@ -6,11 +6,14 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.Windows.ApplicationModel.Resources;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 using Windows.Storage;
+using Windows.System;
 using WinVector.App.Shell;
+using WinVector.Core.Bridge;
 using WinVector.Core.Files;
 using WinVector.Core.Shell;
 
@@ -83,6 +86,70 @@ public sealed partial class MainWindow : Window
         RootGrid.Loaded += (_, _) => UpdateTitleBarInsets();
         RootGrid.SizeChanged += (_, _) => UpdateTitleBarInsets();
         UpdateToolStatus(ToolRail.Children.OfType<ToggleButton>().FirstOrDefault(b => b.IsChecked == true));
+
+        // Ctrl++ y Ctrl+- (en el teclado principal y en el numérico) no tienen nombre en VirtualKey.
+        AddAccelerator(ZoomInMenuItem, (VirtualKey)187, VirtualKey.Add);
+        AddAccelerator(ZoomOutMenuItem, (VirtualKey)189, VirtualKey.Subtract);
+
+        // La herramienta también puede cambiar desde el lienzo, con su atajo de teclado.
+        ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.ActiveTool))
+            {
+                ShowActiveTool(ViewModel.ActiveTool);
+            }
+        };
+    }
+
+    private static void AddAccelerator(MenuFlyoutItem item, params VirtualKey[] keys)
+    {
+        foreach (var key in keys)
+        {
+            item.KeyboardAccelerators.Add(new KeyboardAccelerator { Key = key, Modifiers = VirtualKeyModifiers.Control });
+        }
+    }
+
+    private static Visibility VisibleWhen(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
+
+    private static Visibility VisibleUnless(bool value) => value ? Visibility.Collapsed : Visibility.Visible;
+
+    private static string ArtboardWidthText(Artboard? artboard) => artboard?.Width ?? string.Empty;
+
+    private static string ArtboardHeightText(Artboard? artboard) => artboard?.Height ?? string.Empty;
+
+    private static string ArtboardViewBoxText(Artboard? artboard) => ArtboardInput.Format(artboard?.ViewBox);
+
+    /// <summary>Intro aplica el tamaño escrito y Esc lo descarta.</summary>
+    private void OnArtboardKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == VirtualKey.Enter)
+        {
+            ApplyArtboard();
+            e.Handled = true;
+        }
+        else if (e.Key == VirtualKey.Escape)
+        {
+            ResetArtboardEditor();
+            e.Handled = true;
+        }
+    }
+
+    private void OnArtboardLostFocus(object sender, RoutedEventArgs e) => ApplyArtboard();
+
+    private void ApplyArtboard()
+    {
+        if (!ViewModel.ApplyArtboard(ArtboardWidthBox.Text, ArtboardHeightBox.Text, ArtboardViewBoxBox.Text))
+        {
+            ResetArtboardEditor();
+        }
+    }
+
+    private void ResetArtboardEditor()
+    {
+        var artboard = ViewModel.CurrentArtboard;
+        ArtboardWidthBox.Text = ArtboardWidthText(artboard);
+        ArtboardHeightBox.Text = ArtboardHeightText(artboard);
+        ArtboardViewBoxBox.Text = ArtboardViewBoxText(artboard);
     }
 
     public MainViewModel ViewModel { get; }
@@ -228,12 +295,34 @@ public sealed partial class MainWindow : Window
     /// <summary>Las herramientas son excluyentes: activar una desactiva las demás.</summary>
     private void OnToolClick(object sender, RoutedEventArgs e)
     {
-        foreach (var button in ToolRail.Children.OfType<ToggleButton>())
+        CheckOnly(sender as ToggleButton);
+        // Las herramientas que ya implementa el motor llevan su nombre en Tag (select, hand, zoom).
+        if (sender is ToggleButton { Tag: string tag } && Enum.TryParse<ToolName>(tag, ignoreCase: true, out var tool))
         {
-            button.IsChecked = ReferenceEquals(button, sender);
+            _ = ViewModel.SelectToolAsync(tool);
+        }
+    }
+
+    private void ShowActiveTool(ToolName tool)
+    {
+        var name = tool.ToString();
+        CheckOnly(ToolRail.Children.OfType<ToggleButton>()
+            .FirstOrDefault(b => b.Tag is string tag && string.Equals(tag, name, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private void CheckOnly(ToggleButton? selected)
+    {
+        if (selected is null)
+        {
+            return;
         }
 
-        UpdateToolStatus(sender as ToggleButton);
+        foreach (var button in ToolRail.Children.OfType<ToggleButton>())
+        {
+            button.IsChecked = ReferenceEquals(button, selected);
+        }
+
+        UpdateToolStatus(selected);
     }
 
     private void UpdateToolStatus(ToggleButton? tool)

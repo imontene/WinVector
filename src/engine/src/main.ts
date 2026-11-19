@@ -1,11 +1,20 @@
 import { version as engineVersion } from "../package.json";
-import { BridgeCommandError, EngineBridge, detectTransport } from "./bridge";
-import { DocumentManager, SvgParseError, UnknownDocumentError } from "./document";
+import { BridgeCommandError, EngineBridge, detectTransport, type ToolName } from "./bridge";
+import {
+  applyArtboard,
+  DocumentManager,
+  readArtboard,
+  sameArtboard,
+  SvgParseError,
+  UnknownDocumentError,
+  type ArtboardSettings,
+} from "./document";
 import type { Rect } from "./geometry";
 import { EMPTY_SCENE, Overlay } from "./overlay";
 import sampleSvg from "./sample.svg?raw";
 import { describeElement, selectionBounds } from "./selection";
-import { installSelectTool, trackModifiers } from "./tools";
+import { cursorForTool, installNavigation, installSelectTool, trackModifiers } from "./tools";
+import { Guides } from "./viewport";
 
 const workspace = document.getElementById("workspace");
 if (!workspace) {
@@ -13,15 +22,28 @@ if (!workspace) {
 }
 
 const bridge = new EngineBridge(detectTransport(), { engineVersion });
+const guides = new Guides(workspace);
 const overlay = new Overlay(document.body);
 let marquee: Rect | null = null;
+let activeTool: ToolName = "select";
+/** Ajuste a la cuadrícula: lo usarán las herramientas que mueven y dibujan. */
+let snapToGrid = false;
+/** Último zoom y última mesa de trabajo anunciados de cada documento, para avisar solo si cambian. */
+const announcedZoom = new Map<string, number>();
+const announcedArtboard = new Map<string, ArtboardSettings>();
 
 const documents = new DocumentManager(workspace, {
+  insets: () => guides.insets,
   onChanged: (documentId, revision) => {
     bridge.emit("document.changed", { documentId, revision });
     // Lo seleccionado puede haber cambiado de tamaño o de sitio.
     if (documents.open(documentId).selection.items.length > 0) emitSelection(documentId);
+    announceArtboard(documentId);
     if (documents.active?.id === documentId) refreshOverlay();
+  },
+  onViewportChanged: (documentId, { zoom }) => {
+    if (documents.active?.id === documentId) refreshOverlay();
+    if (announcedZoom.get(documentId) !== zoom) announceZoom(documentId, zoom);
   },
   onHistoryChanged: (documentId, state) => {
     bridge.emit("history.changed", { documentId, ...state });
@@ -44,9 +66,23 @@ function emitSelection(documentId: string): void {
   });
 }
 
+function announceZoom(documentId: string, zoom: number): void {
+  announcedZoom.set(documentId, zoom);
+  bridge.emit("viewport.changed", { documentId, zoom });
+}
+
+/** Anuncia el tamaño de la mesa de trabajo si es nuevo o ha cambiado. */
+function announceArtboard(documentId: string): void {
+  const artboard = readArtboard(documents.get(documentId).root);
+  const previous = announcedArtboard.get(documentId);
+  if (previous && sameArtboard(previous, artboard)) return;
+  announcedArtboard.set(documentId, artboard);
+  bridge.emit("artboard.changed", { documentId, ...artboard });
+}
+
 let overlayFrame = 0;
 
-/** Vuelve a dibujar la capa de superposición en el siguiente fotograma. */
+/** Vuelve a dibujar la capa de superposición, las reglas y la cuadrícula en el siguiente fotograma. */
 function refreshOverlay(): void {
   if (overlayFrame !== 0) return;
   overlayFrame = requestAnimationFrame(() => {
@@ -55,10 +91,26 @@ function refreshOverlay(): void {
     overlay.render(
       active ? { ...active.selection.state, marquee } : { ...EMPTY_SCENE, marquee: null },
     );
+    guides.render(
+      active?.viewport.documentToScreen() ?? null,
+      active?.viewport.artboardRect() ?? null,
+    );
   });
 }
 
-window.addEventListener("resize", refreshOverlay);
+window.addEventListener("resize", () => {
+  documents.active?.viewport.resize();
+  refreshOverlay();
+});
+
+/** Cambia la herramienta activa. Si el cambio viene del lienzo, se avisa a la aplicación. */
+function setTool(tool: ToolName, fromCanvas: boolean): void {
+  activeTool = tool;
+  const cursor = cursorForTool(tool);
+  if (cursor) document.body.dataset.cursor = cursor;
+  else delete document.body.dataset.cursor;
+  if (fromCanvas) bridge.emit("tool.changed", { tool });
+}
 
 /** Traduce los errores de documento a los códigos del contrato. */
 function withDocumentErrors<T>(action: () => T): T {
@@ -77,6 +129,9 @@ bridge.handle("app.ping", ({ sentAt }) => ({ sentAt, receivedAt: Date.now() }));
 bridge.handle("document.load", ({ documentId, name, svg }) => {
   try {
     const loaded = documents.load(documentId, name, svg);
+    announcedArtboard.delete(documentId);
+    announcedZoom.delete(documentId);
+    announceArtboard(documentId);
     return {
       documentId,
       loaded: true,
@@ -106,8 +161,10 @@ bridge.handle("document.serialize", ({ documentId }) =>
 bridge.handle("document.activate", ({ documentId }) =>
   withDocumentErrors(() => {
     const { revision } = documents.activate(documentId);
-    // La aplicación vacía la selección al cambiar de pestaña; cada documento conserva la suya.
+    // La aplicación vacía la selección al cambiar de pestaña; cada documento conserva la suya, y
+    // también su zoom.
     emitSelection(documentId);
+    announceZoom(documentId, documents.open(documentId).viewport.zoom);
     refreshOverlay();
     return { documentId, revision };
   }),
@@ -116,6 +173,8 @@ bridge.handle("document.activate", ({ documentId }) =>
 bridge.handle("document.close", ({ documentId }) =>
   withDocumentErrors(() => {
     documents.close(documentId);
+    announcedZoom.delete(documentId);
+    announcedArtboard.delete(documentId);
     refreshOverlay();
     return { documentId };
   }),
@@ -144,7 +203,51 @@ bridge.handle("history.redo", ({ documentId }) =>
   }),
 );
 
+bridge.handle("view.zoom", ({ documentId, action }) =>
+  withDocumentErrors(() => {
+    const { viewport } = documents.open(documentId);
+    if (action === "in") viewport.zoomIn();
+    else if (action === "out") viewport.zoomOut();
+    else if (action === "fit") viewport.fit();
+    else viewport.actualSize();
+    return { documentId, zoom: viewport.zoom };
+  }),
+);
+
+bridge.handle("view.setOptions", (options) => {
+  guides.options = { showRulers: options.showRulers, showGrid: options.showGrid };
+  snapToGrid = options.snapToGrid;
+  // Las reglas ocupan sitio: el documento ajustado a la ventana se vuelve a ajustar.
+  documents.active?.viewport.resize();
+  refreshOverlay();
+  return { ...guides.options, snapToGrid };
+});
+
+bridge.handle("tool.select", ({ tool }) => {
+  setTool(tool, false);
+  return { tool: activeTool };
+});
+
+bridge.handle("artboard.set", ({ documentId, width, height, viewBox }) =>
+  withDocumentErrors(() => {
+    const target = documents.get(documentId);
+    applyArtboard(target, { width, height, viewBox });
+    return { documentId, ...readArtboard(target.root) };
+  }),
+);
+
 trackModifiers(window);
+installNavigation(window, {
+  viewport: () => documents.active?.viewport ?? null,
+  tool: () => activeTool,
+  setTool: (tool) => {
+    setTool(tool, true);
+  },
+  showMarquee: (rect) => {
+    marquee = rect;
+    refreshOverlay();
+  },
+});
 installSelectTool(document, {
   active: () => {
     const active = documents.active;

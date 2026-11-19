@@ -25,6 +25,9 @@ internal sealed class FakeEngine
     /// <summary>Comandos recibidos, como "document.load d1".</summary>
     public List<string> Commands { get; } = [];
 
+    /// <summary>Payloads de artboard.set recibidos, tal cual.</summary>
+    public List<string> ArtboardsSet { get; } = [];
+
     /// <summary>Documentos que el motor rechazará como no válidos.</summary>
     public HashSet<string> InvalidSvgs { get; } = [];
 
@@ -135,6 +138,24 @@ internal sealed class FakeEngine
                 break;
             case "document.serialize":
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","svg":{{JsonSerializer.Serialize(_documents[documentId!])}},"revision":{{_revisions.GetValueOrDefault(documentId!)}}}""");
+                break;
+            case "view.setOptions":
+            case "tool.select":
+                _transport.RespondOk(id, name, payload.GetRawText());
+                break;
+            case "view.zoom":
+                var zoom = payload.GetProperty("action").GetString() switch
+                {
+                    "in" => 1.5,
+                    "out" => 0.6667,
+                    "actual" => 1.0,
+                    _ => 0.8,
+                };
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","zoom":{{zoom.ToString(System.Globalization.CultureInfo.InvariantCulture)}}}""");
+                break;
+            case "artboard.set":
+                ArtboardsSet.Add(payload.GetRawText());
+                _transport.RespondOk(id, name, payload.GetRawText());
                 break;
             case "selection.selectAll":
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}"}""");

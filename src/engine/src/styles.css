@@ -28,13 +28,91 @@ body {
   user-select: none;
 }
 
+/* El lienzo: la mesa de trabajo (dentro del shadow root de cada documento, src/document) se coloca
+   en él con posición absoluta según el zoom y el desplazamiento (src/viewport). El navegador no
+   desplaza ni hace zoom por su cuenta: los gestos táctiles los atiende el motor. */
 #workspace {
-  display: grid;
-  place-items: center;
+  position: relative;
   height: 100%;
+  overflow: hidden;
+  touch-action: none;
 }
 
-/* La mesa de trabajo se dibuja dentro del shadow root del documento (src/document). */
+/* Reglas y cuadrícula (src/viewport/guides.ts): por encima del documento, transparentes al puntero. */
+:root {
+  --ruler-background: #f3f3f3;
+  --ruler-line: #9a9a9a;
+  --ruler-text: #5c5c5c;
+  --grid-line: rgb(0 0 0 / 7%);
+  --grid-line-major: rgb(0 0 0 / 15%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ruler-background: #272727;
+    --ruler-line: #5f5f5f;
+    --ruler-text: #b5b5b5;
+    --grid-line: rgb(255 255 255 / 7%);
+    --grid-line-major: rgb(255 255 255 / 15%);
+  }
+}
+
+.grid,
+.ruler,
+.ruler-corner {
+  position: absolute;
+  pointer-events: none;
+}
+
+.grid {
+  inset: 0;
+  z-index: 1;
+}
+
+.ruler,
+.ruler-corner {
+  z-index: 2;
+}
+
+.ruler-top {
+  top: 0;
+  left: 20px;
+}
+
+.ruler-left {
+  top: 20px;
+  left: 0;
+}
+
+.ruler-corner {
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  background: var(--ruler-background);
+  box-shadow: inset -1px -1px 0 var(--ruler-line);
+}
+
+/* Cursor de las herramientas de navegación (src/tools/navigation.ts). */
+body[data-cursor="grab"],
+body[data-cursor="grab"] * {
+  cursor: grab !important;
+}
+
+body[data-cursor="grabbing"],
+body[data-cursor="grabbing"] * {
+  cursor: grabbing !important;
+}
+
+body[data-cursor="zoom-in"],
+body[data-cursor="zoom-in"] * {
+  cursor: zoom-in !important;
+}
+
+body[data-cursor="zoom-out"],
+body[data-cursor="zoom-out"] * {
+  cursor: zoom-out !important;
+}
 
 /* Capa de superposición (src/overlay): fuera del documento y transparente al puntero. */
 :root {
