@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClipboardPaste",
+  "description": "SVG del portapapeles para pegar en un documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "svg"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "svg": {
+      "type": "string",
+      "description": "Texto del SVG, de WinVector o de otra aplicación."
+    }
+  }
+}

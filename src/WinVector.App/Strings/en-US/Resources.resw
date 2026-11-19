@@ -481,4 +481,19 @@ Licensed under the Apache License 2.0.</value>
   <data name="HistoryActionUngroup" xml:space="preserve">
     <value>ungroup</value>
   </data>
+  <data name="MenuEditDuplicate.Text" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="MenuEditDelete.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Del</value>
+  </data>
+  <data name="HistoryActionPaste" xml:space="preserve">
+    <value>paste</value>
+  </data>
+  <data name="HistoryActionDuplicate" xml:space="preserve">
+    <value>duplicate</value>
+  </data>
+  <data name="HistoryActionDelete" xml:space="preserve">
+    <value>delete</value>
+  </data>
 </root>

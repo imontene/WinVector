@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClipboardPasteResult",
+  "description": "Resultado de pegar.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "count"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "count": {
+      "type": "integer",
+      "description": "Objetos pegados; 0 si el texto no era un SVG con algo que pegar."
+    }
+  }
+}

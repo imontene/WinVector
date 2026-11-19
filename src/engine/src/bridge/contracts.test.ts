@@ -262,6 +262,43 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c17",
+    name: "clipboard.paste",
+    payload: { documentId: "d1", svg: "<svg/>" },
+  },
+  {
+    ...base,
+    kind: "response",
+    id: "c18",
+    name: "clipboard.copy",
+    ok: true,
+    payload: { documentId: "d1", svg: null },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c19",
+    name: "selection.duplicate",
+    payload: { documentId: "d1" },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c20",
+    name: "selection.delete",
+    payload: { documentId: "d1" },
+  },
+  {
+    ...base,
+    kind: "response",
+    id: "c21",
+    name: "clipboard.paste",
+    ok: true,
+    payload: { documentId: "d1", count: 2 },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e4",
     name: "error",
@@ -289,7 +326,13 @@ function summarize(message: BridgeMessage): string {
       case "object.arrange":
       case "object.group":
       case "object.ungroup":
+      case "selection.duplicate":
+      case "selection.delete":
         return `cambió: ${String(message.payload.changed)}`;
+      case "clipboard.copy":
+        return `copiado: ${String(message.payload.svg?.length)}`;
+      case "clipboard.paste":
+        return `pegados: ${String(message.payload.count)}`;
       case "history.undo":
       case "history.redo":
         return `deshacer: ${String(message.payload.undoAction)}`;
@@ -322,7 +365,12 @@ function summarize(message: BridgeMessage): string {
         return `ordenar ${message.payload.action}`;
       case "object.group":
       case "object.ungroup":
+      case "selection.duplicate":
+      case "selection.delete":
+      case "clipboard.copy":
         return `${message.name} ${message.payload.documentId}`;
+      case "clipboard.paste":
+        return `pegar ${String(message.payload.svg.length)}`;
       case "view.zoom":
         return `zoom ${message.payload.action}`;
       case "view.setOptions":
@@ -398,6 +446,11 @@ describe("contrato del puente", () => {
       "ordenar front",
       "object.group d1",
       "cambió: false",
+      "pegar 6",
+      "copiado: undefined",
+      "selection.duplicate d1",
+      "selection.delete d1",
+      "pegados: 2",
       "error unknown-message",
     ]);
   });

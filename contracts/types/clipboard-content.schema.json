@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClipboardContent",
+  "description": "La selección como SVG independiente, para el portapapeles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "svg"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "svg": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Texto del SVG con los objetos y las definiciones que usan, o null si no hay nada seleccionado."
+    }
+  }
+}

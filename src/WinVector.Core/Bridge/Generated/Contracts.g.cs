@@ -80,6 +80,27 @@ public enum BridgeErrorCode
     Internal,
 }
 
+/// <summary>La selección como SVG independiente, para el portapapeles.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Svg">Texto del SVG con los objetos y las definiciones que usan, o null si no hay nada seleccionado.</param>
+public sealed record ClipboardContent(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("svg")] string? Svg);
+
+/// <summary>SVG del portapapeles para pegar en un documento.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Svg">Texto del SVG, de WinVector o de otra aplicación.</param>
+public sealed record ClipboardPaste(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("svg")] string Svg);
+
+/// <summary>Resultado de pegar.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Count">Objetos pegados; 0 si el texto no era un SVG con algo que pegar.</param>
+public sealed record ClipboardPasteResult(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("count")] int Count);
+
 /// <summary>Texto de un documento para guardarlo.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Svg">Texto completo del SVG.</param>
@@ -337,6 +358,18 @@ public static class BridgeCommands
     /// <summary>Desagrupa los grupos seleccionados sin cambiar su aspecto; los que cambiarían (opacidad, filtro, recorte, máscara) se dejan. Se puede deshacer.</summary>
     public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectUngroup = new("object.ungroup");
 
+    /// <summary>Duplica la selección junto al original y selecciona las copias. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<DocumentRef, ObjectChange> SelectionDuplicate = new("selection.duplicate");
+
+    /// <summary>Elimina la selección. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<DocumentRef, ObjectChange> SelectionDelete = new("selection.delete");
+
+    /// <summary>Devuelve la selección como SVG independiente; la aplicación lo pone en el portapapeles de Windows.</summary>
+    public static readonly BridgeCommand<DocumentRef, ClipboardContent> ClipboardCopy = new("clipboard.copy");
+
+    /// <summary>Pega un SVG en el puntero, o desplazado respecto a su posición original si el puntero no está sobre el lienzo, y lo selecciona. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<ClipboardPaste, ClipboardPasteResult> ClipboardPaste = new("clipboard.paste");
+
     /// <summary>Carga un documento SVG en el motor con el identificador que le asigna la aplicación.</summary>
     public static readonly BridgeCommand<DocumentLoad, DocumentLoadResult> DocumentLoad = new("document.load");
 
@@ -414,6 +447,9 @@ public static class BridgeEvents
 [JsonSerializable(typeof(AppPong))]
 [JsonSerializable(typeof(Artboard))]
 [JsonSerializable(typeof(BridgeError))]
+[JsonSerializable(typeof(ClipboardContent))]
+[JsonSerializable(typeof(ClipboardPaste))]
+[JsonSerializable(typeof(ClipboardPasteResult))]
 [JsonSerializable(typeof(DocumentContent))]
 [JsonSerializable(typeof(DocumentLoad))]
 [JsonSerializable(typeof(DocumentLoadResult))]

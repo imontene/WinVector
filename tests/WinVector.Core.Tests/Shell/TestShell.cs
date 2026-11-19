@@ -79,3 +79,20 @@ internal sealed class FakeDialogs : IShellDialogs
         return Task.CompletedTask;
     }
 }
+
+/// <summary>Portapapeles en memoria que anota lo que se escribe.</summary>
+internal sealed class FakeClipboard : IShellClipboard
+{
+    public string? Svg { get; set; }
+
+    public int Writes { get; private set; }
+
+    public Task SetSvgAsync(string svg)
+    {
+        Svg = svg;
+        Writes++;
+        return Task.CompletedTask;
+    }
+
+    public Task<string?> GetSvgAsync() => Task.FromResult(Svg);
+}
