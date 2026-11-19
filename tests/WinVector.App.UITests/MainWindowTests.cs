@@ -185,13 +185,29 @@ public sealed class MainWindowTests
         var fitted = Session.WaitForName("ZoomStatus", name => name.Length > 0, EngineTimeout);
         var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
         Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
+        Thread.Sleep(300);
 
+        // Con el lienzo enfocado, los atajos de zoom los atiende el motor.
         Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_1);
         var actual = Session.WaitForName("ZoomStatus", name => name.StartsWith("100", StringComparison.Ordinal), EngineTimeout);
-        StringAssert.StartsWith(actual, "100", "Ctrl+1 no llegó al menú Ver con el lienzo enfocado.");
+        StringAssert.StartsWith(actual, "100", "Ctrl+1 con el lienzo enfocado no cambió el zoom.");
 
         Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_0);
         Assert.AreEqual(fitted, Session.WaitForName("ZoomStatus", name => name == fitted, EngineTimeout));
+    }
+
+    [TestMethod]
+    public void CtrlNConElLienzoEnfocadoAbreOtraPestaña()
+    {
+        // Con el lienzo enfocado, el teclado va a la página: el motor reenvía Ctrl+N a la aplicación.
+        WaitForEngine();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
+        Thread.Sleep(300);
+
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_N);
+
+        Assert.IsTrue(Retry.WhileFalse(() => Tabs().Length == 2, TimeSpan.FromSeconds(5)).Result, "Ctrl+N con el lienzo enfocado no abrió otra pestaña.");
     }
 
     [TestMethod]
