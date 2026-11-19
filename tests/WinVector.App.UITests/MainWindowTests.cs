@@ -143,7 +143,7 @@ public sealed class MainWindowTests
         {
             using var fresh = new FlaUI.UIA3.UIA3Automation();
             var freshWindow = Session.Application.GetMainWindow(fresh);
-            var freshCanvas = freshWindow.FindFirstDescendant(cf => cf.ByAutomationId("EngineCanvas"));
+            var freshCanvas = freshWindow?.FindFirstDescendant(cf => cf.ByAutomationId("EngineCanvas"));
             var freshText = freshCanvas?.FindFirstDescendant(cf => cf.ByName("WinVector"));
             TestContext.WriteLine($"Pestañas: {Tabs().Length}");
             TestContext.WriteLine($"Latencia (motor listo): '{Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault}'");
