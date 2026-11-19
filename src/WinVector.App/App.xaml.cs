@@ -47,6 +47,20 @@ public partial class App : Application
             return [.. files.Files.Select(file => file.Path)];
         }
 
-        return WinVector.Core.Shell.CommandLine.SplitArguments(args.Arguments);
+        // En las aplicaciones empaquetadas, LaunchActivatedEventArgs.Arguments de WinUI puede llegar
+        // vacío: los argumentos se toman de la activación o, en su defecto, de la línea de comandos.
+        if (activation.Kind == Microsoft.Windows.AppLifecycle.ExtendedActivationKind.Launch
+            && activation.Data is Windows.ApplicationModel.Activation.ILaunchActivatedEventArgs launch
+            && !string.IsNullOrWhiteSpace(launch.Arguments))
+        {
+            return WinVector.Core.Shell.CommandLine.SplitArguments(launch.Arguments);
+        }
+
+        if (!string.IsNullOrWhiteSpace(args.Arguments))
+        {
+            return WinVector.Core.Shell.CommandLine.SplitArguments(args.Arguments);
+        }
+
+        return [.. Environment.GetCommandLineArgs().Skip(1)];
     }
 }
