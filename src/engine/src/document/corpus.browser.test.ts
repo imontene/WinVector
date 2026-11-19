@@ -143,7 +143,7 @@ describe("corpus de SVG", () => {
       // Las animaciones SMIL cambian con el tiempo: dos capturas no coinciden aunque el SVG sea igual.
       if (/<animate|<set\b/.test(source)) skip("contiene animaciones");
       // Chromium no deja leer los píxeles de una imagen SVG con foreignObject (lienzo de origen cruzado).
-      if (/<foreignObject/.test(source))
+      if (source.includes("<foreignObject"))
         skip("Chromium no permite leer los píxeles de un SVG con foreignObject");
       const doc = load(source);
       touchEverything(doc);
