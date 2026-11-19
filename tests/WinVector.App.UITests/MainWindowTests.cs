@@ -97,6 +97,8 @@ public sealed class MainWindowTests
         WaitForEngine();
         Session.OpenSample();
         var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        // Primero un clic en el lienzo, para que la página reciba el teclado y vea pulsar Ctrl.
+        Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
         using (Keyboard.Pressing(VirtualKeyShort.CONTROL))
         {
             Mouse.Click(AppSession.SamplePoint(canvas, 100, 87));
@@ -119,7 +121,14 @@ public sealed class MainWindowTests
         var inside = Session.WaitForName("SelectionStatus", InsideGroup, EngineTimeout);
         Assert.IsTrue(InsideGroup(inside), $"El doble clic no entró en el grupo: {inside}");
 
+        // Esc deselecciona y sigue dentro del grupo ("En g#fondo")...
         Keyboard.Press(VirtualKeyShort.ESCAPE);
+        static bool OnlyGroup(string name) =>
+            !name.StartsWith("circle#sol", StringComparison.Ordinal) && name.EndsWith(" g#fondo", StringComparison.Ordinal);
+        var deselected = Session.WaitForName("SelectionStatus", OnlyGroup, EngineTimeout);
+        Assert.IsTrue(OnlyGroup(deselected), $"El primer Esc no deseleccionó: {deselected}");
+
+        // ...y otro Esc sale del grupo y lo selecciona.
         Keyboard.Press(VirtualKeyShort.ESCAPE);
         Assert.AreEqual("g#fondo", Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout));
     }

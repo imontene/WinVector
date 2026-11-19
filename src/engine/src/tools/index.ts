@@ -7,3 +7,4 @@
  * Por ahora, la herramienta Selección (issue #27).
  */
 export * from "./selectTool";
+export * from "./modifiers";

@@ -6,6 +6,7 @@ import {
   selectableChildren,
   type Selection,
 } from "../selection";
+import { isPressed } from "./modifiers";
 
 /** Distancia en píxeles a partir de la cual pulsar y mover es un arrastre y no un clic. */
 const DRAG_THRESHOLD = 3;
@@ -60,16 +61,17 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     // El documento está en un shadow root: el destino real es el primero de composedPath().
     const pick = pickAt(event.composedPath()[0] ?? null, root, {
       scope: selection.scope,
-      deep: event.ctrlKey || event.metaKey,
+      deep: isPressed(event, "Control") || isPressed(event, "Meta"),
     });
 
+    const shift = isPressed(event, "Shift");
     if (!pick) {
-      press = { kind: "marquee", start: point(event), additive: event.shiftKey, marquee: null };
+      press = { kind: "marquee", start: point(event), additive: shift, marquee: null };
       // El arrastre sigue aunque el puntero salga del lienzo.
       target.documentElement.setPointerCapture(event.pointerId);
       return;
     }
-    if (event.shiftKey) {
+    if (shift) {
       selection.toggle(pick.element, pick.scope);
     } else if (selection.items.includes(pick.element) && pick.scope === selection.scope) {
       // Se mantiene la selección múltiple por si el usuario arrastra para moverla (issue #28).

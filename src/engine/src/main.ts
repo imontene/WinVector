@@ -5,7 +5,7 @@ import type { Rect } from "./geometry";
 import { EMPTY_SCENE, Overlay } from "./overlay";
 import sampleSvg from "./sample.svg?raw";
 import { describeElement, selectionBounds } from "./selection";
-import { installSelectTool } from "./tools";
+import { installSelectTool, trackModifiers } from "./tools";
 
 const workspace = document.getElementById("workspace");
 if (!workspace) {
@@ -144,6 +144,7 @@ bridge.handle("history.redo", ({ documentId }) =>
   }),
 );
 
+trackModifiers(window);
 installSelectTool(document, {
   active: () => {
     const active = documents.active;
