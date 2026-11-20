@@ -344,6 +344,38 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void QuitarElRellenoDelSolDesdeElPanelYDeshacer()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var sun = AppSession.SamplePoint(canvas, 300, 96);
+        var orange = System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47);
+        Mouse.DoubleClick(sun);
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+
+        // El botón de relleno muestra el color del sol.
+        var fill = Retry.WhileNull(() => Session.FindById("FillButton"), EngineTimeout).Result
+            ?? throw new AssertFailedException("No aparece el botón de relleno.");
+        Assert.AreEqual("#FFB547", Session.WaitForName("FillButton", name => name == "#FFB547", EngineTimeout));
+
+        fill.Click();
+        var none = Retry.WhileNull(() => Session.FindInApp("FillNone"), TimeSpan.FromSeconds(10)).Result
+            ?? throw new AssertFailedException("No aparece Sin relleno.");
+        none.Patterns.Invoke.Pattern.Invoke();
+
+        Assert.IsTrue(
+            Retry.WhileFalse(() => !AppSession.IsClose(AppSession.ColorAt(sun), orange), EngineTimeout).Result,
+            "El sol sigue relleno.");
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result);
+        undo.Click();
+        Assert.IsTrue(
+            Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(sun), orange), EngineTimeout).Result,
+            "Deshacer no devolvió el relleno al sol.");
+    }
+
+    [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);

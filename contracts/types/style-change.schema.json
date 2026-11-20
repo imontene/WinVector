@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StyleChange",
+  "description": "Cambio de estilo de la selección. Un campo null no cambia.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "fill",
+    "stroke",
+    "strokeWidth",
+    "opacity"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "fill": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Relleno: \"none\" o \"#rrggbb\"."
+    },
+    "stroke": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Trazo: \"none\" o \"#rrggbb\"."
+    },
+    "strokeWidth": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Grosor del trazo, 0 o más."
+    },
+    "opacity": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Opacidad, de 0 a 1."
+    }
+  }
+}

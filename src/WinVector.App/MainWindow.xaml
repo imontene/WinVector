@@ -423,6 +423,14 @@
                         <PathIcon Data="M2,2 L14,2 L14,14 L2,14 Z M3.5,3.5 L3.5,12.5 L12.5,3.5 Z" />
                     </ToggleButton>
                     <ToggleButton
+                        x:Uid="ToolEyedropper"
+                        AutomationProperties.AutomationId="ToolEyedropper"
+                        Click="OnToolClick"
+                        Style="{StaticResource ToolButtonStyle}"
+                        Tag="eyedropper">
+                        <PathIcon Data="M11.5,1.5 A2,2 0 0 1 14.5,4.5 L12.6,6.4 L13.3,7.1 L12.2,8.2 L11.5,7.5 L5.5,13.5 L3,14 L2,13 L2.5,10.5 L8.5,4.5 L7.8,3.8 L8.9,2.7 L9.6,3.4 Z M9.6,5.6 L3.8,11.4 L3.6,12.4 L4.6,12.2 L10.4,6.4 Z" />
+                    </ToggleButton>
+                    <ToggleButton
                         x:Uid="ToolHand"
                         AutomationProperties.AutomationId="ToolHand"
                         Click="OnToolClick"
@@ -529,6 +537,134 @@
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             TextWrapping="Wrap" />
+
+                        <!-- Apariencia: relleno, trazo y opacidad. -->
+                        <TextBlock x:Uid="AppearanceTitle" Margin="0,8,0,0" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <Grid ColumnSpacing="8" RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock
+                                x:Uid="FillLabel"
+                                Grid.Row="0"
+                                VerticalAlignment="Center" />
+                            <DropDownButton
+                                x:Name="FillButton"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                AutomationProperties.AutomationId="FillButton"
+                                AutomationProperties.Name="{x:Bind PaintText(ViewModel.SelectionFill), Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border
+                                        Width="16"
+                                        Height="16"
+                                        Background="{x:Bind app:BindingFunctions.PaintBrush(ViewModel.SelectionFill), Mode=OneWay}"
+                                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="2" />
+                                    <TextBlock Text="{x:Bind PaintText(ViewModel.SelectionFill), Mode=OneWay}" />
+                                </StackPanel>
+                                <DropDownButton.Flyout>
+                                    <Flyout x:Name="FillFlyout" Closed="OnPaintFlyoutClosed" Opening="OnPaintFlyoutOpening">
+                                        <StackPanel Width="300" Spacing="8">
+                                            <ColorPicker
+                                                x:Name="FillPicker"
+                                                AutomationProperties.AutomationId="FillPicker"
+                                                ColorChanged="OnPaintColorChanged"
+                                                IsAlphaEnabled="False"
+                                                IsColorPreviewVisible="False"
+                                                IsHexInputVisible="True"
+                                                IsMoreButtonVisible="False" />
+                                            <Button
+                                                x:Uid="FillNone"
+                                                HorizontalAlignment="Stretch"
+                                                AutomationProperties.AutomationId="FillNone"
+                                                Click="OnPaintNoneClick"
+                                                Tag="fill" />
+                                            <TextBlock x:Uid="RecentColorsLabel" Style="{StaticResource CaptionTextBlockStyle}" />
+                                            <StackPanel x:Name="FillRecent" Orientation="Horizontal" Spacing="4" />
+                                        </StackPanel>
+                                    </Flyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                            <TextBlock
+                                x:Uid="StrokeLabel"
+                                Grid.Row="1"
+                                VerticalAlignment="Center" />
+                            <DropDownButton
+                                x:Name="StrokeButton"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                AutomationProperties.AutomationId="StrokeButton"
+                                AutomationProperties.Name="{x:Bind PaintText(ViewModel.SelectionStroke), Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border
+                                        Width="16"
+                                        Height="16"
+                                        Background="{x:Bind app:BindingFunctions.PaintBrush(ViewModel.SelectionStroke), Mode=OneWay}"
+                                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="2" />
+                                    <TextBlock Text="{x:Bind PaintText(ViewModel.SelectionStroke), Mode=OneWay}" />
+                                </StackPanel>
+                                <DropDownButton.Flyout>
+                                    <Flyout x:Name="StrokeFlyout" Closed="OnPaintFlyoutClosed" Opening="OnPaintFlyoutOpening">
+                                        <StackPanel Width="300" Spacing="8">
+                                            <ColorPicker
+                                                x:Name="StrokePicker"
+                                                AutomationProperties.AutomationId="StrokePicker"
+                                                ColorChanged="OnPaintColorChanged"
+                                                IsAlphaEnabled="False"
+                                                IsColorPreviewVisible="False"
+                                                IsHexInputVisible="True"
+                                                IsMoreButtonVisible="False" />
+                                            <Button
+                                                x:Uid="StrokeNone"
+                                                HorizontalAlignment="Stretch"
+                                                AutomationProperties.AutomationId="StrokeNone"
+                                                Click="OnPaintNoneClick"
+                                                Tag="stroke" />
+                                            <TextBlock x:Uid="RecentColorsLabel" Style="{StaticResource CaptionTextBlockStyle}" />
+                                            <StackPanel x:Name="StrokeRecent" Orientation="Horizontal" Spacing="4" />
+                                        </StackPanel>
+                                    </Flyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                            <NumberBox
+                                x:Uid="SelectionStrokeWidth"
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                AutomationProperties.AutomationId="SelectionStrokeWidth"
+                                LargeChange="1"
+                                Minimum="0"
+                                SmallChange="0.5"
+                                SpinButtonPlacementMode="Compact"
+                                ValueChanged="OnStrokeWidthChanged"
+                                Value="{x:Bind ViewModel.SelectionStrokeWidth, Mode=OneWay}" />
+                            <NumberBox
+                                x:Uid="SelectionOpacity"
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                AutomationProperties.AutomationId="SelectionOpacity"
+                                LargeChange="10"
+                                Maximum="100"
+                                Minimum="0"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Compact"
+                                ValueChanged="OnOpacityChanged"
+                                Value="{x:Bind ViewModel.SelectionOpacityPercent, Mode=OneWay}" />
+                        </Grid>
                     </StackPanel>
 
                     <!-- Sin nada seleccionado, el panel edita la mesa de trabajo. -->

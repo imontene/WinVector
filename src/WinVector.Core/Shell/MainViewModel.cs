@@ -110,6 +110,31 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _lockAspectRatio;
 
+    /// <summary>
+    /// Relleno de la selección: "none", un color "#rrggbb", "url" (degradado o patrón) o null si los
+    /// objetos tienen rellenos distintos o no hay selección.
+    /// </summary>
+    [ObservableProperty]
+    private string? _selectionFill;
+
+    /// <summary>Trazo de la selección, con los mismos valores que <see cref="SelectionFill"/>.</summary>
+    [ObservableProperty]
+    private string? _selectionStroke;
+
+    /// <summary>Grosor del trazo de la selección, o NaN si es distinto entre objetos.</summary>
+    [ObservableProperty]
+    private double _selectionStrokeWidth = double.NaN;
+
+    /// <summary>Opacidad de la selección en porcentaje (0 a 100), o NaN si es distinta entre objetos.</summary>
+    [ObservableProperty]
+    private double _selectionOpacityPercent = double.NaN;
+
+    /// <summary>Colores usados hace poco, el más reciente primero.</summary>
+    public ObservableCollection<string> RecentColors { get; } = [];
+
+    /// <summary>Colores recientes que se recuerdan.</summary>
+    public const int RecentColorsLimit = 10;
+
     /// <summary>True si se puede girar desde el panel: hay exactamente un objeto seleccionado.</summary>
     public bool CanRotateSelection => !double.IsNaN(SelectionRotation);
 
@@ -653,6 +678,92 @@ public sealed partial class MainViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Cambia el relleno de la selección: "none" o un color "#rrggbb".</summary>
+    /// <returns>False si el valor no es válido o no hay nada seleccionado.</returns>
+    public bool SetSelectionFill(string paint) => SendStyle(fill: NormalizePaint(paint));
+
+    /// <summary>Cambia el trazo de la selección: "none" o un color "#rrggbb".</summary>
+    public bool SetSelectionStroke(string paint) => SendStyle(stroke: NormalizePaint(paint));
+
+    /// <summary>Cambia el grosor del trazo de la selección (0 o más).</summary>
+    public bool SetSelectionStrokeWidth(double width)
+    {
+        if (!double.IsFinite(width) || width < 0 || Math.Abs(width - SelectionStrokeWidth) < 1e-9)
+        {
+            OnPropertyChanged(nameof(SelectionStrokeWidth));
+            return false;
+        }
+
+        return SendStyle(strokeWidth: width);
+    }
+
+    /// <summary>Cambia la opacidad de la selección, en porcentaje (0 a 100).</summary>
+    public bool SetSelectionOpacityPercent(double percent)
+    {
+        if (!double.IsFinite(percent) || percent < 0 || percent > 100 || Math.Abs(percent - SelectionOpacityPercent) < 1e-9)
+        {
+            OnPropertyChanged(nameof(SelectionOpacityPercent));
+            return false;
+        }
+
+        return SendStyle(opacity: percent / 100);
+    }
+
+    /// <summary>Recuerda un color usado: va el primero de los recientes, sin repetirse.</summary>
+    public void RememberColor(string color)
+    {
+        if (NormalizePaint(color) is not { } hex || hex == "none")
+        {
+            return;
+        }
+
+        RecentColors.Remove(hex);
+        RecentColors.Insert(0, hex);
+        while (RecentColors.Count > RecentColorsLimit)
+        {
+            RecentColors.RemoveAt(RecentColors.Count - 1);
+        }
+    }
+
+    /// <summary>"none" o un color "#rrggbb" en minúsculas; null si no es válido.</summary>
+    public static string? NormalizePaint(string? paint)
+    {
+        var value = paint?.Trim().ToLowerInvariant();
+        if (value == "none")
+        {
+            return value;
+        }
+
+        if (value is { Length: 4 } && value[0] == '#' && value[1..].All(Uri.IsHexDigit))
+        {
+            // #abc → #aabbcc
+            return string.Concat("#", value[1], value[1], value[2], value[2], value[3], value[3]);
+        }
+
+        return value is { Length: 7 } && value[0] == '#' && value[1..].All(Uri.IsHexDigit) ? value : null;
+    }
+
+    private bool SendStyle(string? fill = null, string? stroke = null, double? strokeWidth = null, double? opacity = null)
+    {
+        if (SelectedDocument is not { IsLoaded: true } document || !HasSelection
+            || (fill is null && stroke is null && strokeWidth is null && opacity is null))
+        {
+            return false;
+        }
+
+        var change = new StyleChange(document.DocumentId, fill, stroke, strokeWidth, opacity);
+        Enqueue(() => SendAsync(BridgeCommands.SelectionSetStyle, change));
+        return true;
+    }
+
+    private void ShowStyle(SelectionStyle? style)
+    {
+        SelectionFill = style?.Fill;
+        SelectionStroke = style?.Stroke;
+        SelectionStrokeWidth = style?.StrokeWidth is { } width ? Math.Round(width, 2) : double.NaN;
+        SelectionOpacityPercent = style?.Opacity is { } opacity ? Math.Round(opacity * 100, 1) : double.NaN;
+    }
+
     /// <summary>Vuelve a anunciar los valores del panel, para que descarte lo escrito.</summary>
     private void RefreshGeometry()
     {
@@ -839,6 +950,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectionSummary = string.Empty;
         HasSelection = false;
         ShowGeometry(null, null);
+        ShowStyle(null);
         OnPropertyChanged(nameof(ZoomText));
         OnPropertyChanged(nameof(CurrentArtboard));
         NotifyEditCommandsChanged();
@@ -999,6 +1111,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         HasSelection = selection.Items.Count > 0;
         ShowGeometry(selection.Bounds, selection.Items.Count == 1 ? selection.Rotation : null);
+        ShowStyle(selection.Items.Count > 0 ? selection.Style : null);
         var items = selection.Items.Count switch
         {
             0 => string.Empty,

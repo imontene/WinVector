@@ -35,6 +35,13 @@
       "response": "DocumentRef"
     },
     {
+      "name": "selection.setStyle",
+      "kind": "command",
+      "description": "Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial.",
+      "payload": "StyleChange",
+      "response": "ObjectChange"
+    },
+    {
       "name": "object.arrange",
       "kind": "command",
       "description": "Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer.",

@@ -498,4 +498,46 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="HistoryActionDelete" xml:space="preserve">
     <value>eliminar</value>
   </data>
+  <data name="AppearanceTitle.Text" xml:space="preserve">
+    <value>Apariencia</value>
+  </data>
+  <data name="FillLabel.Text" xml:space="preserve">
+    <value>Relleno</value>
+  </data>
+  <data name="StrokeLabel.Text" xml:space="preserve">
+    <value>Trazo</value>
+  </data>
+  <data name="FillNone.Content" xml:space="preserve">
+    <value>Sin relleno</value>
+  </data>
+  <data name="StrokeNone.Content" xml:space="preserve">
+    <value>Sin trazo</value>
+  </data>
+  <data name="RecentColorsLabel.Text" xml:space="preserve">
+    <value>Colores recientes</value>
+  </data>
+  <data name="SelectionStrokeWidth.Header" xml:space="preserve">
+    <value>Grosor del trazo</value>
+  </data>
+  <data name="SelectionOpacity.Header" xml:space="preserve">
+    <value>Opacidad (%)</value>
+  </data>
+  <data name="PaintNone" xml:space="preserve">
+    <value>Ninguno</value>
+  </data>
+  <data name="PaintMixed" xml:space="preserve">
+    <value>Varios</value>
+  </data>
+  <data name="PaintServer" xml:space="preserve">
+    <value>Degradado o patrón</value>
+  </data>
+  <data name="ToolEyedropper.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Cuentagotas (I): clic para dar el color a la selección; con Mayús, al trazo</value>
+  </data>
+  <data name="ToolEyedropper.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Cuentagotas</value>
+  </data>
+  <data name="HistoryActionStyle" xml:space="preserve">
+    <value>cambiar el estilo</value>
+  </data>
 </root>

@@ -221,6 +221,8 @@ export interface SelectionChanged {
   readonly scope: SelectedElement | null;
   /** Giro del objeto seleccionado respecto al documento, en grados entre -180 y 180. Solo cuando hay un único objeto seleccionado. */
   readonly rotation?: number;
+  /** Estilo de la selección; solo cuando hay algo seleccionado. */
+  readonly style?: SelectionStyle;
 }
 
 /** Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia. */
@@ -239,8 +241,34 @@ export interface SelectionGeometry {
   readonly rotation: number | null;
 }
 
+/** Estilo calculado de la selección, venga de atributos, de CSS o de los grupos. null: los objetos tienen valores distintos. */
+export interface SelectionStyle {
+  /** Relleno: "none", un color "#rrggbb" o "url" (degradado o patrón). */
+  readonly fill: string | null;
+  /** Trazo: "none", "#rrggbb" o "url". */
+  readonly stroke: string | null;
+  /** Grosor del trazo en unidades del elemento. */
+  readonly strokeWidth: number | null;
+  /** Opacidad del objeto, de 0 a 1. */
+  readonly opacity: number | null;
+}
+
+/** Cambio de estilo de la selección. Un campo null no cambia. */
+export interface StyleChange {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Relleno: "none" o "#rrggbb". */
+  readonly fill: string | null;
+  /** Trazo: "none" o "#rrggbb". */
+  readonly stroke: string | null;
+  /** Grosor del trazo, 0 o más. */
+  readonly strokeWidth: number | null;
+  /** Opacidad, de 0 a 1. */
+  readonly opacity: number | null;
+}
+
 /** Herramienta del lienzo que ya implementa el motor. */
-export type ToolName = "select" | "hand" | "zoom";
+export type ToolName = "select" | "hand" | "zoom" | "eyedropper";
 
 /** Herramienta activa del lienzo. */
 export interface ToolState {
@@ -288,6 +316,8 @@ export interface BridgeCommands {
     readonly payload: SelectionGeometry;
     readonly response: DocumentRef;
   };
+  /** Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial. */
+  readonly "selection.setStyle": { readonly payload: StyleChange; readonly response: ObjectChange };
   /** Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer. */
   readonly "object.arrange": { readonly payload: ObjectArrange; readonly response: ObjectChange };
   /** Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer. */
@@ -367,6 +397,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "app.ping",
   "selection.selectAll",
   "selection.setGeometry",
+  "selection.setStyle",
   "object.arrange",
   "object.group",
   "object.ungroup",

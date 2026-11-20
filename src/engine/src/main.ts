@@ -22,12 +22,14 @@ import sampleSvg from "./sample.svg?raw";
 import { describeElement, selectionBounds, selectionScreenRect } from "./selection";
 import {
   cursorForTool,
+  installEyedropper,
   installNavigation,
   installSelectTool,
   installShortcuts,
   trackModifiers,
 } from "./tools";
 import { copySelection, duplicate, pasteSvg, remove } from "./clipboard";
+import { applyStyle, readStyle } from "./style";
 import { arrange, group, ungroup } from "./structure";
 import { rotationOf, setGeometry } from "./transform";
 import { gridSpacing, Guides, type Viewport } from "./viewport";
@@ -81,6 +83,7 @@ function emitSelection(documentId: string): void {
     bounds: selectionBounds(items, target.root),
     scope: scope ? describeElement(scope) : null,
     ...(single && items.length === 1 ? { rotation: rotationOf(single, target.root) } : {}),
+    ...(items.length > 0 ? { style: readStyle(items) } : {}),
   });
 }
 
@@ -338,6 +341,13 @@ bridge.handle("clipboard.paste", ({ documentId, svg }) =>
   }),
 );
 
+bridge.handle("selection.setStyle", ({ documentId, ...style }) =>
+  withDocumentErrors(() => {
+    const { document: doc, selection } = documents.open(documentId);
+    return { documentId, changed: applyStyle(selection.items, style, doc.history) };
+  }),
+);
+
 bridge.handle("history.undo", ({ documentId }) =>
   withDocumentErrors(() => {
     const { history } = documents.get(documentId);
@@ -392,6 +402,19 @@ bridge.handle("artboard.set", ({ documentId, width, height, viewBox }) =>
 );
 
 trackModifiers(window);
+installEyedropper(window, {
+  tool: () => activeTool,
+  active: () => {
+    const active = documents.active;
+    return active
+      ? {
+          root: active.document.root,
+          selection: active.selection,
+          history: active.document.history,
+        }
+      : null;
+  },
+});
 installShortcuts(window, {
   undo: () => documents.active?.document.history.undo(),
   redo: () => documents.active?.document.history.redo(),

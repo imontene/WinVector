@@ -6,6 +6,7 @@
   "enum": [
     "select",
     "hand",
-    "zoom"
+    "zoom",
+    "eyedropper"
   ]
 }

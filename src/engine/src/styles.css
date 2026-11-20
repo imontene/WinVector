@@ -114,6 +114,11 @@ body[data-cursor="zoom-out"] * {
   cursor: zoom-out !important;
 }
 
+body[data-cursor="crosshair"],
+body[data-cursor="crosshair"] * {
+  cursor: crosshair !important;
+}
+
 /* Capa de superposición (src/overlay): fuera del documento y transparente al puntero. */
 :root {
   --selection: #0067c0;

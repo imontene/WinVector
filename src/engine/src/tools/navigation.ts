@@ -7,7 +7,12 @@ import { isPressed } from "./modifiers";
 const DRAG_THRESHOLD = 3;
 
 /** Atajos de teclado de las herramientas, sin modificadores, con el lienzo enfocado. */
-const TOOL_KEYS: Readonly<Record<string, ToolName>> = { v: "select", h: "hand", z: "zoom" };
+const TOOL_KEYS: Readonly<Record<string, ToolName>> = {
+  v: "select",
+  h: "hand",
+  z: "zoom",
+  i: "eyedropper",
+};
 
 export interface NavigationHost {
   /** Viewport del documento visible, o `null` si no hay ninguno. */
@@ -45,7 +50,7 @@ function wheelPixels(event: WheelEvent): { dx: number; dy: number } {
  * - Arrastrar con la barra espaciadora pulsada, con el botón central o con la herramienta Mano
  *   desplaza el lienzo.
  * - Herramienta Zoom: clic acerca, `Alt`+clic aleja y arrastrar acerca hasta el rectángulo.
- * - `V`, `H` y `Z` cambian a Selección, Mano y Zoom.
+ * - `V`, `H`, `Z` e `I` cambian a Selección, Mano, Zoom y Cuentagotas.
  *
  * Escucha en la fase de captura de la ventana: cuando un gesto es de navegación, la herramienta
  * activa (Selección) no lo recibe.
@@ -257,5 +262,14 @@ export function installNavigation(target: Window, host: NavigationHost): () => v
 
 /** Exportado para que la herramienta activa refleje su cursor al cambiar desde la aplicación. */
 export function cursorForTool(tool: ToolName): string {
-  return tool === "hand" ? "grab" : tool === "zoom" ? "zoom-in" : "";
+  switch (tool) {
+    case "hand":
+      return "grab";
+    case "zoom":
+      return "zoom-in";
+    case "eyedropper":
+      return "crosshair";
+    default:
+      return "";
+  }
 }
