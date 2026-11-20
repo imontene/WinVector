@@ -254,8 +254,15 @@
                         </MenuFlyoutItem>
                     </MenuBarItem>
 
-                    <MenuBarItem x:Uid="MenuPath">
-                        <MenuFlyoutItem x:Uid="MenuPathObjectToPath" IsEnabled="False" />
+                    <MenuBarItem x:Name="PathMenu" x:Uid="MenuPath">
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathObjectToPath"
+                            AutomationProperties.AutomationId="MenuPathObjectToPath"
+                            Command="{x:Bind ViewModel.ConvertToPathCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="C" Modifiers="Control,Shift" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
                     </MenuBarItem>
 
                     <MenuBarItem x:Uid="MenuText">

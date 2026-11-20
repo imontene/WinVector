@@ -313,6 +313,13 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c24",
+    name: "object.toPath",
+    payload: { documentId: "d1" },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e4",
     name: "error",
@@ -340,6 +347,7 @@ function summarize(message: BridgeMessage): string {
       case "object.arrange":
       case "object.group":
       case "object.ungroup":
+      case "object.toPath":
       case "selection.duplicate":
       case "selection.delete":
       case "selection.setStyle":
@@ -381,6 +389,7 @@ function summarize(message: BridgeMessage): string {
         return `ordenar ${message.payload.action}`;
       case "object.group":
       case "object.ungroup":
+      case "object.toPath":
       case "selection.duplicate":
       case "selection.delete":
       case "clipboard.copy":
@@ -473,6 +482,7 @@ describe("contrato del puente", () => {
       "pegados: 2",
       "relleno #ff0000",
       "forma r=12",
+      "object.toPath d1",
       "error unknown-message",
     ]);
   });

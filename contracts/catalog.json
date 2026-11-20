@@ -56,6 +56,13 @@
       "response": "ObjectChange"
     },
     {
+      "name": "object.toPath",
+      "kind": "command",
+      "description": "Convierte en trazados (<path>) las formas seleccionadas (rectángulo, elipse, círculo, línea, polígono, polilínea) sin cambiar su aspecto, conservando sus atributos. Se puede deshacer.",
+      "payload": "DocumentRef",
+      "response": "ObjectChange"
+    },
+    {
       "name": "object.group",
       "kind": "command",
       "description": "Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer.",

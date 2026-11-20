@@ -37,6 +37,7 @@ import {
   type ShapeStyle,
 } from "./tools";
 import { copySelection, duplicate, pasteSvg, remove } from "./clipboard";
+import { convertAllToPath } from "./paths";
 import { applyStyle, readStyle } from "./style";
 import { arrange, group, ungroup } from "./structure";
 import { rotationOf, setGeometry } from "./transform";
@@ -252,7 +253,7 @@ bridge.handle("selection.setGeometry", ({ documentId, ...target }) =>
  */
 function objectOperation(
   documentId: string,
-  operation: { kind: "arrange"; action: ArrangeAction } | { kind: "group" | "ungroup" },
+  operation: { kind: "arrange"; action: ArrangeAction } | { kind: "group" | "ungroup" | "to-path" },
 ): boolean {
   const { document: doc, selection } = documents.open(documentId);
   const items = selection.items;
@@ -264,6 +265,11 @@ function objectOperation(
       const created = doc.history.transact("group", () => group(items, doc.root));
       if (created) selection.set([created], created.parentElement ?? doc.root);
       return created !== null;
+    }
+    case "to-path": {
+      const replaced = doc.history.transact("to-path", () => convertAllToPath(items));
+      selection.replace(items, replaced);
+      return replaced.size > 0;
     }
     case "ungroup": {
       const released = doc.history.transact("ungroup", () => ungroup(items, doc.root));
@@ -278,6 +284,13 @@ bridge.handle("object.arrange", ({ documentId, action }) =>
   withDocumentErrors(() => ({
     documentId,
     changed: objectOperation(documentId, { kind: "arrange", action }),
+  })),
+);
+
+bridge.handle("object.toPath", ({ documentId }) =>
+  withDocumentErrors(() => ({
+    documentId,
+    changed: objectOperation(documentId, { kind: "to-path" }),
   })),
 );
 
@@ -484,6 +497,10 @@ installShortcuts(window, {
   ungroup: () => {
     const id = documents.active?.id;
     if (id) objectOperation(id, { kind: "ungroup" });
+  },
+  toPath: () => {
+    const id = documents.active?.id;
+    if (id) objectOperation(id, { kind: "to-path" });
   },
   duplicate: () => {
     const id = documents.active?.id;

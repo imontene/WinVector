@@ -187,6 +187,7 @@ internal sealed class FakeEngine
             case "object.arrange":
             case "object.group":
             case "object.ungroup":
+            case "object.toPath":
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
             case "selection.setStyle":

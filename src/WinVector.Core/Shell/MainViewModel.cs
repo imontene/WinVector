@@ -88,6 +88,7 @@ public sealed partial class MainViewModel : ObservableObject
         Add("select-all", SelectAllCommand);
         Add("group", GroupCommand);
         Add("ungroup", UngroupCommand);
+        Add("object-to-path", ConvertToPathCommand);
         Add("bring-to-front", BringToFrontCommand);
         Add("bring-forward", BringForwardCommand);
         Add("send-backward", SendBackwardCommand);
@@ -1048,6 +1049,10 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(HasSelection))]
     public Task GroupAsync() => SelectionCommandAsync(BridgeCommands.ObjectGroup);
 
+    /// <summary>Convierte en trazados las formas seleccionadas sin cambiar su aspecto.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task ConvertToPathAsync() => SelectionCommandAsync(BridgeCommands.ObjectToPath);
+
     /// <summary>Desagrupa los grupos seleccionados que se pueden desagrupar sin cambiar su aspecto.</summary>
     [RelayCommand(CanExecute = nameof(HasSelection))]
     public Task UngroupAsync() => SelectionCommandAsync(BridgeCommands.ObjectUngroup);
@@ -1141,6 +1146,7 @@ public sealed partial class MainViewModel : ObservableObject
         SendToBackCommand.NotifyCanExecuteChanged();
         GroupCommand.NotifyCanExecuteChanged();
         UngroupCommand.NotifyCanExecuteChanged();
+        ConvertToPathCommand.NotifyCanExecuteChanged();
         CopyCommand.NotifyCanExecuteChanged();
         CutCommand.NotifyCanExecuteChanged();
         DuplicateCommand.NotifyCanExecuteChanged();

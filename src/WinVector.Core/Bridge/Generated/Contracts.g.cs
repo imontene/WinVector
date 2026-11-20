@@ -498,6 +498,9 @@ public static class BridgeCommands
     /// <summary>Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer.</summary>
     public static readonly BridgeCommand<ObjectArrange, ObjectChange> ObjectArrange = new("object.arrange");
 
+    /// <summary>Convierte en trazados (&lt;path&gt;) las formas seleccionadas (rectángulo, elipse, círculo, línea, polígono, polilínea) sin cambiar su aspecto, conservando sus atributos. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectToPath = new("object.toPath");
+
     /// <summary>Agrupa la selección en un &lt;g&gt; sin cambiar su aspecto. Se puede deshacer.</summary>
     public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectGroup = new("object.group");
 

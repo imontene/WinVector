@@ -11,6 +11,8 @@ export interface ShortcutHost {
   remove(): void;
   group(): void;
   ungroup(): void;
+  /** Convierte la selección en trazados (Ctrl+Mayús+C). */
+  toPath(): void;
   /** Envía a la aplicación un atajo que el motor no atiende (Ctrl+S, Ctrl+N…). */
   forward(shortcut: KeyboardShortcut): void;
 }
@@ -76,6 +78,11 @@ function handleOwn(key: string, shift: boolean, host: ShortcutHost): boolean {
     case "g":
       if (shift) host.ungroup();
       else host.group();
+      return true;
+    case "c":
+      // Ctrl+C lo atiende la aplicación (portapapeles); Ctrl+Mayús+C convierte en trazado.
+      if (!shift) return false;
+      host.toPath();
       return true;
     case "pageup":
       host.arrange(shift ? "front" : "forward");

@@ -421,6 +421,7 @@ public sealed class MainViewModelBridgeTests : IDisposable
         await ReadyAsync();
         Assert.IsFalse(_viewModel.GroupCommand.CanExecute(null));
         Assert.IsFalse(_viewModel.BringToFrontCommand.CanExecute(null));
+        Assert.IsFalse(_viewModel.ConvertToPathCommand.CanExecute(null));
 
         SelectSun();
         Assert.IsTrue(_viewModel.GroupCommand.CanExecute(null));
@@ -430,8 +431,9 @@ public sealed class MainViewModelBridgeTests : IDisposable
         await _viewModel.SendBackwardAsync();
         await _viewModel.GroupAsync();
         await _viewModel.UngroupAsync();
+        await _viewModel.ConvertToPathAsync();
 
-        Assert.AreEqual("object.arrange d1 | object.arrange d1 | object.group d1 | object.ungroup d1", string.Join(" | ", _engine.Commands));
+        Assert.AreEqual("object.arrange d1 | object.arrange d1 | object.group d1 | object.ungroup d1 | object.toPath d1", string.Join(" | ", _engine.Commands));
     }
 
     [TestMethod]
@@ -598,7 +600,7 @@ public sealed class MainViewModelBridgeTests : IDisposable
     public void LaPaletaTieneLasOrdenesDeLosMenus()
     {
         var ids = _viewModel.Commands.All.Select(entry => entry.Id).ToList();
-        foreach (var id in (string[])["new", "open", "save", "undo", "redo", "copy", "paste", "group", "bring-to-front", "zoom-fit", "toggle-grid", "tool-eyedropper", "tool-rectangle", "tool-ellipse", "tool-line", "tool-polygon", "tool-star"])
+        foreach (var id in (string[])["new", "open", "save", "undo", "redo", "copy", "paste", "group", "bring-to-front", "zoom-fit", "toggle-grid", "tool-eyedropper", "tool-rectangle", "tool-ellipse", "tool-line", "tool-polygon", "tool-star", "object-to-path"])
         {
             CollectionAssert.Contains(ids, id);
         }
