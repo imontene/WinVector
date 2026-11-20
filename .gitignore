@@ -17,7 +17,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
-perf/resultados/
+src/engine/perf/resultados/
 .vitest/
 
 # Sistema
