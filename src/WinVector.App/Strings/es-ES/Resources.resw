@@ -893,4 +893,13 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="HistoryActionShape" xml:space="preserve">
     <value>cambiar la forma</value>
   </data>
+  <data name="PaletteNameObjectToPath" xml:space="preserve">
+    <value>Convertir objeto en trazado</value>
+  </data>
+  <data name="PaletteShortcutObjectToPath" xml:space="preserve">
+    <value>Ctrl+Mayús+C</value>
+  </data>
+  <data name="HistoryActionToPath" xml:space="preserve">
+    <value>convertir en trazado</value>
+  </data>
 </root>

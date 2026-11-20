@@ -891,4 +891,13 @@ Licensed under the Apache License 2.0.</value>
   <data name="HistoryActionShape" xml:space="preserve">
     <value>change shape</value>
   </data>
+  <data name="PaletteNameObjectToPath" xml:space="preserve">
+    <value>Object to path</value>
+  </data>
+  <data name="PaletteShortcutObjectToPath" xml:space="preserve">
+    <value>Ctrl+Shift+C</value>
+  </data>
+  <data name="HistoryActionToPath" xml:space="preserve">
+    <value>convert to path</value>
+  </data>
 </root>

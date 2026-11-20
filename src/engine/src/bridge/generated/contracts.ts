@@ -412,6 +412,8 @@ export interface BridgeCommands {
   readonly "selection.setShape": { readonly payload: ShapeChange; readonly response: ObjectChange };
   /** Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer. */
   readonly "object.arrange": { readonly payload: ObjectArrange; readonly response: ObjectChange };
+  /** Convierte en trazados (<path>) las formas seleccionadas (rectángulo, elipse, círculo, línea, polígono, polilínea) sin cambiar su aspecto, conservando sus atributos. Se puede deshacer. */
+  readonly "object.toPath": { readonly payload: DocumentRef; readonly response: ObjectChange };
   /** Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer. */
   readonly "object.group": { readonly payload: DocumentRef; readonly response: ObjectChange };
   /** Desagrupa los grupos seleccionados sin cambiar su aspecto; los que cambiarían (opacidad, filtro, recorte, máscara) se dejan. Se puede deshacer. */
@@ -492,6 +494,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "selection.setStyle",
   "selection.setShape",
   "object.arrange",
+  "object.toPath",
   "object.group",
   "object.ungroup",
   "selection.duplicate",

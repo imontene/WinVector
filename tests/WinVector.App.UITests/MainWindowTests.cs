@@ -374,6 +374,25 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ConvertirElSolEnTrazadoDesdeElMenuTrazado()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var sun = AppSession.SamplePoint(canvas, 300, 96);
+        var orange = System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47);
+        Mouse.DoubleClick(sun);
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+
+        InvokeMenu("PathMenu", "MenuPathObjectToPath");
+
+        Assert.IsTrue(
+            Session.WaitForName("SelectionStatus", name => name.StartsWith("path#sol", StringComparison.Ordinal), EngineTimeout).StartsWith("path#sol", StringComparison.Ordinal),
+            "El sol no pasó a ser un trazado.");
+        Assert.IsTrue(AppSession.IsClose(AppSession.ColorAt(sun), orange), "El sol cambió de aspecto al convertirlo.");
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();
