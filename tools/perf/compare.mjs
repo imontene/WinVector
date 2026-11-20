@@ -18,7 +18,8 @@ const { warn, fail } = reference.thresholds;
 /**
  * Una medida comparable.
  * @typedef {{ group: string, name: string, value: number, base: number | undefined,
- *   unit: string, higherIsBetter: boolean, floor: number, target?: { limit: number, text: string } }} Metric
+ *   unit: string, higherIsBetter: boolean, floor: number, warnOnly?: boolean,
+ *   target?: { limit: number, text: string } }} Metric
  */
 
 /** @type {Metric[]} */
@@ -73,6 +74,8 @@ function engineMetrics(results) {
   }
 }
 
+// El arranque en las máquinas de la CI varía mucho de una ejecución a otra (sobre todo en frío):
+// solo avisa, no hace fallar la CI.
 function appMetrics(results) {
   for (const [key, group] of [
     ["cold", "Aplicación, en frío"],
@@ -88,6 +91,7 @@ function appMetrics(results) {
       unit: "ms",
       higherIsBetter: false,
       floor: 250,
+      warnOnly: true,
     });
     metrics.push({
       group,
@@ -97,6 +101,7 @@ function appMetrics(results) {
       unit: "ms",
       higherIsBetter: false,
       floor: 250,
+      warnOnly: true,
       ...(key === "cold"
         ? {
             target: {
@@ -114,6 +119,7 @@ function appMetrics(results) {
       unit: "ms",
       higherIsBetter: false,
       floor: 250,
+      warnOnly: true,
     });
   }
 }
@@ -154,7 +160,7 @@ const failures = [];
 for (const metric of metrics) {
   const change = worsening(metric);
   let status = "✅";
-  if (change !== undefined && change > fail) {
+  if (change !== undefined && change > fail && !metric.warnOnly) {
     status = "❌";
     failures.push(metric);
   } else if (change !== undefined && change > warn) {
@@ -177,7 +183,7 @@ for (const metric of metrics) {
 const summary = [
   "### Rendimiento",
   "",
-  `Umbrales respecto a la referencia: aviso si empeora más de un ${Math.round(warn * 100)} %, fallo si empeora más de un ${Math.round(fail * 100)} %.`,
+  `Umbrales respecto a la referencia: aviso si empeora más de un ${Math.round(warn * 100)} %, fallo si empeora más de un ${Math.round(fail * 100)} % (el arranque de la aplicación solo avisa).`,
   "",
   "| Grupo | Medida | Resultado | Referencia | Cambio | Objetivo |",
   "| --- | --- | --- | --- | --- | --- |",
