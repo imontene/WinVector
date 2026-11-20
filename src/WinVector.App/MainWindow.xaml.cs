@@ -345,9 +345,10 @@ public sealed partial class MainWindow : Window
 
     private void OnShapeFieldChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
-        if (sender.DataContext is ShapeFieldViewModel field && !double.IsNaN(args.NewValue))
+        // La clave del campo va en Tag: no depende de cómo asigna ItemsRepeater el DataContext.
+        if (sender.Tag is string key && !double.IsNaN(args.NewValue))
         {
-            ViewModel.SetShapeField(field.Key, args.NewValue);
+            ViewModel.SetShapeField(key, args.NewValue);
         }
     }
 
