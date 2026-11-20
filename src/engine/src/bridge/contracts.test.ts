@@ -240,6 +240,28 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c14",
+    name: "object.arrange",
+    payload: { documentId: "d1", action: "front" },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c16",
+    name: "object.group",
+    payload: { documentId: "d1" },
+  },
+  {
+    ...base,
+    kind: "response",
+    id: "c15",
+    name: "object.ungroup",
+    ok: true,
+    payload: { documentId: "d1", changed: false },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e4",
     name: "error",
@@ -264,6 +286,10 @@ function summarize(message: BridgeMessage): string {
       case "selection.selectAll":
       case "selection.setGeometry":
         return `${message.name} ${message.payload.documentId}`;
+      case "object.arrange":
+      case "object.group":
+      case "object.ungroup":
+        return `cambió: ${String(message.payload.changed)}`;
       case "history.undo":
       case "history.redo":
         return `deshacer: ${String(message.payload.undoAction)}`;
@@ -292,6 +318,11 @@ function summarize(message: BridgeMessage): string {
         return `${message.name} ${message.payload.documentId}`;
       case "selection.setGeometry":
         return `geometría x=${String(message.payload.x)}`;
+      case "object.arrange":
+        return `ordenar ${message.payload.action}`;
+      case "object.group":
+      case "object.ungroup":
+        return `${message.name} ${message.payload.documentId}`;
       case "view.zoom":
         return `zoom ${message.payload.action}`;
       case "view.setOptions":
@@ -364,6 +395,9 @@ describe("contrato del puente", () => {
       "alto 100",
       "atajo Ctrl+s",
       "geometría x=10",
+      "ordenar front",
+      "object.group d1",
+      "cambió: false",
       "error unknown-message",
     ]);
   });

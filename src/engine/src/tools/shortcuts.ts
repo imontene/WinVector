@@ -1,10 +1,13 @@
-import type { KeyboardShortcut, ZoomAction } from "../bridge";
+import type { ArrangeAction, KeyboardShortcut, ZoomAction } from "../bridge";
 
 /** Lo que hacen los atajos que atiende el propio motor. */
 export interface ShortcutHost {
   undo(): void;
   redo(): void;
   zoom(action: ZoomAction): void;
+  arrange(action: ArrangeAction): void;
+  group(): void;
+  ungroup(): void;
   /** Envía a la aplicación un atajo que el motor no atiende (Ctrl+S, Ctrl+N…). */
   forward(shortcut: KeyboardShortcut): void;
 }
@@ -16,7 +19,7 @@ const MODIFIER_KEYS = new Set(["control", "shift", "alt", "meta", "altgraph"]);
  *
  * Con el lienzo enfocado, WebView2 entrega el teclado a la página y los aceleradores de la ventana
  * (menús) no se disparan. El motor atiende los atajos que puede resolver por sí mismo (deshacer y
- * rehacer, zoom) y envía los demás atajos con Ctrl y las teclas de función a la aplicación. Con la
+ * rehacer, zoom, agrupar, orden de apilado) y envía los demás atajos con Ctrl y las teclas de función a la aplicación. Con la
  * ventana enfocada pasa lo contrario: los atiende la aplicación y la página no los recibe, así que
  * nunca se ejecutan dos veces.
  *
@@ -56,6 +59,16 @@ function handleOwn(key: string, shift: boolean, host: ShortcutHost): boolean {
       return true;
     case "y":
       host.redo();
+      return true;
+    case "g":
+      if (shift) host.ungroup();
+      else host.group();
+      return true;
+    case "pageup":
+      host.arrange(shift ? "front" : "forward");
+      return true;
+    case "pagedown":
+      host.arrange(shift ? "back" : "backward");
       return true;
     case "0":
       host.zoom("fit");

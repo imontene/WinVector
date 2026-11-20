@@ -466,4 +466,19 @@ Licensed under the Apache License 2.0.</value>
   <data name="GeometryHint.Text" xml:space="preserve">
     <value>In document units (those of the viewBox). Enter applies the value; arrow keys step it up and down. With several objects, the values are those of the set.</value>
   </data>
+  <data name="MenuObjectBringForward.Text" xml:space="preserve">
+    <value>Bring forward</value>
+  </data>
+  <data name="MenuObjectSendBackward.Text" xml:space="preserve">
+    <value>Send backward</value>
+  </data>
+  <data name="HistoryActionArrange" xml:space="preserve">
+    <value>arrange</value>
+  </data>
+  <data name="HistoryActionGroup" xml:space="preserve">
+    <value>group</value>
+  </data>
+  <data name="HistoryActionUngroup" xml:space="preserve">
+    <value>ungroup</value>
+  </data>
 </root>

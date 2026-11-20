@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ObjectArrange",
+  "description": "Cambia el orden de apilado de la selección.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "action"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "action": {
+      "$ref": "./arrange-action.schema.json",
+      "description": "Al frente, al fondo, un nivel arriba o un nivel abajo."
+    }
+  }
+}

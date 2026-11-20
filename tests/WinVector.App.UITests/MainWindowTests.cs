@@ -11,6 +11,12 @@ public sealed class MainWindowTests
 {
     private static readonly TimeSpan EngineTimeout = TimeSpan.FromSeconds(20);
 
+    /// <summary>
+    /// Espera a que arranque el motor. En un equipo recién creado de la CI, el primer WebView2 de la
+    /// sesión puede tardar más de 20 s en arrancar; las demás esperas siguen en 20 s.
+    /// </summary>
+    private static readonly TimeSpan EngineStartTimeout = TimeSpan.FromSeconds(60);
+
     private AppSession? _session;
 
     public TestContext TestContext { get; set; } = null!;
@@ -75,7 +81,7 @@ public sealed class MainWindowTests
     {
         var latency = Retry.WhileNull(
             () => NullIfEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault),
-            EngineTimeout,
+            EngineStartTimeout,
             TimeSpan.FromMilliseconds(250)).Result;
 
         Assert.IsNotNull(latency, "La barra de estado no muestra la latencia del puente: el motor no se anunció.");
@@ -294,6 +300,28 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void AgruparDesdeElMenuObjetoYDeshacer()
+    {
+        ClickSample(300, 96);
+        Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout);
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
+        Session.WaitForName("SelectionStatus", name => name.StartsWith('2'), EngineTimeout);
+
+        Session.GetById("ObjectMenu").Patterns.ExpandCollapse.Pattern.Expand();
+        var item = Retry.WhileNull(() => Session.FindInApp("MenuObjectGroup"), TimeSpan.FromSeconds(10)).Result
+            ?? throw new AssertFailedException("No aparece Objeto > Agrupar.");
+        item.Patterns.Invoke.Pattern.Invoke();
+
+        // El grupo nuevo no tiene id: la barra de estado dice "g".
+        Assert.AreEqual("g", Session.WaitForName("SelectionStatus", name => name == "g", EngineTimeout));
+
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result);
+        undo.Click();
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, "Deshacer agrupar no dejó el documento como estaba.");
+    }
+
+    [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);
@@ -382,7 +410,7 @@ public sealed class MainWindowTests
 
     private void WaitForEngine() =>
         Assert.IsTrue(
-            Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineTimeout).Result,
+            Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineStartTimeout).Result,
             "El motor no terminó de cargar.");
 
     private void InvokeViewMenu(string automationId)
