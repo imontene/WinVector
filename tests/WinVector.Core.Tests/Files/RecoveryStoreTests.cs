@@ -73,6 +73,24 @@ public sealed class RecoveryStoreTests : IDisposable
     }
 
     [TestMethod]
+    public async Task UnaCopiaQueLlegaTrasCerrarLaSesionNoSeEscribe()
+    {
+        var store = Started();
+        var folder = store.SessionFolder;
+        var saves = Enumerable.Range(0, 20)
+            .Select(i => store.SaveAsync($"d{i}", "x.svg", null, FileEncoding.Utf8, new string('x', 100_000)))
+            .ToList();
+
+        // Cerrar espera a la copia en curso y las demás ya no se escriben: la carpeta desaparece entera.
+        store.EndSession();
+        await Task.WhenAll(saves);
+        store.Dispose();
+        await store.SaveAsync("tarde", "x.svg", null, FileEncoding.Utf8, "<svg/>");
+
+        Assert.IsFalse(Directory.Exists(folder));
+    }
+
+    [TestMethod]
     public async Task BorrarUnaCopiaLaQuitaDeLasRecuperables()
     {
         var crashed = Started();

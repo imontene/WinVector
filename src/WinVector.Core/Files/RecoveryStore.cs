@@ -30,8 +30,14 @@ public sealed class RecoveryStore : IDisposable
 
     private readonly string _root;
     private readonly TimeProvider _time;
+    /// <summary>
+    /// Una sola escritura o borrado a la vez: al terminar la sesión se espera a la copia que se esté
+    /// escribiendo, para no borrar la carpeta con un archivo a medias dentro.
+    /// </summary>
+    /// <remarks>No se desecha: no usa su WaitHandle, y una copia pendiente aún puede liberarlo.</remarks>
     private readonly SemaphoreSlim _writing = new(1, 1);
     private FileStream? _lock;
+    private bool _disposed;
 
     /// <param name="root">Carpeta de las copias de recuperación (dentro de los datos locales de la aplicación).</param>
     public RecoveryStore(string root, TimeProvider? timeProvider = null)
@@ -62,12 +68,17 @@ public sealed class RecoveryStore : IDisposable
     /// <param name="key">Identificador del documento dentro de la sesión.</param>
     public async Task SaveAsync(string key, string title, string? filePath, FileEncoding encoding, string svg, CancellationToken cancellationToken = default)
     {
-        var folder = SessionFolder ?? throw new InvalidOperationException("La sesión de recuperación no ha empezado.");
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         var metadata = new Metadata(title, filePath, encoding.Encoding.WebName, encoding.HasByteOrderMark, _time.GetUtcNow());
         await _writing.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            // Si la sesión terminó mientras se preparaba la copia, ya no hace falta.
+            if (_disposed || SessionFolder is not { } folder)
+            {
+                return;
+            }
+
             // Primero el texto y después los datos: una copia sin datos no se ofrece.
             await WriteAtomicAsync(Path.Combine(folder, $"{key}.svg"), svg, cancellationToken).ConfigureAwait(false);
             await WriteAtomicAsync(Path.Combine(folder, $"{key}.json"), JsonSerializer.Serialize(metadata, JsonOptions), cancellationToken).ConfigureAwait(false);
@@ -81,14 +92,22 @@ public sealed class RecoveryStore : IDisposable
     /// <summary>Borra la copia de un documento (al guardarlo o al descartar sus cambios).</summary>
     public void Delete(string key)
     {
-        if (SessionFolder is not { } folder)
+        _writing.Wait();
+        try
         {
-            return;
-        }
+            if (SessionFolder is not { } folder)
+            {
+                return;
+            }
 
-        foreach (var extension in (string[])[".json", ".svg"])
+            foreach (var extension in (string[])[".json", ".svg"])
+            {
+                TryDelete(Path.Combine(folder, key + extension));
+            }
+        }
+        finally
         {
-            TryDelete(Path.Combine(folder, key + extension));
+            _writing.Release();
         }
     }
 
@@ -125,21 +144,38 @@ public sealed class RecoveryStore : IDisposable
     /// <summary>Cierre normal: borra la carpeta de esta sesión.</summary>
     public void EndSession()
     {
-        _lock?.Dispose();
-        _lock = null;
-        if (SessionFolder is { } folder)
+        _writing.Wait();
+        try
         {
-            TryDeleteFolder(folder);
-        }
+            _lock?.Dispose();
+            _lock = null;
+            if (SessionFolder is { } folder)
+            {
+                TryDeleteFolder(folder);
+            }
 
-        SessionFolder = null;
+            SessionFolder = null;
+        }
+        finally
+        {
+            _writing.Release();
+        }
     }
 
+    /// <summary>Suelta el bloqueo sin borrar la sesión, después de esperar a la copia en curso.</summary>
     public void Dispose()
     {
-        _lock?.Dispose();
-        _lock = null;
-        _writing.Dispose();
+        _writing.Wait();
+        try
+        {
+            _disposed = true;
+            _lock?.Dispose();
+            _lock = null;
+        }
+        finally
+        {
+            _writing.Release();
+        }
     }
 
     private List<string> OrphanFolders()
