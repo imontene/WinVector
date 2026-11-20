@@ -162,7 +162,8 @@ public sealed partial class MainWindow : Window
     /// <summary>Intro o un clic en un resultado: ejecuta la orden elegida, o la primera que coincide.</summary>
     private void OnCommandSearchSubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
-        var entry = args.ChosenSuggestion as CommandEntry ?? ViewModel.Commands.Search(args.QueryText).FirstOrDefault();
+        var found = ViewModel.Commands.Search(args.QueryText);
+        var entry = args.ChosenSuggestion as CommandEntry ?? (found.Count > 0 ? found[0] : null);
         if (entry is null)
         {
             return;
