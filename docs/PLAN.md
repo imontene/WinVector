@@ -235,12 +235,13 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - **Resultado:** se pueden abrir SVG de terceros, moverlos, recolorearlos y guardarlos sin dañarlos.
 - **Conseguido:** el corpus de SVG de terceros se abre, se mueve, se recolorea y se guarda sin perder contenido desconocido; deshacer vuelve al texto exacto del archivo ([ADR 0005](adr/0005-historial.md)). Copias de recuperación cada 10 s y recarga del lienzo si falla su proceso. El lienzo es accesible desde el arranque. Mediciones de referencia en [rendimiento.md](rendimiento.md): 60 fps con 2.000 objetos y ventana lista en 0,5 s en caliente (2,4 s en frío en la CI, por confirmar en un equipo de gama media). Prototipo de edición de texto y enfoque elegido para la Fase 4 ([ADR 0006](adr/0006-edicion-de-texto.md)).
 
-### Fase 2 · Formas (M)
+### Fase 2 · Formas (M) ✅ Terminada
 - Herramientas de rectángulo, elipse, línea, polígono y estrella, con modificadores y propiedades específicas.
 - Convertir forma a trazado.
 - Edición por vértices de las formas de segmentos rectos (polígonos, polilíneas, líneas y estrellas): mover, añadir y borrar vértices.
 - Formas libres de líneas rectas, vértice a vértice (polígonos cerrados y polilíneas abiertas).
 - La herramienta de vértices y la de formas libres se diseñan para que la herramienta de nodos y la pluma de la Fase 3 las amplíen con curvas.
+- **Conseguido:** rectángulo (`R`, con esquinas redondeadas desde el lienzo), elipse y círculo (`E`), línea (`L`, con sus extremos editables), polígono (`G`) y estrella (`S`), con `Mayús` y `Alt`, último estilo usado y un paso del historial por forma. Panel con las propiedades de cada forma. Convertir en trazado (`Ctrl+Mayús+C`). Herramienta Vértices (`A`) y formas libres de líneas rectas con la pluma (`P`). Pruebas de interfaz de punta a punta, hasta guardar el archivo.
 
 ### Fase 3 · Trazados (L)
 - Analizador y serializador de `d` con pruebas exhaustivas.
