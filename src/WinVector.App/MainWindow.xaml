@@ -588,6 +588,39 @@
                             Style="{StaticResource CaptionTextBlockStyle}"
                             TextWrapping="Wrap" />
 
+                        <!-- Propiedades propias de la forma (radio, lados…), en las unidades de sus atributos. -->
+                        <StackPanel Spacing="8" Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasShapeFields), Mode=OneWay}">
+                            <TextBlock
+                                Margin="0,8,0,0"
+                                AutomationProperties.AutomationId="ShapeTitle"
+                                Style="{StaticResource BodyStrongTextBlockStyle}"
+                                Text="{x:Bind ViewModel.ShapeTitle, Mode=OneWay}" />
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.ShapeFields}">
+                                <ItemsRepeater.Layout>
+                                    <UniformGridLayout
+                                        ItemsStretch="Fill"
+                                        MaximumRowsOrColumns="2"
+                                        MinColumnSpacing="8"
+                                        MinItemWidth="100"
+                                        MinRowSpacing="8" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="shell:ShapeFieldViewModel">
+                                        <NumberBox
+                                            AutomationProperties.AutomationId="{x:Bind AutomationId}"
+                                            Header="{x:Bind Label}"
+                                            LargeChange="{x:Bind LargeChange}"
+                                            Maximum="{x:Bind Maximum}"
+                                            Minimum="{x:Bind Minimum}"
+                                            SmallChange="{x:Bind SmallChange}"
+                                            SpinButtonPlacementMode="Compact"
+                                            ValueChanged="OnShapeFieldChanged"
+                                            Value="{x:Bind Value, Mode=OneWay}" />
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </StackPanel>
+
                         <!-- Apariencia: relleno, trazo y opacidad. -->
                         <TextBlock x:Uid="AppearanceTitle" Margin="0,8,0,0" Style="{StaticResource BodyStrongTextBlockStyle}" />
                         <Grid ColumnSpacing="8" RowSpacing="8">

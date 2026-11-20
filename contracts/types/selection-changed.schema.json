@@ -51,6 +51,10 @@
     "style": {
       "$ref": "./selection-style.schema.json",
       "description": "Estilo de la selección; solo cuando hay algo seleccionado."
+    },
+    "shape": {
+      "$ref": "./shape-properties.schema.json",
+      "description": "Propiedades propias de la forma; solo con un único objeto seleccionado que sea una forma (rectángulo, elipse, círculo, línea, polígono o estrella de WinVector)."
     }
   }
 }

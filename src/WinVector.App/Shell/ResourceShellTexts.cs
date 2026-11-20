@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.Windows.ApplicationModel.Resources;
+using WinVector.Core.Bridge;
 using WinVector.Core.Files;
 using WinVector.Core.Shell;
 
@@ -38,6 +39,10 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
     public string CommandName(string id) => TryGetString($"PaletteName{ToPascalCase(id)}") is { Length: > 0 } name ? name : id;
 
     public string CommandShortcut(string id) => TryGetString($"PaletteShortcut{ToPascalCase(id)}");
+
+    public string ShapeName(ShapeType type) => TryGetString($"ShapeName{type}") is { Length: > 0 } name ? name : type.ToString();
+
+    public string ShapeField(string key) => TryGetString($"ShapeField{ToPascalCase(key)}") is { Length: > 0 } name ? name : key;
 
     public string UndoCommand(string? action) => HistoryCommand("UndoCommand", action);
 

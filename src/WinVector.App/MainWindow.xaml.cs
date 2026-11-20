@@ -343,6 +343,14 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private void OnShapeFieldChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (sender.DataContext is ShapeFieldViewModel field && !double.IsNaN(args.NewValue))
+        {
+            ViewModel.SetShapeField(field.Key, args.NewValue);
+        }
+    }
+
     private void ApplyArtboard()
     {
         if (!ViewModel.ApplyArtboard(ArtboardWidthBox.Text, ArtboardHeightBox.Text, ArtboardViewBoxBox.Text))

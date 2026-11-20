@@ -1,3 +1,4 @@
+using WinVector.Core.Bridge;
 using WinVector.Core.Files;
 using WinVector.Core.Shell;
 
@@ -53,6 +54,10 @@ internal sealed class TestTexts : IShellTexts
     };
 
     public string CommandShortcut(string id) => id == "undo" ? "Ctrl+Z" : string.Empty;
+
+    public string ShapeName(ShapeType type) => type.ToString();
+
+    public string ShapeField(string key) => key;
 }
 
 /// <summary>Diálogos con respuestas preparadas que anotan lo que se les pregunta.</summary>

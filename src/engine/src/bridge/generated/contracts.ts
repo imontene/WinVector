@@ -223,6 +223,8 @@ export interface SelectionChanged {
   readonly rotation?: number;
   /** Estilo de la selección; solo cuando hay algo seleccionado. */
   readonly style?: SelectionStyle;
+  /** Propiedades propias de la forma; solo con un único objeto seleccionado que sea una forma (rectángulo, elipse, círculo, línea, polígono o estrella de WinVector). */
+  readonly shape?: ShapeProperties;
 }
 
 /** Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia. */
@@ -252,6 +254,93 @@ export interface SelectionStyle {
   /** Opacidad del objeto, de 0 a 1. */
   readonly opacity: number | null;
 }
+
+/** Cambio de propiedades propias de la forma seleccionada. Solo cambian las que se indican; las que no son de su tipo se ignoran. */
+export interface ShapeChange {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Rectángulo: x de la esquina superior izquierda. */
+  readonly x?: number;
+  /** Rectángulo: y de la esquina superior izquierda. */
+  readonly y?: number;
+  /** Rectángulo: ancho (más de 0). */
+  readonly width?: number;
+  /** Rectángulo: alto (más de 0). */
+  readonly height?: number;
+  /** Rectángulo: radio de las esquinas (rx y ry iguales), 0 para esquinas rectas. */
+  readonly cornerRadius?: number;
+  /** Elipse, círculo, polígono y estrella: x del centro. */
+  readonly cx?: number;
+  /** Elipse, círculo, polígono y estrella: y del centro. */
+  readonly cy?: number;
+  /** Elipse: radio horizontal (más de 0). */
+  readonly rx?: number;
+  /** Elipse: radio vertical (más de 0). */
+  readonly ry?: number;
+  /** Círculo: radio. Polígono y estrella: radio exterior, del centro a cada vértice o punta. */
+  readonly r?: number;
+  /** Línea: x del primer extremo. */
+  readonly x1?: number;
+  /** Línea: y del primer extremo. */
+  readonly y1?: number;
+  /** Línea: x del segundo extremo. */
+  readonly x2?: number;
+  /** Línea: y del segundo extremo. */
+  readonly y2?: number;
+  /** Polígono: lados. Estrella: puntas. Entero de 3 a 100. */
+  readonly sides?: number;
+  /** Estrella: radio interior respecto al exterior, de 0 a 1. */
+  readonly inner?: number;
+  /** Polígono y estrella: ángulo del primer vértice en grados, desde el eje x. */
+  readonly rotation?: number;
+  /** Polígono y estrella: redondeo de las esquinas, de 0 (rectas) a 1. */
+  readonly rounding?: number;
+}
+
+/** Propiedades propias de la forma seleccionada, en las unidades de sus atributos (las de su grupo, sin su transform). Solo están las de su tipo. */
+export interface ShapeProperties {
+  /** Tipo de forma. */
+  readonly type: ShapeType;
+  /** Rectángulo: x de la esquina superior izquierda. */
+  readonly x?: number;
+  /** Rectángulo: y de la esquina superior izquierda. */
+  readonly y?: number;
+  /** Rectángulo: ancho (más de 0). */
+  readonly width?: number;
+  /** Rectángulo: alto (más de 0). */
+  readonly height?: number;
+  /** Rectángulo: radio de las esquinas (rx y ry iguales), 0 para esquinas rectas. */
+  readonly cornerRadius?: number;
+  /** Elipse, círculo, polígono y estrella: x del centro. */
+  readonly cx?: number;
+  /** Elipse, círculo, polígono y estrella: y del centro. */
+  readonly cy?: number;
+  /** Elipse: radio horizontal (más de 0). */
+  readonly rx?: number;
+  /** Elipse: radio vertical (más de 0). */
+  readonly ry?: number;
+  /** Círculo: radio. Polígono y estrella: radio exterior, del centro a cada vértice o punta. */
+  readonly r?: number;
+  /** Línea: x del primer extremo. */
+  readonly x1?: number;
+  /** Línea: y del primer extremo. */
+  readonly y1?: number;
+  /** Línea: x del segundo extremo. */
+  readonly x2?: number;
+  /** Línea: y del segundo extremo. */
+  readonly y2?: number;
+  /** Polígono: lados. Estrella: puntas. Entero de 3 a 100. */
+  readonly sides?: number;
+  /** Estrella: radio interior respecto al exterior, de 0 a 1. */
+  readonly inner?: number;
+  /** Polígono y estrella: ángulo del primer vértice en grados, desde el eje x. */
+  readonly rotation?: number;
+  /** Polígono y estrella: redondeo de las esquinas, de 0 (rectas) a 1. */
+  readonly rounding?: number;
+}
+
+/** Tipo de forma con propiedades propias en el panel. */
+export type ShapeType = "rect" | "ellipse" | "circle" | "line" | "polygon" | "star";
 
 /** Cambio de estilo de la selección. Un campo null no cambia. */
 export interface StyleChange {
@@ -319,6 +408,8 @@ export interface BridgeCommands {
   };
   /** Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial. */
   readonly "selection.setStyle": { readonly payload: StyleChange; readonly response: ObjectChange };
+  /** Cambia propiedades propias de la forma seleccionada (radio de las esquinas, lados de un polígono…) en un paso que se puede deshacer. Los cambios seguidos de la misma propiedad son un solo paso del historial. */
+  readonly "selection.setShape": { readonly payload: ShapeChange; readonly response: ObjectChange };
   /** Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer. */
   readonly "object.arrange": { readonly payload: ObjectArrange; readonly response: ObjectChange };
   /** Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer. */
@@ -399,6 +490,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "selection.selectAll",
   "selection.setGeometry",
   "selection.setStyle",
+  "selection.setShape",
   "object.arrange",
   "object.group",
   "object.ungroup",

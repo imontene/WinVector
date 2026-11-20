@@ -228,13 +228,15 @@ public sealed record SelectedElement(
 /// <param name="Scope">Grupo en el que ha entrado el usuario con doble clic; la selección con un clic elige entre sus hijos. Null en el nivel superior del documento.</param>
 /// <param name="Rotation">Giro del objeto seleccionado respecto al documento, en grados entre -180 y 180. Solo cuando hay un único objeto seleccionado.</param>
 /// <param name="Style">Estilo de la selección; solo cuando hay algo seleccionado.</param>
+/// <param name="Shape">Propiedades propias de la forma; solo con un único objeto seleccionado que sea una forma (rectángulo, elipse, círculo, línea, polígono o estrella de WinVector).</param>
 public sealed record SelectionChanged(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items,
     [property: JsonPropertyName("bounds")] Rect? Bounds,
     [property: JsonPropertyName("scope")] SelectedElement? Scope,
     [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null,
-    [property: JsonPropertyName("style"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SelectionStyle? Style = null);
+    [property: JsonPropertyName("style"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SelectionStyle? Style = null,
+    [property: JsonPropertyName("shape"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShapeProperties? Shape = null);
 
 /// <summary>Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -261,6 +263,106 @@ public sealed record SelectionStyle(
     [property: JsonPropertyName("stroke")] string? Stroke,
     [property: JsonPropertyName("strokeWidth")] double? StrokeWidth,
     [property: JsonPropertyName("opacity")] double? Opacity);
+
+/// <summary>Cambio de propiedades propias de la forma seleccionada. Solo cambian las que se indican; las que no son de su tipo se ignoran.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="X">Rectángulo: x de la esquina superior izquierda.</param>
+/// <param name="Y">Rectángulo: y de la esquina superior izquierda.</param>
+/// <param name="Width">Rectángulo: ancho (más de 0).</param>
+/// <param name="Height">Rectángulo: alto (más de 0).</param>
+/// <param name="CornerRadius">Rectángulo: radio de las esquinas (rx y ry iguales), 0 para esquinas rectas.</param>
+/// <param name="Cx">Elipse, círculo, polígono y estrella: x del centro.</param>
+/// <param name="Cy">Elipse, círculo, polígono y estrella: y del centro.</param>
+/// <param name="Rx">Elipse: radio horizontal (más de 0).</param>
+/// <param name="Ry">Elipse: radio vertical (más de 0).</param>
+/// <param name="R">Círculo: radio. Polígono y estrella: radio exterior, del centro a cada vértice o punta.</param>
+/// <param name="X1">Línea: x del primer extremo.</param>
+/// <param name="Y1">Línea: y del primer extremo.</param>
+/// <param name="X2">Línea: x del segundo extremo.</param>
+/// <param name="Y2">Línea: y del segundo extremo.</param>
+/// <param name="Sides">Polígono: lados. Estrella: puntas. Entero de 3 a 100.</param>
+/// <param name="Inner">Estrella: radio interior respecto al exterior, de 0 a 1.</param>
+/// <param name="Rotation">Polígono y estrella: ángulo del primer vértice en grados, desde el eje x.</param>
+/// <param name="Rounding">Polígono y estrella: redondeo de las esquinas, de 0 (rectas) a 1.</param>
+public sealed record ShapeChange(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("x"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? X = null,
+    [property: JsonPropertyName("y"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Y = null,
+    [property: JsonPropertyName("width"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Width = null,
+    [property: JsonPropertyName("height"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Height = null,
+    [property: JsonPropertyName("cornerRadius"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? CornerRadius = null,
+    [property: JsonPropertyName("cx"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Cx = null,
+    [property: JsonPropertyName("cy"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Cy = null,
+    [property: JsonPropertyName("rx"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rx = null,
+    [property: JsonPropertyName("ry"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Ry = null,
+    [property: JsonPropertyName("r"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? R = null,
+    [property: JsonPropertyName("x1"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? X1 = null,
+    [property: JsonPropertyName("y1"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Y1 = null,
+    [property: JsonPropertyName("x2"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? X2 = null,
+    [property: JsonPropertyName("y2"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Y2 = null,
+    [property: JsonPropertyName("sides"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Sides = null,
+    [property: JsonPropertyName("inner"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Inner = null,
+    [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null,
+    [property: JsonPropertyName("rounding"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rounding = null);
+
+/// <summary>Propiedades propias de la forma seleccionada, en las unidades de sus atributos (las de su grupo, sin su transform). Solo están las de su tipo.</summary>
+/// <param name="Type">Tipo de forma.</param>
+/// <param name="X">Rectángulo: x de la esquina superior izquierda.</param>
+/// <param name="Y">Rectángulo: y de la esquina superior izquierda.</param>
+/// <param name="Width">Rectángulo: ancho (más de 0).</param>
+/// <param name="Height">Rectángulo: alto (más de 0).</param>
+/// <param name="CornerRadius">Rectángulo: radio de las esquinas (rx y ry iguales), 0 para esquinas rectas.</param>
+/// <param name="Cx">Elipse, círculo, polígono y estrella: x del centro.</param>
+/// <param name="Cy">Elipse, círculo, polígono y estrella: y del centro.</param>
+/// <param name="Rx">Elipse: radio horizontal (más de 0).</param>
+/// <param name="Ry">Elipse: radio vertical (más de 0).</param>
+/// <param name="R">Círculo: radio. Polígono y estrella: radio exterior, del centro a cada vértice o punta.</param>
+/// <param name="X1">Línea: x del primer extremo.</param>
+/// <param name="Y1">Línea: y del primer extremo.</param>
+/// <param name="X2">Línea: x del segundo extremo.</param>
+/// <param name="Y2">Línea: y del segundo extremo.</param>
+/// <param name="Sides">Polígono: lados. Estrella: puntas. Entero de 3 a 100.</param>
+/// <param name="Inner">Estrella: radio interior respecto al exterior, de 0 a 1.</param>
+/// <param name="Rotation">Polígono y estrella: ángulo del primer vértice en grados, desde el eje x.</param>
+/// <param name="Rounding">Polígono y estrella: redondeo de las esquinas, de 0 (rectas) a 1.</param>
+public sealed record ShapeProperties(
+    [property: JsonPropertyName("type")] ShapeType Type,
+    [property: JsonPropertyName("x"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? X = null,
+    [property: JsonPropertyName("y"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Y = null,
+    [property: JsonPropertyName("width"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Width = null,
+    [property: JsonPropertyName("height"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Height = null,
+    [property: JsonPropertyName("cornerRadius"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? CornerRadius = null,
+    [property: JsonPropertyName("cx"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Cx = null,
+    [property: JsonPropertyName("cy"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Cy = null,
+    [property: JsonPropertyName("rx"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rx = null,
+    [property: JsonPropertyName("ry"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Ry = null,
+    [property: JsonPropertyName("r"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? R = null,
+    [property: JsonPropertyName("x1"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? X1 = null,
+    [property: JsonPropertyName("y1"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Y1 = null,
+    [property: JsonPropertyName("x2"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? X2 = null,
+    [property: JsonPropertyName("y2"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Y2 = null,
+    [property: JsonPropertyName("sides"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Sides = null,
+    [property: JsonPropertyName("inner"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Inner = null,
+    [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null,
+    [property: JsonPropertyName("rounding"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rounding = null);
+
+/// <summary>Tipo de forma con propiedades propias en el panel.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ShapeType>))]
+public enum ShapeType
+{
+    [JsonStringEnumMemberName("rect")]
+    Rect,
+    [JsonStringEnumMemberName("ellipse")]
+    Ellipse,
+    [JsonStringEnumMemberName("circle")]
+    Circle,
+    [JsonStringEnumMemberName("line")]
+    Line,
+    [JsonStringEnumMemberName("polygon")]
+    Polygon,
+    [JsonStringEnumMemberName("star")]
+    Star,
+}
 
 /// <summary>Cambio de estilo de la selección. Un campo null no cambia.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -390,6 +492,9 @@ public static class BridgeCommands
     /// <summary>Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial.</summary>
     public static readonly BridgeCommand<StyleChange, ObjectChange> SelectionSetStyle = new("selection.setStyle");
 
+    /// <summary>Cambia propiedades propias de la forma seleccionada (radio de las esquinas, lados de un polígono…) en un paso que se puede deshacer. Los cambios seguidos de la misma propiedad son un solo paso del historial.</summary>
+    public static readonly BridgeCommand<ShapeChange, ObjectChange> SelectionSetShape = new("selection.setShape");
+
     /// <summary>Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer.</summary>
     public static readonly BridgeCommand<ObjectArrange, ObjectChange> ObjectArrange = new("object.arrange");
 
@@ -508,6 +613,8 @@ public static class BridgeEvents
 [JsonSerializable(typeof(SelectionChanged))]
 [JsonSerializable(typeof(SelectionGeometry))]
 [JsonSerializable(typeof(SelectionStyle))]
+[JsonSerializable(typeof(ShapeChange))]
+[JsonSerializable(typeof(ShapeProperties))]
 [JsonSerializable(typeof(StyleChange))]
 [JsonSerializable(typeof(ToolState))]
 [JsonSerializable(typeof(ViewOptions))]

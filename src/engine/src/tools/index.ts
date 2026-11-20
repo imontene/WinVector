@@ -19,3 +19,4 @@ export * from "./shapeTool";
 export * from "./cornerRadius";
 export * from "./lineEnds";
 export * from "./shapeHandles";
+export * from "./shapeProperties";

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShapeType",
+  "description": "Tipo de forma con propiedades propias en el panel.",
+  "type": "string",
+  "enum": [
+    "rect",
+    "ellipse",
+    "circle",
+    "line",
+    "polygon",
+    "star"
+  ]
+}

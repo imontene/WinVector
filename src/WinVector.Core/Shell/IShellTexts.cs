@@ -1,3 +1,4 @@
+using WinVector.Core.Bridge;
 using WinVector.Core.Files;
 
 namespace WinVector.Core.Shell;
@@ -64,4 +65,10 @@ public interface IShellTexts
 
     /// <summary>Atajo de una orden para la paleta de comandos ("Ctrl+Z"), o vacío si no tiene.</summary>
     string CommandShortcut(string id);
+
+    /// <summary>Nombre de un tipo de forma para el panel de propiedades ("Rectángulo").</summary>
+    string ShapeName(ShapeType type);
+
+    /// <summary>Etiqueta de un campo de la forma ("Radio de las esquinas"), por su identificador ("cornerRadius").</summary>
+    string ShapeField(string key);
 }
