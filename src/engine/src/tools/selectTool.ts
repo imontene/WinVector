@@ -16,6 +16,7 @@ import {
 import { moveBy, rotateAround, scaleAround, transformItems, TransformSession } from "../transform";
 import { shapeHandleAt, shapeHandles, type HandleDrag } from "./shapeHandles";
 import { isPressed } from "./modifiers";
+import { vertexEditKind } from "./vertices";
 
 /** Distancia en píxeles a partir de la cual pulsar y mover es un arrastre y no un clic. */
 const DRAG_THRESHOLD = 3;
@@ -36,6 +37,8 @@ export interface SelectToolHost {
   showMarquee(marquee: Rect | null): void;
   /** Separación de la cuadrícula en unidades del documento si está activo el ajuste, o `null`. */
   snapSpacing(): number | null;
+  /** Doble clic en una forma de segmentos rectos: pasa a editar sus vértices. */
+  editVertices?(element: Element): void;
 }
 
 type Press =
@@ -82,7 +85,8 @@ const angle = (p: Point, center: Point) =>
  *
  * - Clic: selecciona el objeto del grupo actual bajo el puntero (en un SVG exportado, la capa o el
  *   grupo). `Ctrl`+clic selecciona el elemento más profundo; `Mayús`+clic lo añade o lo quita.
- * - Doble clic sobre un grupo: entra en él. `Esc`: deselecciona y, si no hay nada seleccionado,
+ * - Doble clic sobre un grupo: entra en él; sobre un polígono, una línea, una estrella o un
+ *   rectángulo, pasa a editar sus vértices (herramienta Vértices). `Esc`: deselecciona y, si no hay nada seleccionado,
  *   sale del grupo. Durante un arrastre, `Esc` lo cancela.
  * - Arrastrar desde el fondo: selecciona los objetos que quedan enteros dentro del marco.
  * - `Ctrl+A`: selecciona todos los objetos del grupo actual.
@@ -330,6 +334,10 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     const hit = event.composedPath()[0] ?? null;
     const path = thinElementAt(point(event), root, hit) ?? hit;
     const pick = pickAt(path, root, { scope: selection.scope });
+    if (pick && !isContainer(pick.element) && vertexEditKind(pick.element) && host.editVertices) {
+      host.editVertices(pick.element);
+      return;
+    }
     if (!pick || !isContainer(pick.element)) return;
     selection.enter(pick.element);
     const inner = pickAt(path, root, { scope: pick.element });

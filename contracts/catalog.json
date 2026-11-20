@@ -21,6 +21,12 @@
       "payload": "SelectionChanged"
     },
     {
+      "name": "shape.converted",
+      "kind": "event",
+      "description": "Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado.",
+      "payload": "ShapeConverted"
+    },
+    {
       "name": "selection.selectAll",
       "kind": "command",
       "description": "Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno.",

@@ -20,3 +20,5 @@ export * from "./cornerRadius";
 export * from "./lineEnds";
 export * from "./shapeHandles";
 export * from "./shapeProperties";
+export * from "./vertices";
+export * from "./vertexTool";

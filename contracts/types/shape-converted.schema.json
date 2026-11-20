@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShapeConverted",
+  "description": "Una forma ha pasado a ser un polígono normal al editar sus vértices (pierde lo que la hacía rectángulo o estrella).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "from"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Documento de la forma."
+    },
+    "from": {
+      "$ref": "./shape-type.schema.json",
+      "description": "Lo que era: rect, polygon (regular) o star."
+    }
+  }
+}

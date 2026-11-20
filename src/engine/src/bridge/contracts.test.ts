@@ -321,6 +321,13 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "event",
+    id: "e5",
+    name: "shape.converted",
+    payload: { documentId: "d1", from: "star" },
+  },
+  {
+    ...base,
+    kind: "event",
     id: "e4",
     name: "error",
     payload: { code: "unknown-message", message: "Mensaje desconocido", relatedId: null },
@@ -413,6 +420,8 @@ function summarize(message: BridgeMessage): string {
   switch (message.name) {
     case "engine.ready":
       return `motor ${message.payload.engineVersion}`;
+    case "shape.converted":
+      return `${message.payload.from} pasa a polígono`;
     case "selection.changed":
       return `${String(message.payload.items.length)} seleccionados en ${message.payload.documentId}, dentro de ${String(message.payload.scope?.id)}`;
     case "document.changed":
@@ -483,6 +492,7 @@ describe("contrato del puente", () => {
       "relleno #ff0000",
       "forma r=12",
       "object.toPath d1",
+      "star pasa a polígono",
       "error unknown-message",
     ]);
   });

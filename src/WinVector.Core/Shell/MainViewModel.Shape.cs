@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using WinVector.Core.Bridge;
 
 namespace WinVector.Core.Shell;
@@ -7,6 +8,23 @@ namespace WinVector.Core.Shell;
 public sealed partial class MainViewModel
 {
     private ShapeProperties? _shape;
+
+    /// <summary>
+    /// Aviso del lienzo para la barra de estado ("la estrella pasa a ser un polígono"), o vacío. Se
+    /// vuelve a vaciar al cambiar de herramienta.
+    /// </summary>
+    [ObservableProperty]
+    private string _canvasNotice = string.Empty;
+
+    partial void OnActiveToolChanged(ToolName value) => CanvasNotice = string.Empty;
+
+    private void OnShapeConverted(ShapeConverted converted)
+    {
+        if (converted.DocumentId == SelectedDocument?.DocumentId)
+        {
+            CanvasNotice = _texts.ShapeConverted(converted.From);
+        }
+    }
 
     /// <summary>
     /// Campos de la forma seleccionada, según su tipo. Vacío si no hay una sola forma seleccionada

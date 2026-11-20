@@ -17,6 +17,7 @@ const TOOL_KEYS: Readonly<Record<string, ToolName>> = {
   l: "line",
   g: "polygon",
   s: "star",
+  a: "vertex",
 };
 
 export interface NavigationHost {
@@ -208,8 +209,10 @@ export function installNavigation(target: Window, host: NavigationHost): () => v
   };
 
   const onDoubleClick = (event: MouseEvent) => {
-    // Con otra herramienta o con la barra espaciadora, el doble clic no entra en grupos.
-    if (spaceDown || host.tool() !== "select") consume(event);
+    // Con la barra espaciadora o con Mano, Zoom o Cuentagotas, el doble clic no entra en grupos. Las
+    // herramientas de forma y la de vértices atienden su propio doble clic.
+    const tool = host.tool();
+    if (spaceDown || tool === "hand" || tool === "zoom" || tool === "eyedropper") consume(event);
   };
 
   const onKeyDown = (event: KeyboardEvent) => {

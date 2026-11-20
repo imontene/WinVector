@@ -17,6 +17,11 @@ export interface OverlayScene {
   readonly shapeHandles?: readonly Point[];
   /** Radio de esos manejadores, en píxeles. */
   readonly shapeHandleSize?: number;
+  /** Vértices de la forma que se edita con la herramienta Vértices, en pantalla, o `null`. */
+  readonly vertices?: {
+    readonly points: readonly Point[];
+    readonly selected: readonly boolean[];
+  } | null;
 }
 
 export const EMPTY_SCENE: OverlayScene = { items: [], scope: null, marquee: null, handles: null };
@@ -61,6 +66,15 @@ export class Overlay {
       circle.setAttribute("r", String(scene.shapeHandleSize ?? 4));
       shapes.push(circle);
     }
+    scene.vertices?.points.forEach((point, index) => {
+      const size = 7;
+      const square = this.#rect(
+        { x: point.x - size / 2, y: point.y - size / 2, width: size, height: size },
+        "overlay-vertex",
+      );
+      if (scene.vertices?.selected[index]) square.classList.add("overlay-vertex-selected");
+      shapes.push(square);
+    });
     if (scene.marquee) shapes.push(this.#rect(scene.marquee, "overlay-marquee"));
     this.element.replaceChildren(...shapes);
   }

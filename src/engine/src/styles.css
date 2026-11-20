@@ -214,3 +214,13 @@ body[data-handle="move"] {
 body[data-handle="radius"] {
   cursor: pointer;
 }
+
+/* Vértices de la forma que se edita (src/tools/vertexTool.ts). */
+.overlay-vertex {
+  fill: var(--handle-fill, #fff);
+  stroke-width: 1;
+}
+
+.overlay-vertex-selected {
+  fill: var(--selection);
+}

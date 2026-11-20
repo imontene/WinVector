@@ -297,6 +297,14 @@ export interface ShapeChange {
   readonly rounding?: number;
 }
 
+/** Una forma ha pasado a ser un polígono normal al editar sus vértices (pierde lo que la hacía rectángulo o estrella). */
+export interface ShapeConverted {
+  /** Documento de la forma. */
+  readonly documentId: string;
+  /** Lo que era: rect, polygon (regular) o star. */
+  readonly from: ShapeType;
+}
+
 /** Propiedades propias de la forma seleccionada, en las unidades de sus atributos (las de su grupo, sin su transform). Solo están las de su tipo. */
 export interface ShapeProperties {
   /** Tipo de forma. */
@@ -358,7 +366,16 @@ export interface StyleChange {
 
 /** Herramienta del lienzo que ya implementa el motor. */
 export type ToolName =
-  "select" | "hand" | "zoom" | "eyedropper" | "rectangle" | "ellipse" | "line" | "polygon" | "star";
+  | "select"
+  | "hand"
+  | "zoom"
+  | "eyedropper"
+  | "rectangle"
+  | "ellipse"
+  | "line"
+  | "polygon"
+  | "star"
+  | "vertex";
 
 /** Herramienta activa del lienzo. */
 export interface ToolState {
@@ -466,6 +483,8 @@ export interface BridgeEvents {
   readonly "engine.ready": EngineReady;
   /** La selección del documento ha cambiado. */
   readonly "selection.changed": SelectionChanged;
+  /** Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado. */
+  readonly "shape.converted": ShapeConverted;
   /** El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno. */
   readonly error: BridgeError;
   /** Un documento ha cambiado. La revisión identifica su estado: cambia con cada edición y, al deshacer o rehacer, vuelve a la de ese estado. */
@@ -515,6 +534,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
 export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "engine.ready",
   "selection.changed",
+  "shape.converted",
   "error",
   "document.changed",
   "files.dropped",
