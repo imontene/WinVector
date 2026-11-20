@@ -1,6 +1,7 @@
 import { multiply, scaling, translation, type Rect } from "../geometry";
 import type { History } from "../history";
 import { selectionBounds } from "../selection";
+import { circleToEllipse, outermost } from "./apply";
 import { rotateAround, rotationOf, transformItems } from "./operations";
 
 /** Valores que se quieren para la selección; `null` deja el valor como está. */
@@ -25,6 +26,9 @@ const angleDelta = (to: number, from: number) => ((((to - from) % 360) + 540) % 
  * solo paso del historial. La caja es la de toda la selección en unidades del documento: escalar
  * fija su esquina superior izquierda.
  *
+ * Los círculos sin `transform` que se escalan de forma desigual pasan a ser elipses; si se pasa
+ * `replaced`, se anota en él cada elemento sustituido con el que lo sustituye.
+ *
  * @returns `false` si no había nada que cambiar.
  */
 export function setGeometry(
@@ -32,6 +36,7 @@ export function setGeometry(
   root: SVGSVGElement,
   history: History,
   target: GeometryTarget,
+  replaced?: Map<Element, Element>,
 ): boolean {
   const initial = selectionBounds(items, root);
   if (!initial) return false;
@@ -56,6 +61,9 @@ export function setGeometry(
         : !rotate && !resize
           ? "move"
           : "transform";
+  const plainCircles = outermost(items).filter(
+    (item) => item.localName === "circle" && !item.hasAttribute("transform"),
+  );
   history.transact(action, () => {
     let bounds: Rect = initial;
     if (rotate) {
@@ -76,6 +84,10 @@ export function setGeometry(
       multiply(scaling(sx, sy), translation(-bounds.x, -bounds.y)),
     );
     transformItems(items, m, root);
+    for (const circle of plainCircles) {
+      const ellipse = circleToEllipse(circle);
+      if (ellipse) replaced?.set(circle, ellipse);
+    }
   });
   return true;
 }

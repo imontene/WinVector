@@ -190,3 +190,174 @@ test("R elige el rectángulo y lo anuncia; con él, el clic no selecciona", asyn
   await page.locator("#tarjeta").dblclick();
   expect((await sent(page)).filter((m) => m.name === "selection.changed")).toHaveLength(before);
 });
+
+/** Elementos creados de un tipo (los que no tienen identificador). */
+const createdOf = (page: Page, tag: string) =>
+  page
+    .locator("#workspace svg")
+    .first()
+    .evaluate(
+      (svg, t) =>
+        [...svg.querySelectorAll(`${t}:not([id])`)].map((element) =>
+          Object.fromEntries([...element.attributes].map((a) => [a.name, a.value])),
+        ),
+      tag,
+    ) as Promise<Record<string, string>[]>;
+
+test("la elipse se inscribe en el arrastre; con Mayús es un círculo", async ({ page }) => {
+  await selectTool(page, "ellipse");
+  await drawDrag(page, { x: 20, y: 20 }, { x: 80, y: 50 });
+  const [ellipse] = await createdOf(page, "ellipse");
+  expect(number(ellipse?.cx)).toBeCloseTo(50, 0);
+  expect(number(ellipse?.cy)).toBeCloseTo(35, 0);
+  expect(number(ellipse?.rx)).toBeCloseTo(30, 0);
+  expect(number(ellipse?.ry)).toBeCloseTo(15, 0);
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "create-ellipse" });
+
+  // Mayús a mitad del arrastre: la elipse pasa a ser un círculo, sin dejar la elipse.
+  const a = await toScreen(page, 200, 200);
+  const b = await toScreen(page, 260, 220);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 3 });
+  await expect.poll(async () => (await createdOf(page, "ellipse")).length).toBe(2);
+  await page.keyboard.down("Shift");
+  await expect.poll(async () => (await createdOf(page, "circle")).length).toBe(1);
+  await page.mouse.up();
+  await page.keyboard.up("Shift");
+  expect(await createdOf(page, "ellipse")).toHaveLength(1);
+  const [circle] = await createdOf(page, "circle");
+  expect(number(circle?.r)).toBeCloseTo(30, 0);
+  expect(circle).toMatchObject({ fill: "#ffffff", stroke: "#000000" });
+
+  await page.keyboard.press("Control+Z");
+  await page.keyboard.press("Control+Z");
+  await expect.poll(() => serialize(page)).toBe(sample);
+});
+
+test("E elige la elipse", async ({ page }) => {
+  await page.locator("#sol").click();
+  await page.keyboard.press("e");
+  await expect
+    .poll(() => lastSent(page))
+    .toMatchObject({ name: "tool.changed", payload: { tool: "ellipse" } });
+});
+
+test("el manejador de la esquina redondea un rectángulo; Esc lo deja como estaba", async ({
+  page,
+}) => {
+  await selectTool(page, "rectangle");
+  await drawDrag(page, { x: 20, y: 160 }, { x: 120, y: 220 });
+  await selectTool(page, "select");
+  const handle = page.locator(".overlay .overlay-radius");
+  await expect(handle).toHaveCount(1);
+  const box = await handle.boundingBox();
+  if (!box) throw new Error("Sin manejador");
+  const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const k = await scale(page);
+
+  // Esc a mitad del arrastre: sin cambios ni paso del historial.
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x - 10 * k, start.y + 10 * k, { steps: 4 });
+  await expect.poll(async () => (await createdOf(page, "rect"))[0]?.rx).toBeDefined();
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  expect((await createdOf(page, "rect"))[0]?.rx).toBeUndefined();
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "create-rectangle" });
+
+  // Hacia dentro 10 unidades en diagonal: el radio crece 10 (rx y ry iguales).
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x - 10 * k, start.y + 10 * k, { steps: 4 });
+  await page.mouse.up();
+  const [rounded] = await createdOf(page, "rect");
+  const tolerance = 1 / k + 0.01;
+  const initial = 14 / k; // el manejador empieza a 14 px de la esquina, con radio 0
+  expect(Math.abs(number(rounded?.rx) - 10)).toBeLessThan(tolerance + initial);
+  expect(rounded?.ry).toBe(rounded?.rx);
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "corner-radius" });
+
+  await page.keyboard.press("Control+Z");
+  await expect.poll(async () => (await createdOf(page, "rect"))[0]?.rx).toBeUndefined();
+});
+
+test("un círculo escalado de forma desigual pasa a ser una elipse con su id y su estilo", async ({
+  page,
+}) => {
+  await page.locator("#sol").dblclick();
+  const handles = page.locator('.overlay [data-handle="e"]');
+  await expect(handles).toHaveCount(1);
+  const box = await handles.boundingBox();
+  if (!box) throw new Error("Sin manejador");
+  const k = await scale(page);
+  const from = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x + 40 * k, from.y, { steps: 5 });
+  await page.mouse.up();
+
+  const sun = page.locator("#sol");
+  await expect.poll(() => sun.evaluate((e) => e.localName)).toBe("ellipse");
+  const attributes = await sun.evaluate((e) =>
+    Object.fromEntries([...e.attributes].map((a) => [a.name, a.value])),
+  );
+  expect(attributes).toMatchObject({ id: "sol", fill: "#ffb547", cy: "96", ry: "52" });
+  expect(attributes.transform).toBeUndefined();
+  expect(number(attributes.rx)).toBeGreaterThan(70);
+  // Sigue seleccionado.
+  const selection = (await sent(page)).filter((m) => m.name === "selection.changed").at(-1);
+  expect(selection?.payload).toMatchObject({ items: [{ tagName: "ellipse", id: "sol" }] });
+
+  await page.keyboard.press("Control+Z");
+  await expect.poll(() => serialize(page)).toBe(sample);
+});
+
+test("cambiar solo el ancho de un círculo en el panel lo convierte en elipse seleccionada", async ({
+  page,
+}) => {
+  await page.locator("#sol").dblclick();
+  await hostSend(
+    page,
+    command("c-geo", "selection.setGeometry", {
+      documentId: "d1",
+      x: null,
+      y: null,
+      width: 150,
+      height: null,
+      rotation: null,
+    }),
+  );
+  const sun = page.locator("#sol");
+  await expect.poll(() => sun.evaluate((e) => e.localName)).toBe("ellipse");
+  const [rx, ry] = await sun.evaluate((e) => [e.getAttribute("rx"), e.getAttribute("ry")]);
+  // La caja del navegador tiene precisión simple: 75.00001 es 75.
+  expect(number(rx ?? undefined)).toBeCloseTo(75, 3);
+  expect(ry).toBe("52");
+  await expect
+    .poll(
+      async () => (await sent(page)).filter((m) => m.name === "selection.changed").at(-1)?.payload,
+    )
+    .toMatchObject({ items: [{ tagName: "ellipse", id: "sol" }] });
+});
+
+test("un rectángulo pequeño no tiene manejador del radio y se puede arrastrar", async ({
+  page,
+}) => {
+  const k = await scale(page);
+  await selectTool(page, "rectangle");
+  // 10 unidades: menos de 42 píxeles de pantalla con el zoom de la prueba.
+  const size = Math.min(10, 30 / k);
+  await drawDrag(page, { x: 20, y: 200 }, { x: 20 + size, y: 200 + size });
+  await selectTool(page, "select");
+  await expect(page.locator(".overlay .overlay-shape-handle")).toHaveCount(0);
+
+  const center = await toScreen(page, 20 + size / 2, 200 + size / 2);
+  await page.mouse.move(center.x, center.y);
+  await page.mouse.down();
+  await page.mouse.move(center.x + 40, center.y, { steps: 4 });
+  await page.mouse.up();
+  const [rect] = await createdOf(page, "rect");
+  expect(number(rect?.x)).toBeGreaterThan(25);
+  expect(rect?.rx).toBeUndefined();
+});

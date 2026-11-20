@@ -13,6 +13,7 @@ import {
   type Selection,
 } from "../selection";
 import { moveBy, rotateAround, scaleAround, transformItems, TransformSession } from "../transform";
+import { isOverRadiusHandle, radiusTarget, RadiusDrag } from "./cornerRadius";
 import { isPressed } from "./modifiers";
 
 /** Distancia en píxeles a partir de la cual pulsar y mover es un arrastre y no un clic. */
@@ -55,6 +56,12 @@ type Press =
       session: TransformSession | null;
     }
   | {
+      /** Pulsación sobre el manejador del radio de un rectángulo: redondea sus esquinas. */
+      readonly kind: "radius";
+      readonly drag: RadiusDrag;
+      readonly history: History;
+    }
+  | {
       /** Pulsación sobre el fondo: arrastrar dibuja un marco; soltar sin mover deselecciona. */
       readonly kind: "marquee";
       readonly start: Point;
@@ -80,7 +87,8 @@ const angle = (p: Point, center: Point) =>
  * - `Ctrl+A`: selecciona todos los objetos del grupo actual.
  * - Arrastrar un objeto mueve la selección; las flechas la mueven 1 unidad (10 con `Mayús`).
  * - Los manejadores escalan (`Mayús`: proporcional; `Alt`: desde el centro) y el de arriba gira
- *   (`Mayús`: de 15° en 15°).
+ *   (`Mayús`: de 15° en 15°). Con un solo rectángulo, el círculo de la esquina superior derecha
+ *   redondea sus esquinas.
  *
  * Cada transformación es un paso del historial. Devuelve una función que desinstala la herramienta.
  */
@@ -110,6 +118,19 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     if (handle && bounds) {
       event.preventDefault();
       press = { kind: "handle", handle, start: point(event), bounds, session: null };
+      target.documentElement.setPointerCapture(event.pointerId);
+      return;
+    }
+
+    const radiusRect = radiusTarget(selection.items);
+    if (radiusRect && isOverRadiusHandle(radiusRect, point(event))) {
+      event.preventDefault();
+      active.history.begin("corner-radius");
+      press = {
+        kind: "radius",
+        drag: new RadiusDrag(radiusRect, point(event)),
+        history: active.history,
+      };
       target.documentElement.setPointerCapture(event.pointerId);
       return;
     }
@@ -158,7 +179,15 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
         active && active.selection.items.length > 0
           ? selectionScreenRect(active.selection.items, active.root)
           : null;
-      setHandleCursor(rect ? handleAt(point(event), rect) : null);
+      const radiusRect = active ? radiusTarget(active.selection.items) : null;
+      const overRadius = radiusRect !== null && isOverRadiusHandle(radiusRect, point(event));
+      setHandleCursor(
+        rect ? (handleAt(point(event), rect) ?? (overRadius ? "radius" : null)) : null,
+      );
+      return;
+    }
+    if (press.kind === "radius") {
+      press.drag.update(point(event));
       return;
     }
     if (!active) return;
@@ -263,9 +292,14 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     if (!current || !active) return;
     const { root, selection } = active;
 
+    if (current.kind === "radius") {
+      current.history.commit();
+      return;
+    }
     if (current.kind === "item" || current.kind === "handle") {
       if (current.session) {
-        current.session.commit();
+        const items = selection.items;
+        selection.replace(items, current.session.commit());
         setHandleCursor(null);
       } else if (current.kind === "item") {
         selection.set([current.element], current.scope);
@@ -301,6 +335,7 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
 
   const cancelPress = () => {
     if (press?.kind === "marquee") host.showMarquee(null);
+    else if (press?.kind === "radius") press.history.rollback();
     else press?.session?.cancel();
     press = null;
     setHandleCursor(null);

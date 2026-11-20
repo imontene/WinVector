@@ -292,6 +292,34 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ConLaElipseYMayusSeDibujaUnCirculo()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+
+        Session.GetById("ToolEllipse").Click();
+        // Un clic sin arrastrar no crea nada, pero hace que la página reciba el teclado y vea Mayús.
+        Mouse.Click(new System.Drawing.Point(canvas.X + 4, canvas.Y + 4));
+        // El teclado llega a la página por WebView2 y el ratón por WinUI: con la entrada sintética, el
+        // arrastre a veces se adelanta a la tecla. Se intenta hasta tres veces, en sitios distintos.
+        var status = string.Empty;
+        for (var attempt = 0; attempt < 3 && !status.StartsWith("circle", StringComparison.Ordinal); attempt++)
+        {
+            using (Keyboard.Pressing(VirtualKeyShort.SHIFT))
+            {
+                Thread.Sleep(500);
+                Mouse.Drag(AppSession.SamplePoint(canvas, 205, 10 + (attempt * 12)), AppSession.SamplePoint(canvas, 235, 18 + (attempt * 12)));
+                Thread.Sleep(200);
+            }
+
+            status = Session.WaitForName("SelectionStatus", name => name.StartsWith("circle", StringComparison.Ordinal), TimeSpan.FromSeconds(5));
+        }
+
+        Assert.IsTrue(status.StartsWith("circle", StringComparison.Ordinal), $"No se creó un círculo: la selección es '{status}'.");
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();

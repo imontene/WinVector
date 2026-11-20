@@ -14,3 +14,4 @@ export * from "./shortcuts";
 export * from "./eyedropper";
 export * from "./shapes";
 export * from "./shapeTool";
+export * from "./cornerRadius";

@@ -2,6 +2,7 @@ import { multiply, rotation, scaling, translation, type Matrix, type Point } fro
 import type { History } from "../history";
 import {
   applyTransform,
+  circleToEllipse,
   elementToRoot,
   outermost,
   restore,
@@ -54,11 +55,22 @@ export class TransformSession {
     }
   }
 
-  /** Termina el gesto: queda como un paso del historial (si cambió algo). */
-  commit(): void {
-    if (!this.#open) return;
+  /**
+   * Termina el gesto: queda como un paso del historial (si cambió algo). Los círculos que el gesto
+   * ha escalado de forma desigual pasan a ser elipses; devuelve cada elemento sustituido con el
+   * que lo sustituye, para actualizar la selección.
+   */
+  commit(): ReadonlyMap<Element, Element> {
+    const replaced = new Map<Element, Element>();
+    if (!this.#open) return replaced;
     this.#open = false;
+    for (const saved of this.#snapshots) {
+      if (saved.attributes.get("transform") !== null) continue;
+      const ellipse = circleToEllipse(saved.element);
+      if (ellipse) replaced.set(saved.element, ellipse);
+    }
     this.#history.commit();
+    return replaced;
   }
 
   /** Cancela el gesto (Esc): todo vuelve a como estaba y no queda ningún paso. */
