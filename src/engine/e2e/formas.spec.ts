@@ -423,3 +423,68 @@ test("L elige la línea", async ({ page }) => {
     .poll(() => lastSent(page))
     .toMatchObject({ name: "tool.changed", payload: { tool: "line" } });
 });
+
+const pointCount = (shape: Record<string, string> | undefined) =>
+  (shape?.points ?? "").trim().split(/\s+/).length;
+
+test("el polígono se arrastra del centro a un vértice y guarda sus parámetros", async ({
+  page,
+}) => {
+  await selectTool(page, "polygon");
+  await drawDrag(page, { x: 100, y: 200 }, { x: 130, y: 200 });
+
+  const [hexagon] = await createdOf(page, "polygon");
+  expect(pointCount(hexagon)).toBe(6);
+  expect(hexagon).toMatchObject({
+    "data-winvector-shape": "polygon",
+    "data-winvector-sides": "6",
+    "data-winvector-cx": "100",
+    "data-winvector-cy": "200",
+    fill: "#ffffff",
+  });
+  expect(number(hexagon?.["data-winvector-r"])).toBeCloseTo(30, 0);
+  expect(number(hexagon?.["data-winvector-rotation"])).toBeCloseTo(0, 0);
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "create-polygon" });
+});
+
+test("las flechas cambian los lados durante el arrastre y Mayús fija el giro", async ({ page }) => {
+  await selectTool(page, "star");
+  const a = await toScreen(page, 100, 200);
+  const b = await toScreen(page, 103, 160);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 3 });
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.down("Shift");
+  await page.mouse.move(b.x, b.y + 1, { steps: 1 });
+  await page.mouse.up();
+  await page.keyboard.up("Shift");
+
+  const [star] = await createdOf(page, "polygon");
+  expect(star).toMatchObject({ "data-winvector-shape": "star", "data-winvector-sides": "7" });
+  expect(pointCount(star)).toBe(14);
+  // Casi hacia arriba con Mayús: exactamente hacia arriba.
+  expect(star?.["data-winvector-rotation"]).toBe("-90");
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "create-star" });
+
+  // La siguiente estrella nace con las mismas puntas.
+  await drawDrag(page, { x: 250, y: 200 }, { x: 280, y: 200 });
+  expect((await createdOf(page, "polygon"))[1]?.["data-winvector-sides"]).toBe("7");
+
+  await page.keyboard.press("Control+Z");
+  await page.keyboard.press("Control+Z");
+  await expect.poll(() => serialize(page)).toBe(sample);
+});
+
+test("G y S eligen el polígono y la estrella", async ({ page }) => {
+  await page.locator("#sol").click();
+  await page.keyboard.press("g");
+  await expect
+    .poll(() => lastSent(page))
+    .toMatchObject({ name: "tool.changed", payload: { tool: "polygon" } });
+  await page.keyboard.press("s");
+  await expect
+    .poll(() => lastSent(page))
+    .toMatchObject({ name: "tool.changed", payload: { tool: "star" } });
+});

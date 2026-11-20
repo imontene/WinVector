@@ -293,6 +293,10 @@ public enum ToolName
     Ellipse,
     [JsonStringEnumMemberName("line")]
     Line,
+    [JsonStringEnumMemberName("polygon")]
+    Polygon,
+    [JsonStringEnumMemberName("star")]
+    Star,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>

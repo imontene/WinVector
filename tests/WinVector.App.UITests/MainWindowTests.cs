@@ -334,6 +334,21 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ConLaEstrellaArrastrarCreaUnaEstrellaSeleccionada()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+
+        Session.GetById("ToolStar").Click();
+        // Desde el centro hasta una punta, en el cielo despejado.
+        Mouse.Drag(AppSession.SamplePoint(canvas, 225, 25), AppSession.SamplePoint(canvas, 225, 8));
+
+        var status = Session.WaitForName("SelectionStatus", name => name.StartsWith("polygon", StringComparison.Ordinal), EngineTimeout);
+        Assert.IsTrue(status.StartsWith("polygon", StringComparison.Ordinal), $"No se creó la estrella: la selección es '{status}'.");
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();
