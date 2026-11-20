@@ -13,6 +13,7 @@
     "line",
     "polygon",
     "star",
-    "vertex"
+    "vertex",
+    "pen"
   ]
 }

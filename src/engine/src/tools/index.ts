@@ -22,3 +22,4 @@ export * from "./shapeHandles";
 export * from "./shapeProperties";
 export * from "./vertices";
 export * from "./vertexTool";
+export * from "./penTool";

@@ -22,6 +22,8 @@ export interface OverlayScene {
     readonly points: readonly Point[];
     readonly selected: readonly boolean[];
   } | null;
+  /** Primer vértice de la forma libre que se dibuja con la pluma, y si un clic la cerraría. */
+  readonly pen?: { readonly start: Point; readonly closing: boolean } | null;
 }
 
 export const EMPTY_SCENE: OverlayScene = { items: [], scope: null, marquee: null, handles: null };
@@ -75,6 +77,15 @@ export class Overlay {
       if (scene.vertices?.selected[index]) square.classList.add("overlay-vertex-selected");
       shapes.push(square);
     });
+    if (scene.pen) {
+      const circle = this.element.ownerDocument.createElementNS(SVG_NS, "circle");
+      circle.classList.add("overlay-pen-start");
+      if (scene.pen.closing) circle.classList.add("overlay-pen-closing");
+      circle.setAttribute("cx", String(round(scene.pen.start.x)));
+      circle.setAttribute("cy", String(round(scene.pen.start.y)));
+      circle.setAttribute("r", scene.pen.closing ? "6" : "4");
+      shapes.push(circle);
+    }
     if (scene.marquee) shapes.push(this.#rect(scene.marquee, "overlay-marquee"));
     this.element.replaceChildren(...shapes);
   }
