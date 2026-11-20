@@ -28,6 +28,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IShellDialogs _dialogs;
     private readonly ILogger _logger;
     private readonly TimeProvider _time;
+    private readonly IShellClipboard _clipboard;
     private BridgeClient? _bridge;
     private Task _engineWork = Task.CompletedTask;
     private int _untitledCount;
@@ -38,7 +39,8 @@ public sealed partial class MainViewModel : ObservableObject
         IShellDialogs? dialogs = null,
         RecentFiles? recentFiles = null,
         ILogger<MainViewModel>? logger = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IShellClipboard? clipboard = null)
     {
         ArgumentNullException.ThrowIfNull(texts);
         _texts = texts;
@@ -46,6 +48,7 @@ public sealed partial class MainViewModel : ObservableObject
         RecentFiles = recentFiles ?? new RecentFiles(new MemoryRecentFilesStore());
         _logger = logger ?? NullLogger<MainViewModel>.Instance;
         _time = timeProvider ?? TimeProvider.System;
+        _clipboard = clipboard ?? new MemoryClipboard();
         NewDocument();
     }
 
@@ -574,6 +577,15 @@ public sealed partial class MainViewModel : ObservableObject
             case ("r", false):
                 ShowRulers = !ShowRulers;
                 break;
+            case ("c", false):
+                await CopyAsync();
+                break;
+            case ("x", false):
+                await CutAsync();
+                break;
+            case ("v", false):
+                await PasteAsync();
+                break;
             default:
                 return false;
         }
@@ -681,6 +693,63 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(HasSelection))]
     public Task UngroupAsync() => SelectionCommandAsync(BridgeCommands.ObjectUngroup);
 
+    /// <summary>Copia la selección al portapapeles como SVG, con las definiciones que usa.</summary>
+    /// <remarks>
+    /// Cortar, copiar y pegar no llevan acelerador en el menú, para no quitarles Ctrl+C, Ctrl+X y Ctrl+V
+    /// a los cuadros de texto. Con el lienzo enfocado, el motor reenvía esos atajos a la aplicación.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task CopyAsync() => CopyToClipboardAsync(cut: false);
+
+    /// <summary>Copia la selección al portapapeles y la elimina.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task CutAsync() => CopyToClipboardAsync(cut: true);
+
+    /// <summary>Pega el SVG del portapapeles (de WinVector o de otra aplicación) en el documento activo.</summary>
+    [RelayCommand(CanExecute = nameof(CanSelectAll))]
+    public async Task PasteAsync()
+    {
+        if (SelectedDocument is not { IsLoaded: true } document || await _clipboard.GetSvgAsync() is not { } svg)
+        {
+            return;
+        }
+
+        Enqueue(() => SendAsync(BridgeCommands.ClipboardPaste, new ClipboardPaste(document.DocumentId, svg), DocumentCommandTimeout));
+        await _engineWork;
+    }
+
+    /// <summary>Duplica la selección junto al original.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task DuplicateAsync() => SelectionCommandAsync(BridgeCommands.SelectionDuplicate);
+
+    /// <summary>Elimina la selección.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    public Task DeleteAsync() => SelectionCommandAsync(BridgeCommands.SelectionDelete);
+
+    private Task CopyToClipboardAsync(bool cut)
+    {
+        if (SelectedDocument is not { IsLoaded: true } document)
+        {
+            return Task.CompletedTask;
+        }
+
+        var reference = new DocumentRef(document.DocumentId);
+        Enqueue(async () =>
+        {
+            if (await SendAsync(BridgeCommands.ClipboardCopy, reference, DocumentCommandTimeout) is not { Svg: { } svg })
+            {
+                return;
+            }
+
+            await _clipboard.SetSvgAsync(svg);
+            if (cut)
+            {
+                await SendAsync(BridgeCommands.SelectionDelete, reference);
+            }
+        });
+        return _engineWork;
+    }
+
     private Task ArrangeAsync(ArrangeAction action)
     {
         if (SelectedDocument is not { IsLoaded: true } document)
@@ -713,6 +782,10 @@ public sealed partial class MainViewModel : ObservableObject
         SendToBackCommand.NotifyCanExecuteChanged();
         GroupCommand.NotifyCanExecuteChanged();
         UngroupCommand.NotifyCanExecuteChanged();
+        CopyCommand.NotifyCanExecuteChanged();
+        CutCommand.NotifyCanExecuteChanged();
+        DuplicateCommand.NotifyCanExecuteChanged();
+        DeleteCommand.NotifyCanExecuteChanged();
     }
 
     private Task StepHistoryAsync(BridgeCommand<DocumentRef, HistoryState> command)
@@ -1001,6 +1074,7 @@ public sealed partial class MainViewModel : ObservableObject
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         SelectAllCommand.NotifyCanExecuteChanged();
+        PasteCommand.NotifyCanExecuteChanged();
         ZoomInCommand.NotifyCanExecuteChanged();
         ZoomOutCommand.NotifyCanExecuteChanged();
         ZoomFitCommand.NotifyCanExecuteChanged();
@@ -1045,6 +1119,20 @@ public sealed partial class MainViewModel : ObservableObject
         public Task<DocumentSize?> AskNewDocumentSizeAsync() => Task.FromResult<DocumentSize?>(null);
 
         public Task ShowErrorAsync(string title, string message) => Task.CompletedTask;
+    }
+
+    /// <summary>Portapapeles en memoria: para pruebas y usos sin interfaz.</summary>
+    private sealed class MemoryClipboard : IShellClipboard
+    {
+        private string? _svg;
+
+        public Task SetSvgAsync(string svg)
+        {
+            _svg = svg;
+            return Task.CompletedTask;
+        }
+
+        public Task<string?> GetSvgAsync() => Task.FromResult(_svg);
     }
 
     private sealed class MemoryRecentFilesStore : IRecentFilesStore

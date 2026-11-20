@@ -25,6 +25,12 @@ internal sealed class FakeEngine
     /// <summary>Comandos recibidos, como "document.load d1".</summary>
     public List<string> Commands { get; } = [];
 
+    /// <summary>SVG que devuelve clipboard.copy (null: nada seleccionado).</summary>
+    public string? CopiedSvg { get; set; } = "<svg><circle/></svg>";
+
+    /// <summary>SVG recibidos con clipboard.paste.</summary>
+    public List<string> PastedSvgs { get; } = [];
+
     /// <summary>Payloads de selection.setGeometry recibidos, tal cual.</summary>
     public List<string> GeometriesSet { get; } = [];
 
@@ -163,6 +169,15 @@ internal sealed class FakeEngine
                 ArtboardsSet.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, payload.GetRawText());
                 break;
+            case "clipboard.copy":
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","svg":{{JsonSerializer.Serialize(CopiedSvg)}}}""");
+                break;
+            case "clipboard.paste":
+                PastedSvgs.Add(payload.GetProperty("svg").GetString()!);
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","count":1}""");
+                break;
+            case "selection.duplicate":
+            case "selection.delete":
             case "object.arrange":
             case "object.group":
             case "object.ungroup":

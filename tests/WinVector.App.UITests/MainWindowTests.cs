@@ -322,6 +322,28 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void CopiarYPegarDesdeElMenuEditarYDeshacer()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.DoubleClick(AppSession.SamplePoint(canvas, 300, 96));
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+
+        InvokeMenu("EditMenu", "MenuEditCopy");
+        InvokeMenu("EditMenu", "MenuEditPaste");
+
+        // La copia pegada lleva un id nuevo: el sol original sigue llamándose "sol".
+        var pasted = Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol-2", StringComparison.Ordinal), EngineTimeout);
+        StringAssert.StartsWith(pasted, "circle#sol-2", "No se pegó la copia del sol.");
+
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result);
+        undo.Click();
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, "Deshacer pegar no dejó el documento como estaba.");
+    }
+
+    [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);
@@ -412,6 +434,15 @@ public sealed class MainWindowTests
         Assert.IsTrue(
             Retry.WhileFalse(() => !string.IsNullOrEmpty(Session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault), EngineStartTimeout).Result,
             "El motor no terminó de cargar.");
+
+    private void InvokeMenu(string menu, string automationId)
+    {
+        Session.GetById(menu).Patterns.ExpandCollapse.Pattern.Expand();
+        var item = Retry.WhileNull(() => Session.FindInApp(automationId), TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException($"No aparece {automationId} en el menú.");
+        Assert.IsTrue(Retry.WhileFalse(() => item.IsEnabled, EngineTimeout).Result, $"{automationId} está desactivado.");
+        item.Patterns.Invoke.Pattern.Invoke();
+    }
 
     private void InvokeViewMenu(string automationId)
     {

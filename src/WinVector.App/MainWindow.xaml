@@ -144,7 +144,7 @@
                         <MenuFlyoutItem x:Uid="MenuFileExit" Click="OnExitClick" />
                     </MenuBarItem>
 
-                    <MenuBarItem x:Uid="MenuEdit">
+                    <MenuBarItem x:Name="EditMenu" x:Uid="MenuEdit">
                         <!-- Los atajos de deshacer y rehacer solo están aquí: el motor no los atiende, para no deshacer dos veces. -->
                         <MenuFlyoutItem
                             AutomationProperties.AutomationId="MenuEditUndo"
@@ -164,10 +164,34 @@
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem x:Uid="MenuEditCut" IsEnabled="False" />
-                        <MenuFlyoutItem x:Uid="MenuEditCopy" IsEnabled="False" />
-                        <MenuFlyoutItem x:Uid="MenuEditPaste" IsEnabled="False" />
-                        <MenuFlyoutItem x:Uid="MenuEditDelete" IsEnabled="False" />
+                        <!-- Sin aceleradores: Ctrl+X, Ctrl+C, Ctrl+V y Supr son de los cuadros de texto. Con el lienzo enfocado, el motor los atiende o los reenvía. -->
+                        <MenuFlyoutItem
+                            x:Uid="MenuEditCut"
+                            AutomationProperties.AutomationId="MenuEditCut"
+                            Command="{x:Bind ViewModel.CutCommand}"
+                            KeyboardAcceleratorTextOverride="Ctrl+X" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuEditCopy"
+                            AutomationProperties.AutomationId="MenuEditCopy"
+                            Command="{x:Bind ViewModel.CopyCommand}"
+                            KeyboardAcceleratorTextOverride="Ctrl+C" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuEditPaste"
+                            AutomationProperties.AutomationId="MenuEditPaste"
+                            Command="{x:Bind ViewModel.PasteCommand}"
+                            KeyboardAcceleratorTextOverride="Ctrl+V" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuEditDuplicate"
+                            AutomationProperties.AutomationId="MenuEditDuplicate"
+                            Command="{x:Bind ViewModel.DuplicateCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="D" Modifiers="Control" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            x:Uid="MenuEditDelete"
+                            AutomationProperties.AutomationId="MenuEditDelete"
+                            Command="{x:Bind ViewModel.DeleteCommand}" />
                         <MenuFlyoutSeparator />
                         <!-- Sin acelerador: Ctrl+A lo atiende el lienzo, y así no se quita a los cuadros de texto. -->
                         <MenuFlyoutItem

@@ -56,6 +56,34 @@
       "response": "ObjectChange"
     },
     {
+      "name": "selection.duplicate",
+      "kind": "command",
+      "description": "Duplica la selección junto al original y selecciona las copias. Se puede deshacer.",
+      "payload": "DocumentRef",
+      "response": "ObjectChange"
+    },
+    {
+      "name": "selection.delete",
+      "kind": "command",
+      "description": "Elimina la selección. Se puede deshacer.",
+      "payload": "DocumentRef",
+      "response": "ObjectChange"
+    },
+    {
+      "name": "clipboard.copy",
+      "kind": "command",
+      "description": "Devuelve la selección como SVG independiente; la aplicación lo pone en el portapapeles de Windows.",
+      "payload": "DocumentRef",
+      "response": "ClipboardContent"
+    },
+    {
+      "name": "clipboard.paste",
+      "kind": "command",
+      "description": "Pega un SVG en el puntero, o desplazado respecto a su posición original si el puntero no está sobre el lienzo, y lo selecciona. Se puede deshacer.",
+      "payload": "ClipboardPaste",
+      "response": "ClipboardPasteResult"
+    },
+    {
       "name": "error",
       "kind": "event",
       "description": "El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno.",

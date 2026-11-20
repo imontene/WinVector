@@ -27,6 +27,7 @@ import {
   installShortcuts,
   trackModifiers,
 } from "./tools";
+import { copySelection, duplicate, pasteSvg, remove } from "./clipboard";
 import { arrange, group, ungroup } from "./structure";
 import { rotationOf, setGeometry } from "./transform";
 import { gridSpacing, Guides, type Viewport } from "./viewport";
@@ -268,6 +269,75 @@ bridge.handle("object.ungroup", ({ documentId }) =>
   })),
 );
 
+/** Duplica la selección y selecciona las copias. */
+function duplicateSelection(documentId: string): boolean {
+  const { document: doc, selection } = documents.open(documentId);
+  if (selection.items.length === 0) return false;
+  const copies = doc.history.transact("duplicate", () => duplicate(selection.items, doc));
+  selection.set(copies);
+  return copies.length > 0;
+}
+
+/** Elimina la selección (la selección queda vacía al podarse). */
+function deleteSelection(documentId: string): boolean {
+  const { document: doc, selection } = documents.open(documentId);
+  if (selection.items.length === 0) return false;
+  return doc.history.transact("delete", () => remove(selection.items)) > 0;
+}
+
+// Último punto del puntero sobre la página: se pega ahí. Si el puntero sale de la página (por
+// ejemplo, al menú Editar), se pega desplazado respecto al original.
+let lastPointer: { x: number; y: number } | null = null;
+window.addEventListener(
+  "pointermove",
+  (event) => {
+    lastPointer = { x: event.clientX, y: event.clientY };
+  },
+  { capture: true },
+);
+document.documentElement.addEventListener("pointerleave", () => {
+  lastPointer = null;
+});
+
+/** Pegados seguidos del mismo contenido se van desplazando para no quedar uno encima de otro. */
+let lastPaste: { documentId: string; svg: string; count: number } | null = null;
+
+bridge.handle("selection.duplicate", ({ documentId }) =>
+  withDocumentErrors(() => ({ documentId, changed: duplicateSelection(documentId) })),
+);
+
+bridge.handle("selection.delete", ({ documentId }) =>
+  withDocumentErrors(() => ({ documentId, changed: deleteSelection(documentId) })),
+);
+
+bridge.handle("clipboard.copy", ({ documentId }) =>
+  withDocumentErrors(() => {
+    const { document: doc, selection } = documents.open(documentId);
+    lastPaste = null;
+    return { documentId, svg: copySelection(selection.items, doc.root) };
+  }),
+);
+
+bridge.handle("clipboard.paste", ({ documentId, svg }) =>
+  withDocumentErrors(() => {
+    const { document: doc, selection, viewport } = documents.open(documentId);
+    const at =
+      lastPointer && documents.active?.id === documentId
+        ? viewport.screenToDocument(lastPointer)
+        : null;
+    const count =
+      lastPaste?.documentId === documentId && lastPaste.svg === svg ? lastPaste.count + 1 : 1;
+    const pasted = doc.history.transact("paste", () =>
+      pasteSvg(svg, doc, selection.scope, { at, offset: 10 * count }),
+    );
+    if (pasted.length > 0) {
+      lastPaste = { documentId, svg, count };
+      selection.set(pasted);
+    }
+    return { documentId, count: pasted.length };
+  }),
+);
+
 bridge.handle("history.undo", ({ documentId }) =>
   withDocumentErrors(() => {
     const { history } = documents.get(documentId);
@@ -340,6 +410,14 @@ installShortcuts(window, {
   ungroup: () => {
     const id = documents.active?.id;
     if (id) objectOperation(id, { kind: "ungroup" });
+  },
+  duplicate: () => {
+    const id = documents.active?.id;
+    if (id) duplicateSelection(id);
+  },
+  remove: () => {
+    const id = documents.active?.id;
+    if (id) deleteSelection(id);
   },
   forward: (shortcut) => {
     bridge.emit("keyboard.shortcut", shortcut);

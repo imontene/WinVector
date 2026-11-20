@@ -51,6 +51,30 @@ export type BridgeErrorCode =
   | "timeout"
   | "internal";
 
+/** La selección como SVG independiente, para el portapapeles. */
+export interface ClipboardContent {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Texto del SVG con los objetos y las definiciones que usan, o null si no hay nada seleccionado. */
+  readonly svg: string | null;
+}
+
+/** SVG del portapapeles para pegar en un documento. */
+export interface ClipboardPaste {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Texto del SVG, de WinVector o de otra aplicación. */
+  readonly svg: string;
+}
+
+/** Resultado de pegar. */
+export interface ClipboardPasteResult {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Objetos pegados; 0 si el texto no era un SVG con algo que pegar. */
+  readonly count: number;
+}
+
 /** Texto de un documento para guardarlo. */
 export interface DocumentContent {
   /** Identificador del documento, asignado por la aplicación. */
@@ -270,6 +294,20 @@ export interface BridgeCommands {
   readonly "object.group": { readonly payload: DocumentRef; readonly response: ObjectChange };
   /** Desagrupa los grupos seleccionados sin cambiar su aspecto; los que cambiarían (opacidad, filtro, recorte, máscara) se dejan. Se puede deshacer. */
   readonly "object.ungroup": { readonly payload: DocumentRef; readonly response: ObjectChange };
+  /** Duplica la selección junto al original y selecciona las copias. Se puede deshacer. */
+  readonly "selection.duplicate": {
+    readonly payload: DocumentRef;
+    readonly response: ObjectChange;
+  };
+  /** Elimina la selección. Se puede deshacer. */
+  readonly "selection.delete": { readonly payload: DocumentRef; readonly response: ObjectChange };
+  /** Devuelve la selección como SVG independiente; la aplicación lo pone en el portapapeles de Windows. */
+  readonly "clipboard.copy": { readonly payload: DocumentRef; readonly response: ClipboardContent };
+  /** Pega un SVG en el puntero, o desplazado respecto a su posición original si el puntero no está sobre el lienzo, y lo selecciona. Se puede deshacer. */
+  readonly "clipboard.paste": {
+    readonly payload: ClipboardPaste;
+    readonly response: ClipboardPasteResult;
+  };
   /** Carga un documento SVG en el motor con el identificador que le asigna la aplicación. */
   readonly "document.load": {
     readonly payload: DocumentLoad;
@@ -332,6 +370,10 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "object.arrange",
   "object.group",
   "object.ungroup",
+  "selection.duplicate",
+  "selection.delete",
+  "clipboard.copy",
+  "clipboard.paste",
   "document.load",
   "document.serialize",
   "document.activate",

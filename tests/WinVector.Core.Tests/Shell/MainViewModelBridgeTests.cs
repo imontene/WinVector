@@ -14,10 +14,11 @@ public sealed class MainViewModelBridgeTests : IDisposable
     private readonly BridgeClient _bridge;
     private readonly IDisposable _attachment;
     private readonly FakeEngine _engine;
+    private readonly FakeClipboard _clipboard = new();
 
     public MainViewModelBridgeTests()
     {
-        _viewModel = new MainViewModel(MainViewModelTests.Texts, timeProvider: _time);
+        _viewModel = new MainViewModel(MainViewModelTests.Texts, timeProvider: _time, clipboard: _clipboard);
         _bridge = new BridgeClient(_transport, timeProvider: _time);
         _attachment = _viewModel.AttachBridge(_bridge);
         _engine = new FakeEngine(_transport);
@@ -431,6 +432,87 @@ public sealed class MainViewModelBridgeTests : IDisposable
         await _viewModel.UngroupAsync();
 
         Assert.AreEqual("object.arrange d1 | object.arrange d1 | object.group d1 | object.ungroup d1", string.Join(" | ", _engine.Commands));
+    }
+
+    [TestMethod]
+    public async Task CopiarPoneElSvgDelMotorEnElPortapapeles()
+    {
+        await ReadyAsync();
+        Assert.IsFalse(_viewModel.CopyCommand.CanExecute(null), "Sin selección no hay nada que copiar.");
+        SelectSun();
+        Assert.IsTrue(_viewModel.CopyCommand.CanExecute(null));
+
+        await _viewModel.CopyAsync();
+
+        Assert.AreEqual("<svg><circle/></svg>", _clipboard.Svg);
+        Assert.IsFalse(_engine.Commands.Contains("selection.delete d1"));
+    }
+
+    [TestMethod]
+    public async Task CortarCopiaYElimina()
+    {
+        await ReadyAsync();
+        SelectSun();
+
+        await _viewModel.CutAsync();
+
+        Assert.AreEqual("<svg><circle/></svg>", _clipboard.Svg);
+        CollectionAssert.Contains(_engine.Commands, "clipboard.copy d1");
+        CollectionAssert.Contains(_engine.Commands, "selection.delete d1");
+    }
+
+    [TestMethod]
+    public async Task SiElMotorNoDevuelveNadaNoSeTocaElPortapapeles()
+    {
+        await ReadyAsync();
+        SelectSun();
+        _engine.CopiedSvg = null;
+        _clipboard.Svg = "<svg id='anterior'/>";
+
+        await _viewModel.CutAsync();
+
+        Assert.AreEqual(0, _clipboard.Writes);
+        Assert.IsFalse(_engine.Commands.Contains("selection.delete d1"), "Si no se copió nada, no se elimina nada.");
+    }
+
+    [TestMethod]
+    public async Task PegarEnviaAlMotorElSvgDelPortapapeles()
+    {
+        await ReadyAsync();
+        await _viewModel.PasteAsync();
+        Assert.IsEmpty(_engine.PastedSvgs, "Con el portapapeles vacío no se pega nada.");
+
+        _clipboard.Svg = "<svg><rect/></svg>";
+        await _viewModel.PasteAsync();
+
+        Assert.AreEqual("<svg><rect/></svg>", _engine.PastedSvgs.Single());
+    }
+
+    [TestMethod]
+    public async Task LosAtajosDelPortapapelesQueEnviaElLienzoFuncionan()
+    {
+        await ReadyAsync();
+        SelectSun();
+
+        Assert.IsTrue(await _viewModel.HandleShortcutAsync(new KeyboardShortcut("c", true, false, false)));
+        Assert.IsTrue(await _viewModel.HandleShortcutAsync(new KeyboardShortcut("v", true, false, false)));
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual("<svg><circle/></svg>", _engine.PastedSvgs.Single());
+    }
+
+    [TestMethod]
+    public async Task DuplicarYEliminarNecesitanSeleccion()
+    {
+        await ReadyAsync();
+        Assert.IsFalse(_viewModel.DuplicateCommand.CanExecute(null));
+        SelectSun();
+        _engine.Commands.Clear();
+
+        await _viewModel.DuplicateAsync();
+        await _viewModel.DeleteAsync();
+
+        Assert.AreEqual("selection.duplicate d1 | selection.delete d1", string.Join(" | ", _engine.Commands));
     }
 
     [TestMethod]

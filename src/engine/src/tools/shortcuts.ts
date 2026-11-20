@@ -6,6 +6,9 @@ export interface ShortcutHost {
   redo(): void;
   zoom(action: ZoomAction): void;
   arrange(action: ArrangeAction): void;
+  duplicate(): void;
+  /** Supr o Retroceso: elimina la selección. */
+  remove(): void;
   group(): void;
   ungroup(): void;
   /** Envía a la aplicación un atajo que el motor no atiende (Ctrl+S, Ctrl+N…). */
@@ -31,6 +34,12 @@ export function installShortcuts(target: Window, host: ShortcutHost): () => void
     const key = event.key.toLowerCase();
     const ctrl = event.ctrlKey || event.metaKey;
     const functionKey = /^f\d{1,2}$/.test(key);
+    // Supr y Retroceso sin modificadores eliminan la selección.
+    if ((key === "delete" || key === "backspace") && !ctrl && !event.altKey && !event.shiftKey) {
+      host.remove();
+      event.preventDefault();
+      return;
+    }
     // Alt+letra abre los menús y Alt+F4 cierra la ventana: de eso se ocupa Windows.
     if ((!ctrl && !functionKey) || event.altKey || MODIFIER_KEYS.has(key)) return;
 
@@ -59,6 +68,10 @@ function handleOwn(key: string, shift: boolean, host: ShortcutHost): boolean {
       return true;
     case "y":
       host.redo();
+      return true;
+    case "d":
+      if (shift) return false;
+      host.duplicate();
       return true;
     case "g":
       if (shift) host.ungroup();

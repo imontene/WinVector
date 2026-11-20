@@ -48,7 +48,8 @@ public sealed partial class MainWindow : Window
             new ResourceShellTexts(_resources),
             _dialogs,
             new RecentFiles(new TextFileRecentFilesStore(Path.Combine(AppDataFolder(), "archivos-recientes.txt"))),
-            App.Logging.CreateLogger<MainViewModel>());
+            App.Logging.CreateLogger<MainViewModel>(),
+            clipboard: new WinUIClipboard());
 
         InitializeComponent();
 
