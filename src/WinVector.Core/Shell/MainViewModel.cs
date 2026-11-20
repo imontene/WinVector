@@ -49,7 +49,54 @@ public sealed partial class MainViewModel : ObservableObject
         _logger = logger ?? NullLogger<MainViewModel>.Instance;
         _time = timeProvider ?? TimeProvider.System;
         _clipboard = clipboard ?? new MemoryClipboard();
+        Commands = new CommandRegistry();
         NewDocument();
+        RegisterCommands();
+    }
+
+    /// <summary>Órdenes de la aplicación para la paleta de comandos (Ctrl+K).</summary>
+    public CommandRegistry Commands { get; }
+
+    /// <summary>Se pide abrir la paleta de comandos (Ctrl+K con el lienzo enfocado).</summary>
+    public event EventHandler? CommandPaletteRequested;
+
+    /// <summary>Registra las órdenes con su nombre y su atajo en el idioma de la interfaz.</summary>
+    private void RegisterCommands()
+    {
+        void Add(string id, System.Windows.Input.ICommand command) =>
+            Commands.Register(id, _texts.CommandName(id), command, _texts.CommandShortcut(id));
+
+        Add("new", NewDocumentCommand);
+        Add("new-with-size", NewDocumentWithSizeCommand);
+        Add("open", OpenCommand);
+        Add("save", SaveCommand);
+        Add("save-as", SaveAsCommand);
+        Add("close-tab", new AsyncRelayCommand(() => RequestCloseDocumentAsync(SelectedDocument)));
+        Add("undo", UndoCommand);
+        Add("redo", RedoCommand);
+        Add("cut", CutCommand);
+        Add("copy", CopyCommand);
+        Add("paste", PasteCommand);
+        Add("duplicate", DuplicateCommand);
+        Add("delete", DeleteCommand);
+        Add("select-all", SelectAllCommand);
+        Add("group", GroupCommand);
+        Add("ungroup", UngroupCommand);
+        Add("bring-to-front", BringToFrontCommand);
+        Add("bring-forward", BringForwardCommand);
+        Add("send-backward", SendBackwardCommand);
+        Add("send-to-back", SendToBackCommand);
+        Add("zoom-in", ZoomInCommand);
+        Add("zoom-out", ZoomOutCommand);
+        Add("zoom-fit", ZoomFitCommand);
+        Add("zoom-actual", ZoomActualCommand);
+        Add("toggle-rulers", new RelayCommand(() => ShowRulers = !ShowRulers));
+        Add("toggle-grid", new RelayCommand(() => ShowGrid = !ShowGrid));
+        Add("toggle-snap", new RelayCommand(() => SnapToGrid = !SnapToGrid));
+        Add("tool-select", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Select)));
+        Add("tool-hand", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Hand)));
+        Add("tool-zoom", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Zoom)));
+        Add("tool-eyedropper", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Eyedropper)));
     }
 
     /// <summary>Archivos abiertos o guardados recientemente.</summary>
@@ -601,6 +648,9 @@ public sealed partial class MainViewModel : ObservableObject
                 break;
             case ("r", false):
                 ShowRulers = !ShowRulers;
+                break;
+            case ("k", false):
+                CommandPaletteRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case ("c", false):
                 await CopyAsync();

@@ -540,4 +540,184 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="HistoryActionStyle" xml:space="preserve">
     <value>cambiar el estilo</value>
   </data>
+  <data name="PaletteNameNew" xml:space="preserve">
+    <value>Documento nuevo</value>
+  </data>
+  <data name="PaletteShortcutNew" xml:space="preserve">
+    <value>Ctrl+N</value>
+  </data>
+  <data name="PaletteNameNewWithSize" xml:space="preserve">
+    <value>Documento nuevo con tamaño</value>
+  </data>
+  <data name="PaletteShortcutNewWithSize" xml:space="preserve">
+    <value>Ctrl+Mayús+N</value>
+  </data>
+  <data name="PaletteNameOpen" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="PaletteShortcutOpen" xml:space="preserve">
+    <value>Ctrl+O</value>
+  </data>
+  <data name="PaletteNameSave" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="PaletteShortcutSave" xml:space="preserve">
+    <value>Ctrl+S</value>
+  </data>
+  <data name="PaletteNameSaveAs" xml:space="preserve">
+    <value>Guardar como</value>
+  </data>
+  <data name="PaletteShortcutSaveAs" xml:space="preserve">
+    <value>Ctrl+Mayús+S</value>
+  </data>
+  <data name="PaletteNameCloseTab" xml:space="preserve">
+    <value>Cerrar pestaña</value>
+  </data>
+  <data name="PaletteShortcutCloseTab" xml:space="preserve">
+    <value>Ctrl+W</value>
+  </data>
+  <data name="PaletteNameUndo" xml:space="preserve">
+    <value>Deshacer</value>
+  </data>
+  <data name="PaletteShortcutUndo" xml:space="preserve">
+    <value>Ctrl+Z</value>
+  </data>
+  <data name="PaletteNameRedo" xml:space="preserve">
+    <value>Rehacer</value>
+  </data>
+  <data name="PaletteShortcutRedo" xml:space="preserve">
+    <value>Ctrl+Y</value>
+  </data>
+  <data name="PaletteNameCut" xml:space="preserve">
+    <value>Cortar</value>
+  </data>
+  <data name="PaletteShortcutCut" xml:space="preserve">
+    <value>Ctrl+X</value>
+  </data>
+  <data name="PaletteNameCopy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="PaletteShortcutCopy" xml:space="preserve">
+    <value>Ctrl+C</value>
+  </data>
+  <data name="PaletteNamePaste" xml:space="preserve">
+    <value>Pegar</value>
+  </data>
+  <data name="PaletteShortcutPaste" xml:space="preserve">
+    <value>Ctrl+V</value>
+  </data>
+  <data name="PaletteNameDuplicate" xml:space="preserve">
+    <value>Duplicar</value>
+  </data>
+  <data name="PaletteShortcutDuplicate" xml:space="preserve">
+    <value>Ctrl+D</value>
+  </data>
+  <data name="PaletteNameDelete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="PaletteShortcutDelete" xml:space="preserve">
+    <value>Supr</value>
+  </data>
+  <data name="PaletteNameSelectAll" xml:space="preserve">
+    <value>Seleccionar todo</value>
+  </data>
+  <data name="PaletteShortcutSelectAll" xml:space="preserve">
+    <value>Ctrl+A</value>
+  </data>
+  <data name="PaletteNameGroup" xml:space="preserve">
+    <value>Agrupar</value>
+  </data>
+  <data name="PaletteShortcutGroup" xml:space="preserve">
+    <value>Ctrl+G</value>
+  </data>
+  <data name="PaletteNameUngroup" xml:space="preserve">
+    <value>Desagrupar</value>
+  </data>
+  <data name="PaletteShortcutUngroup" xml:space="preserve">
+    <value>Ctrl+Mayús+G</value>
+  </data>
+  <data name="PaletteNameBringToFront" xml:space="preserve">
+    <value>Traer al frente</value>
+  </data>
+  <data name="PaletteShortcutBringToFront" xml:space="preserve">
+    <value>Ctrl+Mayús+RePág</value>
+  </data>
+  <data name="PaletteNameBringForward" xml:space="preserve">
+    <value>Subir un nivel</value>
+  </data>
+  <data name="PaletteShortcutBringForward" xml:space="preserve">
+    <value>Ctrl+RePág</value>
+  </data>
+  <data name="PaletteNameSendBackward" xml:space="preserve">
+    <value>Bajar un nivel</value>
+  </data>
+  <data name="PaletteShortcutSendBackward" xml:space="preserve">
+    <value>Ctrl+AvPág</value>
+  </data>
+  <data name="PaletteNameSendToBack" xml:space="preserve">
+    <value>Enviar al fondo</value>
+  </data>
+  <data name="PaletteShortcutSendToBack" xml:space="preserve">
+    <value>Ctrl+Mayús+AvPág</value>
+  </data>
+  <data name="PaletteNameZoomIn" xml:space="preserve">
+    <value>Acercar</value>
+  </data>
+  <data name="PaletteShortcutZoomIn" xml:space="preserve">
+    <value>Ctrl++</value>
+  </data>
+  <data name="PaletteNameZoomOut" xml:space="preserve">
+    <value>Alejar</value>
+  </data>
+  <data name="PaletteShortcutZoomOut" xml:space="preserve">
+    <value>Ctrl+-</value>
+  </data>
+  <data name="PaletteNameZoomFit" xml:space="preserve">
+    <value>Ajustar a la ventana</value>
+  </data>
+  <data name="PaletteShortcutZoomFit" xml:space="preserve">
+    <value>Ctrl+0</value>
+  </data>
+  <data name="PaletteNameZoomActual" xml:space="preserve">
+    <value>Tamaño real</value>
+  </data>
+  <data name="PaletteShortcutZoomActual" xml:space="preserve">
+    <value>Ctrl+1</value>
+  </data>
+  <data name="PaletteNameToggleRulers" xml:space="preserve">
+    <value>Mostrar u ocultar las reglas</value>
+  </data>
+  <data name="PaletteShortcutToggleRulers" xml:space="preserve">
+    <value>Ctrl+R</value>
+  </data>
+  <data name="PaletteNameToggleGrid" xml:space="preserve">
+    <value>Mostrar u ocultar la cuadrícula</value>
+  </data>
+  <data name="PaletteNameToggleSnap" xml:space="preserve">
+    <value>Ajustar a la cuadrícula</value>
+  </data>
+  <data name="PaletteNameToolSelect" xml:space="preserve">
+    <value>Herramienta Selección</value>
+  </data>
+  <data name="PaletteShortcutToolSelect" xml:space="preserve">
+    <value>V</value>
+  </data>
+  <data name="PaletteNameToolHand" xml:space="preserve">
+    <value>Herramienta Mano</value>
+  </data>
+  <data name="PaletteShortcutToolHand" xml:space="preserve">
+    <value>H</value>
+  </data>
+  <data name="PaletteNameToolZoom" xml:space="preserve">
+    <value>Herramienta Zoom</value>
+  </data>
+  <data name="PaletteShortcutToolZoom" xml:space="preserve">
+    <value>Z</value>
+  </data>
+  <data name="PaletteNameToolEyedropper" xml:space="preserve">
+    <value>Cuentagotas</value>
+  </data>
+  <data name="PaletteShortcutToolEyedropper" xml:space="preserve">
+    <value>I</value>
+  </data>
 </root>

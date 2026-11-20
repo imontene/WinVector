@@ -32,6 +32,21 @@ internal sealed class TestTexts : IShellTexts
     public string RedoCommand(string? action) => action is null ? "Rehacer" : $"Rehacer {action}";
 
     public string ZoomPercent(double zoom) => $"{Math.Round(zoom * 100)} %";
+
+    /// <summary>Algunos nombres en español, con tildes, para probar la búsqueda; el resto, el identificador.</summary>
+    public string CommandName(string id) => id switch
+    {
+        "undo" => "Deshacer",
+        "redo" => "Rehacer",
+        "group" => "Agrupar",
+        "ungroup" => "Desagrupar",
+        "zoom-fit" => "Ajustar a la ventana",
+        "tool-hand" => "Herramienta Mano",
+        "duplicate" => "Duplicar selección",
+        _ => id,
+    };
+
+    public string CommandShortcut(string id) => id == "undo" ? "Ctrl+Z" : string.Empty;
 }
 
 /// <summary>Diálogos con respuestas preparadas que anotan lo que se les pregunta.</summary>

@@ -49,4 +49,10 @@ public interface IShellTexts
 
     /// <summary>Zoom para la barra de estado ("150 %"); 1 es el 100 %.</summary>
     string ZoomPercent(double zoom);
+
+    /// <summary>Nombre de una orden para la paleta de comandos ("Deshacer"), por su identificador ("undo").</summary>
+    string CommandName(string id);
+
+    /// <summary>Atajo de una orden para la paleta de comandos ("Ctrl+Z"), o vacío si no tiene.</summary>
+    string CommandShortcut(string id);
 }

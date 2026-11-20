@@ -29,6 +29,10 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string ZoomPercent(double zoom) => Format("ZoomPercent", Math.Round(zoom * 100, zoom < 0.1 ? 1 : 0));
 
+    public string CommandName(string id) => TryGetString($"PaletteName{ToPascalCase(id)}") is { Length: > 0 } name ? name : id;
+
+    public string CommandShortcut(string id) => TryGetString($"PaletteShortcut{ToPascalCase(id)}");
+
     public string UndoCommand(string? action) => HistoryCommand("UndoCommand", action);
 
     public string RedoCommand(string? action) => HistoryCommand("RedoCommand", action);
