@@ -190,7 +190,6 @@ public sealed partial class EngineCanvasView : UserControl
 
         if (args.IsSuccess)
         {
-            StartupTrace.Mark(StartupTrace.Page);
             _engineLoaded = true;
             LoadingCover.Visibility = Visibility.Collapsed;
             CanvasWebView.Visibility = Visibility.Visible;

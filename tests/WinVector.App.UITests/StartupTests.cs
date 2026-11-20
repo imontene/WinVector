@@ -117,7 +117,6 @@ public sealed class StartupTests
             Since("windowMs"),
             Since("canvasMs"),
             Since("webViewMs"),
-            Since("pageMs"),
             Since("engineMs"),
             (int)Math.Round(startOffset));
 
@@ -161,13 +160,12 @@ public sealed class StartupTests
     /// <param name="ContentMs">Hasta que la ventana ha cargado su contenido.</param>
     /// <param name="CanvasMs">Hasta que el lienzo empieza a crear su WebView2.</param>
     /// <param name="WebViewMs">Hasta que el WebView2 del lienzo está creado.</param>
-    /// <param name="PageMs">Hasta que la página del motor ha cargado.</param>
     /// <param name="EngineMs">Hasta que el motor del lienzo responde.</param>
     /// <param name="ProcessMs">Hasta que Windows crea el proceso de la aplicación.</param>
-    private sealed record Startup(int WindowMs, int ContentMs, int CanvasMs, int WebViewMs, int PageMs, int EngineMs, int ProcessMs)
+    private sealed record Startup(int WindowMs, int ContentMs, int CanvasMs, int WebViewMs, int EngineMs, int ProcessMs)
     {
         public override string ToString() => string.Create(
             CultureInfo.InvariantCulture,
-            $"proceso {ProcessMs} ms, ventana {WindowMs} ms, contenido {ContentMs} ms, lienzo {CanvasMs} ms, WebView2 {WebViewMs} ms, página {PageMs} ms, motor {EngineMs} ms");
+            $"proceso {ProcessMs} ms, ventana {WindowMs} ms, contenido {ContentMs} ms, lienzo {CanvasMs} ms, WebView2 {WebViewMs} ms, motor {EngineMs} ms");
     }
 }

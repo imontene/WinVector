@@ -6,8 +6,8 @@ namespace WinVector.App;
 
 /// <summary>
 /// Tiempos de arranque medidos desde dentro de la aplicación (issue #34), en milisegundos desde
-/// que empieza el proceso: la ventana carga su contenido, el WebView2 está creado, la página del
-/// motor ha cargado y el motor responde. Solo se escriben si existe el archivo
+/// que empieza el proceso: la ventana carga su contenido, el lienzo empieza a crear el WebView2,
+/// el WebView2 está creado y el motor responde. Solo se escriben si existe el archivo
 /// <see cref="RequestFile"/> en la carpeta de datos, que crea la prueba de medición del arranque;
 /// así la medición no depende de UI Automation, que retrasa la carga del lienzo al activar la
 /// accesibilidad de WebView2.
@@ -20,7 +20,6 @@ internal static class StartupTrace
     public const string Window = "windowMs";
     public const string Canvas = "canvasMs";
     public const string WebView = "webViewMs";
-    public const string Page = "pageMs";
     public const string Engine = "engineMs";
 
     private static readonly DateTime ProcessStarted = ProcessStart();
