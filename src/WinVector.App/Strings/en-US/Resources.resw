@@ -496,4 +496,46 @@ Licensed under the Apache License 2.0.</value>
   <data name="HistoryActionDelete" xml:space="preserve">
     <value>delete</value>
   </data>
+  <data name="AppearanceTitle.Text" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="FillLabel.Text" xml:space="preserve">
+    <value>Fill</value>
+  </data>
+  <data name="StrokeLabel.Text" xml:space="preserve">
+    <value>Stroke</value>
+  </data>
+  <data name="FillNone.Content" xml:space="preserve">
+    <value>No fill</value>
+  </data>
+  <data name="StrokeNone.Content" xml:space="preserve">
+    <value>No stroke</value>
+  </data>
+  <data name="RecentColorsLabel.Text" xml:space="preserve">
+    <value>Recent colors</value>
+  </data>
+  <data name="SelectionStrokeWidth.Header" xml:space="preserve">
+    <value>Stroke width</value>
+  </data>
+  <data name="SelectionOpacity.Header" xml:space="preserve">
+    <value>Opacity (%)</value>
+  </data>
+  <data name="PaintNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="PaintMixed" xml:space="preserve">
+    <value>Mixed</value>
+  </data>
+  <data name="PaintServer" xml:space="preserve">
+    <value>Gradient or pattern</value>
+  </data>
+  <data name="ToolEyedropper.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Eyedropper (I): click to give its color to the selection; with Shift, to the stroke</value>
+  </data>
+  <data name="ToolEyedropper.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Eyedropper</value>
+  </data>
+  <data name="HistoryActionStyle" xml:space="preserve">
+    <value>style change</value>
+  </data>
 </root>

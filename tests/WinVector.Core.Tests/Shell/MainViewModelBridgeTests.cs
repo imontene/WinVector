@@ -516,6 +516,69 @@ public sealed class MainViewModelBridgeTests : IDisposable
     }
 
     [TestMethod]
+    public async Task ElPanelMuestraElEstiloDeLaSeleccion()
+    {
+        await ReadyAsync();
+        _transport.SendEvent(
+            "selection.changed",
+            """{"documentId":"d1","items":[{"id":"sol","tagName":"circle"}],"bounds":{"x":0,"y":0,"width":1,"height":1},"scope":null,"style":{"fill":"#ffb547","stroke":"none","strokeWidth":1.23456,"opacity":0.4567}}""");
+
+        Assert.AreEqual("#ffb547", _viewModel.SelectionFill);
+        Assert.AreEqual("none", _viewModel.SelectionStroke);
+        Assert.AreEqual(1.23, _viewModel.SelectionStrokeWidth);
+        Assert.AreEqual(45.7, _viewModel.SelectionOpacityPercent);
+
+        _transport.SendEvent("selection.changed", """{"documentId":"d1","items":[],"bounds":null,"scope":null}""");
+        Assert.IsNull(_viewModel.SelectionFill);
+        Assert.IsTrue(double.IsNaN(_viewModel.SelectionOpacityPercent));
+    }
+
+    [TestMethod]
+    public async Task CambiarElEstiloEnviaSoloLoQueCambia()
+    {
+        await ReadyAsync();
+        Assert.IsFalse(_viewModel.SetSelectionFill("#ff0000"), "Sin selección no hay nada que recolorear.");
+        SelectSun();
+
+        Assert.IsTrue(_viewModel.SetSelectionFill("#F00"));
+        Assert.IsTrue(_viewModel.SetSelectionStroke("none"));
+        Assert.IsTrue(_viewModel.SetSelectionStrokeWidth(2.5));
+        Assert.IsTrue(_viewModel.SetSelectionOpacityPercent(50));
+        Assert.IsFalse(_viewModel.SetSelectionFill("rojo"));
+        Assert.IsFalse(_viewModel.SetSelectionOpacityPercent(150));
+        Assert.IsFalse(_viewModel.SetSelectionStrokeWidth(-1));
+        await _viewModel.EngineWork;
+
+        Assert.AreEqual(
+            string.Join(
+                " | ",
+                """{"documentId":"d1","fill":"#ff0000","stroke":null,"strokeWidth":null,"opacity":null}""",
+                """{"documentId":"d1","fill":null,"stroke":"none","strokeWidth":null,"opacity":null}""",
+                """{"documentId":"d1","fill":null,"stroke":null,"strokeWidth":2.5,"opacity":null}""",
+                """{"documentId":"d1","fill":null,"stroke":null,"strokeWidth":null,"opacity":0.5}"""),
+            string.Join(" | ", _engine.StylesSet));
+    }
+
+    [TestMethod]
+    public void LosColoresRecientesVanPrimeroSinRepetirseYConLimite()
+    {
+        _viewModel.RememberColor("#111111");
+        _viewModel.RememberColor("#222222");
+        _viewModel.RememberColor("#111111");
+        _viewModel.RememberColor("none");
+        _viewModel.RememberColor("azul");
+        Assert.AreEqual("#111111 #222222", string.Join(' ', _viewModel.RecentColors));
+
+        for (var i = 0; i < 20; i++)
+        {
+            _viewModel.RememberColor($"#0000{i:x2}");
+        }
+
+        Assert.HasCount(MainViewModel.RecentColorsLimit, _viewModel.RecentColors);
+        Assert.AreEqual("#000013", _viewModel.RecentColors[0]);
+    }
+
+    [TestMethod]
     public async Task MideLaLatenciaDelPuente()
     {
         _engine.BeforePingResponse = () => _time.Advance(TimeSpan.FromMilliseconds(4));

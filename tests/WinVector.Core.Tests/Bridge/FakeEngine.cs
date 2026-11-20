@@ -31,6 +31,9 @@ internal sealed class FakeEngine
     /// <summary>SVG recibidos con clipboard.paste.</summary>
     public List<string> PastedSvgs { get; } = [];
 
+    /// <summary>Payloads de selection.setStyle recibidos, tal cual.</summary>
+    public List<string> StylesSet { get; } = [];
+
     /// <summary>Payloads de selection.setGeometry recibidos, tal cual.</summary>
     public List<string> GeometriesSet { get; } = [];
 
@@ -181,6 +184,10 @@ internal sealed class FakeEngine
             case "object.arrange":
             case "object.group":
             case "object.ungroup":
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
+                break;
+            case "selection.setStyle":
+                StylesSet.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
             case "selection.setGeometry":

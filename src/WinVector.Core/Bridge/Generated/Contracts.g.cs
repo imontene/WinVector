@@ -227,12 +227,14 @@ public sealed record SelectedElement(
 /// <param name="Bounds">Caja que rodea todo lo seleccionado, en unidades de usuario del elemento raíz del documento (las del viewBox). Null si no hay selección o no se puede medir.</param>
 /// <param name="Scope">Grupo en el que ha entrado el usuario con doble clic; la selección con un clic elige entre sus hijos. Null en el nivel superior del documento.</param>
 /// <param name="Rotation">Giro del objeto seleccionado respecto al documento, en grados entre -180 y 180. Solo cuando hay un único objeto seleccionado.</param>
+/// <param name="Style">Estilo de la selección; solo cuando hay algo seleccionado.</param>
 public sealed record SelectionChanged(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items,
     [property: JsonPropertyName("bounds")] Rect? Bounds,
     [property: JsonPropertyName("scope")] SelectedElement? Scope,
-    [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null);
+    [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null,
+    [property: JsonPropertyName("style"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SelectionStyle? Style = null);
 
 /// <summary>Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -249,6 +251,30 @@ public sealed record SelectionGeometry(
     [property: JsonPropertyName("height")] double? Height,
     [property: JsonPropertyName("rotation")] double? Rotation);
 
+/// <summary>Estilo calculado de la selección, venga de atributos, de CSS o de los grupos. null: los objetos tienen valores distintos.</summary>
+/// <param name="Fill">Relleno: "none", un color "#rrggbb" o "url" (degradado o patrón).</param>
+/// <param name="Stroke">Trazo: "none", "#rrggbb" o "url".</param>
+/// <param name="StrokeWidth">Grosor del trazo en unidades del elemento.</param>
+/// <param name="Opacity">Opacidad del objeto, de 0 a 1.</param>
+public sealed record SelectionStyle(
+    [property: JsonPropertyName("fill")] string? Fill,
+    [property: JsonPropertyName("stroke")] string? Stroke,
+    [property: JsonPropertyName("strokeWidth")] double? StrokeWidth,
+    [property: JsonPropertyName("opacity")] double? Opacity);
+
+/// <summary>Cambio de estilo de la selección. Un campo null no cambia.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Fill">Relleno: "none" o "#rrggbb".</param>
+/// <param name="Stroke">Trazo: "none" o "#rrggbb".</param>
+/// <param name="StrokeWidth">Grosor del trazo, 0 o más.</param>
+/// <param name="Opacity">Opacidad, de 0 a 1.</param>
+public sealed record StyleChange(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("fill")] string? Fill,
+    [property: JsonPropertyName("stroke")] string? Stroke,
+    [property: JsonPropertyName("strokeWidth")] double? StrokeWidth,
+    [property: JsonPropertyName("opacity")] double? Opacity);
+
 /// <summary>Herramienta del lienzo que ya implementa el motor.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ToolName>))]
 public enum ToolName
@@ -259,6 +285,8 @@ public enum ToolName
     Hand,
     [JsonStringEnumMemberName("zoom")]
     Zoom,
+    [JsonStringEnumMemberName("eyedropper")]
+    Eyedropper,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>
@@ -348,6 +376,9 @@ public static class BridgeCommands
 
     /// <summary>Mueve, redimensiona o gira la selección hasta los valores del panel de propiedades, en un paso que se puede deshacer.</summary>
     public static readonly BridgeCommand<SelectionGeometry, DocumentRef> SelectionSetGeometry = new("selection.setGeometry");
+
+    /// <summary>Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial.</summary>
+    public static readonly BridgeCommand<StyleChange, ObjectChange> SelectionSetStyle = new("selection.setStyle");
 
     /// <summary>Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer.</summary>
     public static readonly BridgeCommand<ObjectArrange, ObjectChange> ObjectArrange = new("object.arrange");
@@ -466,6 +497,8 @@ public static class BridgeEvents
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]
 [JsonSerializable(typeof(SelectionGeometry))]
+[JsonSerializable(typeof(SelectionStyle))]
+[JsonSerializable(typeof(StyleChange))]
 [JsonSerializable(typeof(ToolState))]
 [JsonSerializable(typeof(ViewOptions))]
 [JsonSerializable(typeof(ViewportChanged))]

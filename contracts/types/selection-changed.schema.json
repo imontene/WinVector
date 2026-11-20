@@ -47,6 +47,10 @@
     "rotation": {
       "type": "number",
       "description": "Giro del objeto seleccionado respecto al documento, en grados entre -180 y 180. Solo cuando hay un único objeto seleccionado."
+    },
+    "style": {
+      "$ref": "./selection-style.schema.json",
+      "description": "Estilo de la selección; solo cuando hay algo seleccionado."
     }
   }
 }

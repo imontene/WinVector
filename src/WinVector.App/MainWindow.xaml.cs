@@ -39,6 +39,13 @@ public sealed partial class MainWindow : Window
     private readonly ResourceLoader _resources = new();
     private readonly WinUIShellDialogs _dialogs;
     private IDisposable? _bridgeAttachment;
+
+    /// <summary>Mientras se prepara el selector al abrirlo, sus cambios no se aplican a la selección.</summary>
+    private bool _preparingPicker;
+
+    /// <summary>Último color elegido en el selector abierto, para recordarlo al cerrarlo.</summary>
+    private string? _pickedColor;
+
     private bool _closeConfirmed;
 
     public MainWindow()
@@ -126,6 +133,127 @@ public sealed partial class MainWindow : Window
     }
 
     private void OnArtboardLostFocus(object sender, RoutedEventArgs e) => ApplyArtboard();
+
+    /// <summary>Texto de una pintura en el panel: el color, "Ninguno", "Varios" o "Degradado o patrón".</summary>
+    private string PaintText(string? paint) => paint switch
+    {
+        null => _resources.GetString("PaintMixed"),
+        "none" => _resources.GetString("PaintNone"),
+        "url" => _resources.GetString("PaintServer"),
+        _ => paint.ToUpperInvariant(),
+    };
+
+    private void OnPaintFlyoutOpening(object sender, object e)
+    {
+        var fill = ReferenceEquals(sender, FillFlyout);
+        var picker = fill ? FillPicker : StrokePicker;
+        _preparingPicker = true;
+        if (BindingFunctions.TryParseColor(fill ? ViewModel.SelectionFill : ViewModel.SelectionStroke, out var color))
+        {
+            picker.Color = color;
+        }
+
+        _preparingPicker = false;
+        _pickedColor = null;
+        RebuildRecentColors();
+    }
+
+    private void OnPaintColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+    {
+        if (_preparingPicker)
+        {
+            return;
+        }
+
+        var hex = BindingFunctions.ToHex(args.NewColor);
+        _pickedColor = hex;
+        if (ReferenceEquals(sender, FillPicker))
+        {
+            ViewModel.SetSelectionFill(hex);
+        }
+        else
+        {
+            ViewModel.SetSelectionStroke(hex);
+        }
+    }
+
+    private void OnPaintFlyoutClosed(object sender, object e)
+    {
+        if (_pickedColor is { } color)
+        {
+            ViewModel.RememberColor(color);
+        }
+
+        _pickedColor = null;
+    }
+
+    private void OnPaintNoneClick(object sender, RoutedEventArgs e)
+    {
+        if (ReferenceEquals(sender, FillNone))
+        {
+            ViewModel.SetSelectionFill("none");
+            FillFlyout.Hide();
+        }
+        else
+        {
+            ViewModel.SetSelectionStroke("none");
+            StrokeFlyout.Hide();
+        }
+    }
+
+    /// <summary>Muestras de los colores recientes en los dos selectores.</summary>
+    private void RebuildRecentColors()
+    {
+        foreach (var (panel, fill) in new[] { (FillRecent, true), (StrokeRecent, false) })
+        {
+            panel.Children.Clear();
+            foreach (var color in ViewModel.RecentColors)
+            {
+                var swatch = new Button
+                {
+                    Width = 24,
+                    Height = 24,
+                    Padding = new Thickness(0),
+                    Tag = color,
+                    Content = new Border { Width = 16, Height = 16, CornerRadius = new CornerRadius(2), Background = BindingFunctions.PaintBrush(color) },
+                };
+                ToolTipService.SetToolTip(swatch, color.ToUpperInvariant());
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(swatch, color.ToUpperInvariant());
+                swatch.Click += (_, _) =>
+                {
+                    if (fill)
+                    {
+                        ViewModel.SetSelectionFill(color);
+                        FillFlyout.Hide();
+                    }
+                    else
+                    {
+                        ViewModel.SetSelectionStroke(color);
+                        StrokeFlyout.Hide();
+                    }
+
+                    ViewModel.RememberColor(color);
+                };
+                panel.Children.Add(swatch);
+            }
+        }
+    }
+
+    private void OnStrokeWidthChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!double.IsNaN(args.NewValue))
+        {
+            ViewModel.SetSelectionStrokeWidth(args.NewValue);
+        }
+    }
+
+    private void OnOpacityChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!double.IsNaN(args.NewValue))
+        {
+            ViewModel.SetSelectionOpacityPercent(args.NewValue);
+        }
+    }
 
     /// <summary>
     /// Un campo del panel de propiedades ha cambiado (Intro, salir del campo o las flechas). Si el

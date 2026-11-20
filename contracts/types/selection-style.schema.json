@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SelectionStyle",
+  "description": "Estilo calculado de la selección, venga de atributos, de CSS o de los grupos. null: los objetos tienen valores distintos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fill",
+    "stroke",
+    "strokeWidth",
+    "opacity"
+  ],
+  "properties": {
+    "fill": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Relleno: \"none\", un color \"#rrggbb\" o \"url\" (degradado o patrón)."
+    },
+    "stroke": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Trazo: \"none\", \"#rrggbb\" o \"url\"."
+    },
+    "strokeWidth": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Grosor del trazo en unidades del elemento."
+    },
+    "opacity": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Opacidad del objeto, de 0 a 1."
+    }
+  }
+}
