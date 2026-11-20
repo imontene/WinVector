@@ -15,3 +15,5 @@ export * from "./eyedropper";
 export * from "./shapes";
 export * from "./shapeTool";
 export * from "./cornerRadius";
+export * from "./lineEnds";
+export * from "./shapeHandles";

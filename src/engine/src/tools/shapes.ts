@@ -27,6 +27,15 @@ export interface ShapeKind {
   apply(element: Element, drag: ShapeDrag): void;
   /** True si el arrastre no da una forma visible (ancho o alto cero): no se crea. */
   isEmpty(drag: ShapeDrag): boolean;
+  /** Atributos de estilo con los que nace; si no se indica, relleno, trazo y grosor del estilo. */
+  paint?(style: ShapeStyle): Readonly<Record<string, string>>;
+}
+
+/** Estilo con el que nacen las formas: el último que se ha usado. */
+export interface ShapeStyle {
+  readonly fill: string;
+  readonly stroke: string;
+  readonly strokeWidth: number;
 }
 
 /**
@@ -93,10 +102,50 @@ export const ELLIPSE: ShapeKind = {
   isEmpty: boxIsEmpty,
 };
 
+/** Paso del ángulo con `Mayús`, en grados. */
+export const ANGLE_STEP = 15;
+
+/** Lleva `point` al ángulo más cercano, en pasos de `step` grados vistos desde `origin`, con la misma distancia. */
+export function snapAngle(origin: Point, point: Point, step = ANGLE_STEP): Point {
+  const dx = point.x - origin.x;
+  const dy = point.y - origin.y;
+  const length = Math.hypot(dx, dy);
+  if (length === 0) return point;
+  const radians = (Math.round((Math.atan2(dy, dx) * 180) / Math.PI / step) * step * Math.PI) / 180;
+  return { x: origin.x + length * Math.cos(radians), y: origin.y + length * Math.sin(radians) };
+}
+
+/** Extremos de la línea de un arrastre: `Mayús` fija el ángulo y `Alt` la centra en el punto inicial. */
+export function lineEnds({ start, end, proportional, fromCenter }: ShapeDrag): [Point, Point] {
+  const tip = proportional ? snapAngle(start, end) : end;
+  const tail = fromCenter ? { x: 2 * start.x - tip.x, y: 2 * start.y - tip.y } : start;
+  return [tail, tip];
+}
+
+/** Segmento recto (`<line>`). */
+export const LINE: ShapeKind = {
+  tagFor: () => "line",
+  action: "create-line",
+  apply(element, drag) {
+    const [a, b] = lineEnds(drag);
+    setAttributes(element, { x1: a.x, y1: a.y, x2: b.x, y2: b.y });
+  },
+  isEmpty: (drag) => {
+    const [a, b] = lineEnds(drag);
+    return Math.hypot(b.x - a.x, b.y - a.y) < 1e-6;
+  },
+  paint: (style) => ({
+    // Una línea sin trazo no se vería: toma el color del relleno o, si tampoco hay, negro.
+    stroke: style.stroke !== "none" ? style.stroke : style.fill !== "none" ? style.fill : "#000000",
+    "stroke-width": formatNumber(style.strokeWidth),
+  }),
+};
+
 /** Formas de cada herramienta. */
 export const SHAPE_TOOLS: Partial<Readonly<Record<ToolName, ShapeKind>>> = {
   rectangle: RECTANGLE,
   ellipse: ELLIPSE,
+  line: LINE,
 };
 
 /** La forma que crea una herramienta, o `undefined` si no es una herramienta de forma. */

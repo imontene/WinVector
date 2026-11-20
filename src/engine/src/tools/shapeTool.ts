@@ -4,19 +4,12 @@ import type { History } from "../history";
 import { screenToRoot, type Selection } from "../selection";
 import { elementToRoot, formatNumber } from "../transform";
 import { isPressed } from "./modifiers";
-import { shapeForTool, type ShapeKind } from "./shapes";
+import { shapeForTool, type ShapeKind, type ShapeStyle } from "./shapes";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** Distancia en píxeles a partir de la cual pulsar y mover empieza a dibujar. */
 const DRAG_THRESHOLD = 3;
-
-/** Estilo con el que nacen las formas: el último que se ha usado. */
-export interface ShapeStyle {
-  readonly fill: string;
-  readonly stroke: string;
-  readonly strokeWidth: number;
-}
 
 /** Estilo de las formas mientras no se haya usado ninguno. */
 export const DEFAULT_SHAPE_STYLE: ShapeStyle = {
@@ -55,7 +48,7 @@ interface Press {
 }
 
 /**
- * Herramientas de forma (rectángulo, elipse…): arrastrar dibuja la forma, `Mayús` mantiene la proporción y
+ * Herramientas de forma (rectángulo, elipse, línea…): arrastrar dibuja la forma, `Mayús` mantiene la proporción y
  * `Alt` dibuja desde el centro; las teclas se pueden pulsar y soltar durante el arrastre. `Esc` lo
  * cancela. La forma nace con el último estilo usado, dentro del grupo en el que se ha entrado, queda
  * seleccionada y es un solo paso del historial. Un clic sin arrastrar no crea nada.
@@ -92,11 +85,11 @@ export function installShapeTool(target: Window, host: ShapeToolHost): () => voi
     const tag = current.kind.tagFor(drag);
     if (!current.element) {
       current.history.begin(current.kind.action);
-      current.element = createShape(page, tag, host.style());
+      current.element = createShape(page, tag, current.kind, host.style());
       current.parent.append(current.element);
     } else if (current.element.localName !== tag) {
       // Elipse o círculo según Mayús: se cambia el elemento, con el mismo estilo.
-      const replacement = createShape(page, tag, host.style());
+      const replacement = createShape(page, tag, current.kind, host.style());
       current.element.replaceWith(replacement);
       current.element = replacement;
     }
@@ -218,10 +211,18 @@ export function installShapeTool(target: Window, host: ShapeToolHost): () => voi
 }
 
 /** Crea el elemento de una forma con el estilo dado, como atributos de presentación. */
-export function createShape(page: Document, tag: string, style: ShapeStyle): Element {
+export function createShape(
+  page: Document,
+  tag: string,
+  kind: ShapeKind,
+  style: ShapeStyle,
+): Element {
   const element = page.createElementNS(SVG_NS, tag);
-  element.setAttribute("fill", style.fill);
-  element.setAttribute("stroke", style.stroke);
-  element.setAttribute("stroke-width", formatNumber(style.strokeWidth));
+  const paint = kind.paint?.(style) ?? {
+    fill: style.fill,
+    stroke: style.stroke,
+    "stroke-width": formatNumber(style.strokeWidth),
+  };
+  for (const [name, value] of Object.entries(paint)) element.setAttribute(name, value);
   return element;
 }

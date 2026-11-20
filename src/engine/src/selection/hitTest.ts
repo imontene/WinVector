@@ -130,3 +130,46 @@ export function pickAt(
 export function describeElement(element: Element): SelectedElement {
   return { id: element.id === "" ? null : element.id, tagName: element.localName };
 }
+
+/** Distancia en píxeles de pantalla a la que se acierta a una línea, por fina que sea. */
+export const THIN_HIT_DISTANCE = 5;
+
+/** Distancia de `p` al segmento de `a` a `b`. */
+function distanceToSegment(p: { x: number; y: number }, a: DOMPoint, b: DOMPoint): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const length = dx * dx + dy * dy;
+  const t =
+    length === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / length));
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+/**
+ * Una línea (`<line>`) a menos de `THIN_HIT_DISTANCE` píxeles del punto de la pantalla que esté
+ * por encima de lo tocado (`hit`): así se puede seleccionar una línea de un píxel sin acertar
+ * exactamente en ella. Devuelve la de más arriba, o `null`.
+ */
+export function thinElementAt(
+  point: { x: number; y: number },
+  root: SVGSVGElement,
+  hit: EventTarget | null,
+): Element | null {
+  const lines = [...root.querySelectorAll("line")].reverse();
+  for (const line of lines) {
+    if (line === hit) return line;
+    // Lo que va después en el documento se pinta encima.
+    if (
+      hit instanceof Node &&
+      root.contains(hit) &&
+      !(hit.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING)
+    ) {
+      continue;
+    }
+    const ctm = line.getScreenCTM();
+    if (!ctm) continue;
+    const a = new DOMPoint(line.x1.baseVal.value, line.y1.baseVal.value).matrixTransform(ctm);
+    const b = new DOMPoint(line.x2.baseVal.value, line.y2.baseVal.value).matrixTransform(ctm);
+    if (distanceToSegment(point, a, b) <= THIN_HIT_DISTANCE) return line;
+  }
+  return null;
+}

@@ -437,6 +437,14 @@
                         <PathIcon Data="M8,3 A6,5 0 1 0 8,13 A6,5 0 1 0 8,3 Z M8,4.5 A4.5,3.5 0 1 1 8,11.5 A4.5,3.5 0 1 1 8,4.5 Z" />
                     </ToggleButton>
                     <ToggleButton
+                        x:Uid="ToolLine"
+                        AutomationProperties.AutomationId="ToolLine"
+                        Click="OnToolClick"
+                        Style="{StaticResource ToolButtonStyle}"
+                        Tag="line">
+                        <PathIcon Data="M2.4,12.5 L12.5,2.4 L13.6,3.5 L3.5,13.6 Z" />
+                    </ToggleButton>
+                    <ToggleButton
                         x:Uid="ToolText"
                         Click="OnToolClick"
                         Style="{StaticResource ToolButtonStyle}">

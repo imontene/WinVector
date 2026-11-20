@@ -9,6 +9,7 @@
     "zoom",
     "eyedropper",
     "rectangle",
-    "ellipse"
+    "ellipse",
+    "line"
   ]
 }

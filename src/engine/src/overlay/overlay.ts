@@ -13,10 +13,10 @@ export interface OverlayScene {
   readonly marquee: Rect | null;
   /** Caja de la selección en pantalla con sus manejadores, o `null` para no dibujarlos. */
   readonly handles?: Rect | null;
-  /** Manejador del radio de las esquinas de un rectángulo, en pantalla, o `null`. */
-  readonly radius?: Point | null;
-  /** Tamaño del manejador del radio, en píxeles. */
-  readonly radiusSize?: number;
+  /** Manejadores propios de la forma seleccionada (radio, extremos de línea), en pantalla. */
+  readonly shapeHandles?: readonly Point[];
+  /** Radio de esos manejadores, en píxeles. */
+  readonly shapeHandleSize?: number;
 }
 
 export const EMPTY_SCENE: OverlayScene = { items: [], scope: null, marquee: null, handles: null };
@@ -53,12 +53,12 @@ export class Overlay {
       if (all) shapes.push(this.#rect(all, "overlay-bounds"));
     }
     if (scene.handles) shapes.push(...this.#handles(scene.handles));
-    if (scene.radius) {
+    for (const handle of scene.shapeHandles ?? []) {
       const circle = this.element.ownerDocument.createElementNS(SVG_NS, "circle");
-      circle.classList.add("overlay-handle", "overlay-radius");
-      circle.setAttribute("cx", String(round(scene.radius.x)));
-      circle.setAttribute("cy", String(round(scene.radius.y)));
-      circle.setAttribute("r", String(scene.radiusSize ?? 4));
+      circle.classList.add("overlay-handle", "overlay-shape-handle");
+      circle.setAttribute("cx", String(round(handle.x)));
+      circle.setAttribute("cy", String(round(handle.y)));
+      circle.setAttribute("r", String(scene.shapeHandleSize ?? 4));
       shapes.push(circle);
     }
     if (scene.marquee) shapes.push(this.#rect(scene.marquee, "overlay-marquee"));
