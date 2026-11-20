@@ -110,10 +110,16 @@ public sealed class StartupTests
         Assert.IsTrue(File.Exists(result), "La aplicación no anotó cuándo estuvo listo el motor.");
         using var times = JsonDocument.Parse(ReadShared(result));
         var startOffset = Math.Max(0, (processStarted - launched).TotalMilliseconds);
+        int Since(string milestone) =>
+            times.RootElement.TryGetProperty(milestone, out var value) ? (int)Math.Round(startOffset + value.GetDouble()) : -1;
         var startup = new Startup(
             (int)Math.Round(windowMs.Value),
-            (int)Math.Round(startOffset + times.RootElement.GetProperty("windowMs").GetDouble()),
-            (int)Math.Round(startOffset + times.RootElement.GetProperty("engineMs").GetDouble()));
+            Since("windowMs"),
+            Since("canvasMs"),
+            Since("webViewMs"),
+            Since("pageMs"),
+            Since("engineMs"),
+            (int)Math.Round(startOffset));
 
         application.Close();
         if (!process.WaitForExit(TimeSpan.FromSeconds(10)))
@@ -153,11 +159,15 @@ public sealed class StartupTests
     /// <summary>Tiempos desde que se pide arrancar la aplicación, en milisegundos.</summary>
     /// <param name="WindowMs">Hasta que se ve la ventana principal.</param>
     /// <param name="ContentMs">Hasta que la ventana ha cargado su contenido.</param>
+    /// <param name="CanvasMs">Hasta que el lienzo empieza a crear su WebView2.</param>
+    /// <param name="WebViewMs">Hasta que el WebView2 del lienzo está creado.</param>
+    /// <param name="PageMs">Hasta que la página del motor ha cargado.</param>
     /// <param name="EngineMs">Hasta que el motor del lienzo responde.</param>
-    private sealed record Startup(int WindowMs, int ContentMs, int EngineMs)
+    /// <param name="ProcessMs">Hasta que Windows crea el proceso de la aplicación.</param>
+    private sealed record Startup(int WindowMs, int ContentMs, int CanvasMs, int WebViewMs, int PageMs, int EngineMs, int ProcessMs)
     {
         public override string ToString() => string.Create(
             CultureInfo.InvariantCulture,
-            $"ventana {WindowMs} ms, contenido {ContentMs} ms, motor {EngineMs} ms");
+            $"proceso {ProcessMs} ms, ventana {WindowMs} ms, contenido {ContentMs} ms, lienzo {CanvasMs} ms, WebView2 {WebViewMs} ms, página {PageMs} ms, motor {EngineMs} ms");
     }
 }
