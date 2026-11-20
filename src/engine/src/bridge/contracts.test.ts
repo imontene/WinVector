@@ -306,6 +306,13 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c23",
+    name: "selection.setShape",
+    payload: { documentId: "d1", r: 12, sides: 6 },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e4",
     name: "error",
@@ -336,6 +343,7 @@ function summarize(message: BridgeMessage): string {
       case "selection.duplicate":
       case "selection.delete":
       case "selection.setStyle":
+      case "selection.setShape":
         return `cambió: ${String(message.payload.changed)}`;
       case "clipboard.copy":
         return `copiado: ${String(message.payload.svg?.length)}`;
@@ -381,6 +389,8 @@ function summarize(message: BridgeMessage): string {
         return `pegar ${String(message.payload.svg.length)}`;
       case "selection.setStyle":
         return `relleno ${String(message.payload.fill)}`;
+      case "selection.setShape":
+        return `forma r=${String(message.payload.r)}`;
       case "view.zoom":
         return `zoom ${message.payload.action}`;
       case "view.setOptions":
@@ -462,6 +472,7 @@ describe("contrato del puente", () => {
       "selection.delete d1",
       "pegados: 2",
       "relleno #ff0000",
+      "forma r=12",
       "error unknown-message",
     ]);
   });

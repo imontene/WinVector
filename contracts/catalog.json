@@ -42,6 +42,13 @@
       "response": "ObjectChange"
     },
     {
+      "name": "selection.setShape",
+      "kind": "command",
+      "description": "Cambia propiedades propias de la forma seleccionada (radio de las esquinas, lados de un polígono…) en un paso que se puede deshacer. Los cambios seguidos de la misma propiedad son un solo paso del historial.",
+      "payload": "ShapeChange",
+      "response": "ObjectChange"
+    },
+    {
       "name": "object.arrange",
       "kind": "command",
       "description": "Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer.",

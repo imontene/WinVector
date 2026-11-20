@@ -62,6 +62,7 @@ public sealed partial class MainWindow : Window
             clipboard: new WinUIClipboard(),
             recovery: _recovery);
 
+        StartupTrace.Start(AppDataFolder());
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
@@ -127,7 +128,7 @@ public sealed partial class MainWindow : Window
             }
             else if (e.PropertyName == nameof(MainViewModel.IsEngineReady) && ViewModel.IsEngineReady)
             {
-                StartupTrace.EngineReady(AppDataFolder());
+                StartupTrace.Mark(StartupTrace.Engine);
             }
         };
     }
@@ -340,6 +341,16 @@ public sealed partial class MainWindow : Window
         if (sender.Tag is string tag && Enum.TryParse<GeometryField>(tag, out var field) && !double.IsNaN(args.NewValue))
         {
             ViewModel.SetSelectionGeometry(field, args.NewValue);
+        }
+    }
+
+    private void OnShapeFieldChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        // Sin valor anterior es el primero que pone el enlace, no una edición. Los límites de cada campo
+        // los comprueba el modelo: con Minimum y Maximum, NumberBox ajustaría el valor por su cuenta.
+        if (sender.Tag is string key && !double.IsNaN(args.NewValue) && !double.IsNaN(args.OldValue))
+        {
+            ViewModel.SetShapeField(key, args.NewValue);
         }
     }
 

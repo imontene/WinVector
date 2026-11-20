@@ -349,6 +349,31 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ElRadioDelSolSeCambiaEnLaSeccionDeLaForma()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var orange = System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47);
+        Mouse.DoubleClick(AppSession.SamplePoint(canvas, 300, 96));
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+
+        var radius = Retry.WhileNull(() => Session.FindById("ShapeR"), EngineTimeout).Result
+            ?? throw new AssertFailedException("No aparece el campo Radio de la forma.");
+        Assert.IsTrue(Retry.WhileFalse(() => Math.Abs(radius.Patterns.RangeValue.Pattern.Value - 52) < 0.01, EngineTimeout).Result, "El panel no muestra el radio del sol.");
+        radius.Patterns.RangeValue.Pattern.SetValue(70);
+
+        // A 60 unidades del centro: fuera del sol con radio 52, dentro con 70.
+        var edge = AppSession.SamplePoint(canvas, 360, 96);
+        Assert.IsTrue(Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(edge), orange), EngineTimeout).Result, "El sol no creció al cambiar el radio.");
+
+        Session.GetById("UndoButton").Click();
+        Assert.IsTrue(
+            Retry.WhileFalse(() => Math.Abs(radius.Patterns.RangeValue.Pattern.Value - 52) < 0.01, EngineTimeout).Result,
+            "Deshacer no devolvió el radio a 52.");
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();
@@ -439,7 +464,17 @@ public sealed class MainWindowTests
             ?? throw new AssertFailedException("No aparece el botón de relleno.");
         Assert.AreEqual("#FFB547", Session.WaitForName("FillButton", name => name == "#FFB547", EngineTimeout));
 
-        fill.Click();
+        // El panel se desplaza: el botón puede quedar fuera de la vista. Se abre por accesibilidad.
+        fill.Patterns.ScrollItem.PatternOrDefault?.ScrollIntoView();
+        if (fill.Patterns.ExpandCollapse.PatternOrDefault is { } expand)
+        {
+            expand.Expand();
+        }
+        else
+        {
+            fill.Click();
+        }
+
         var none = Retry.WhileNull(() => Session.FindInApp("FillNone"), TimeSpan.FromSeconds(10)).Result
             ?? throw new AssertFailedException("No aparece Sin relleno.");
         none.Patterns.Invoke.Pattern.Invoke();

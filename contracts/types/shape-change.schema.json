@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShapeChange",
+  "description": "Cambio de propiedades propias de la forma seleccionada. Solo cambian las que se indican; las que no son de su tipo se ignoran.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "x": {
+      "type": "number",
+      "description": "Rectángulo: x de la esquina superior izquierda."
+    },
+    "y": {
+      "type": "number",
+      "description": "Rectángulo: y de la esquina superior izquierda."
+    },
+    "width": {
+      "type": "number",
+      "description": "Rectángulo: ancho (más de 0)."
+    },
+    "height": {
+      "type": "number",
+      "description": "Rectángulo: alto (más de 0)."
+    },
+    "cornerRadius": {
+      "type": "number",
+      "description": "Rectángulo: radio de las esquinas (rx y ry iguales), 0 para esquinas rectas."
+    },
+    "cx": {
+      "type": "number",
+      "description": "Elipse, círculo, polígono y estrella: x del centro."
+    },
+    "cy": {
+      "type": "number",
+      "description": "Elipse, círculo, polígono y estrella: y del centro."
+    },
+    "rx": {
+      "type": "number",
+      "description": "Elipse: radio horizontal (más de 0)."
+    },
+    "ry": {
+      "type": "number",
+      "description": "Elipse: radio vertical (más de 0)."
+    },
+    "r": {
+      "type": "number",
+      "description": "Círculo: radio. Polígono y estrella: radio exterior, del centro a cada vértice o punta."
+    },
+    "x1": {
+      "type": "number",
+      "description": "Línea: x del primer extremo."
+    },
+    "y1": {
+      "type": "number",
+      "description": "Línea: y del primer extremo."
+    },
+    "x2": {
+      "type": "number",
+      "description": "Línea: x del segundo extremo."
+    },
+    "y2": {
+      "type": "number",
+      "description": "Línea: y del segundo extremo."
+    },
+    "sides": {
+      "type": "number",
+      "description": "Polígono: lados. Estrella: puntas. Entero de 3 a 100."
+    },
+    "inner": {
+      "type": "number",
+      "description": "Estrella: radio interior respecto al exterior, de 0 a 1."
+    },
+    "rotation": {
+      "type": "number",
+      "description": "Polígono y estrella: ángulo del primer vértice en grados, desde el eje x."
+    },
+    "rounding": {
+      "type": "number",
+      "description": "Polígono y estrella: redondeo de las esquinas, de 0 (rectas) a 1."
+    }
+  }
+}

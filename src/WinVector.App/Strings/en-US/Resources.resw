@@ -810,4 +810,85 @@ Licensed under the Apache License 2.0.</value>
   <data name="PaletteShortcutToolStar" xml:space="preserve">
     <value>S</value>
   </data>
+  <data name="ShapeNameRect" xml:space="preserve">
+    <value>Rectangle</value>
+  </data>
+  <data name="ShapeNameEllipse" xml:space="preserve">
+    <value>Ellipse</value>
+  </data>
+  <data name="ShapeNameCircle" xml:space="preserve">
+    <value>Circle</value>
+  </data>
+  <data name="ShapeNameLine" xml:space="preserve">
+    <value>Line</value>
+  </data>
+  <data name="ShapeNamePolygon" xml:space="preserve">
+    <value>Polygon</value>
+  </data>
+  <data name="ShapeNameStar" xml:space="preserve">
+    <value>Star</value>
+  </data>
+  <data name="ShapeFieldX" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="ShapeFieldY" xml:space="preserve">
+    <value>Y</value>
+  </data>
+  <data name="ShapeFieldWidth" xml:space="preserve">
+    <value>Width</value>
+  </data>
+  <data name="ShapeFieldHeight" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="ShapeFieldCornerRadius" xml:space="preserve">
+    <value>Corner radius</value>
+  </data>
+  <data name="ShapeFieldCx" xml:space="preserve">
+    <value>Center X</value>
+  </data>
+  <data name="ShapeFieldCy" xml:space="preserve">
+    <value>Center Y</value>
+  </data>
+  <data name="ShapeFieldRx" xml:space="preserve">
+    <value>Radius X</value>
+  </data>
+  <data name="ShapeFieldRy" xml:space="preserve">
+    <value>Radius Y</value>
+  </data>
+  <data name="ShapeFieldR" xml:space="preserve">
+    <value>Radius</value>
+  </data>
+  <data name="ShapeFieldX1" xml:space="preserve">
+    <value>Start X</value>
+  </data>
+  <data name="ShapeFieldY1" xml:space="preserve">
+    <value>Start Y</value>
+  </data>
+  <data name="ShapeFieldX2" xml:space="preserve">
+    <value>End X</value>
+  </data>
+  <data name="ShapeFieldY2" xml:space="preserve">
+    <value>End Y</value>
+  </data>
+  <data name="ShapeFieldLength" xml:space="preserve">
+    <value>Length</value>
+  </data>
+  <data name="ShapeFieldAngle" xml:space="preserve">
+    <value>Angle (°)</value>
+  </data>
+  <data name="ShapeFieldSides" xml:space="preserve">
+    <value>Sides or points</value>
+  </data>
+  <data name="ShapeFieldInner" xml:space="preserve">
+    <value>Inner radius (%)</value>
+  </data>
+  <data name="ShapeFieldRotation" xml:space="preserve">
+    <value>Rotation (°)</value>
+  </data>
+  <data name="ShapeFieldRounding" xml:space="preserve">
+    <value>Rounding (%)</value>
+  </data>
+  <data name="HistoryActionShape" xml:space="preserve">
+    <value>change shape</value>
+  </data>
 </root>

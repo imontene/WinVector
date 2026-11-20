@@ -509,3 +509,49 @@ test("G y S eligen el polígono y la estrella", async ({ page }) => {
     .poll(() => lastSent(page))
     .toMatchObject({ name: "tool.changed", payload: { tool: "star" } });
 });
+
+/** Último selection.changed. */
+const lastSelection = async (page: Page) =>
+  (await sent(page)).filter((m) => m.name === "selection.changed").at(-1)?.payload as
+    { shape?: Record<string, unknown> } | undefined;
+
+const setShape = (page: Page, id: string, values: Record<string, number>) =>
+  hostSend(page, command(id, "selection.setShape", { documentId: "d1", ...values }));
+
+test("la selección anuncia las propiedades de la forma y el panel las cambia", async ({ page }) => {
+  await page.locator("#tarjeta").dblclick();
+  await expect
+    .poll(async () => (await lastSelection(page))?.shape)
+    .toEqual({ type: "rect", x: 48, y: 58, width: 150, height: 88, cornerRadius: 14 });
+
+  await setShape(page, "c-s1", { cornerRadius: 20 });
+  await expect.poll(() => lastSent(page)).toMatchObject({ id: "c-s1", payload: { changed: true } });
+  await setShape(page, "c-s2", { cornerRadius: 25 });
+  await expect
+    .poll(() =>
+      page.locator("#tarjeta").evaluate((e) => [e.getAttribute("rx"), e.getAttribute("ry")]),
+    )
+    .toEqual(["25", "25"]);
+  // Escribir seguido en el mismo campo es un solo paso.
+  await page.keyboard.press("Control+Z");
+  await expect.poll(() => serialize(page)).toBe(sample);
+});
+
+test("cambiar las puntas y el redondeo de una estrella la rehace y sigue seleccionada", async ({
+  page,
+}) => {
+  await selectTool(page, "star");
+  await drawDrag(page, { x: 100, y: 200 }, { x: 100, y: 170 });
+  await expect
+    .poll(async () => (await lastSelection(page))?.shape)
+    .toMatchObject({ type: "star", sides: 5 });
+
+  await setShape(page, "c-s1", { sides: 8 });
+  await expect.poll(async () => (await lastSelection(page))?.shape).toMatchObject({ sides: 8 });
+  await setShape(page, "c-s2", { rounding: 0.4 });
+  await expect.poll(async () => (await createdOf(page, "path")).length).toBe(1);
+  await expect
+    .poll(async () => (await lastSelection(page))?.shape)
+    .toMatchObject({ type: "star", sides: 8, rounding: 0.4 });
+  expect(await createdOf(page, "polygon")).toHaveLength(0);
+});

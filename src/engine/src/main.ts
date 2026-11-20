@@ -28,6 +28,9 @@ import {
   installSelectTool,
   installShapeTool,
   installShortcuts,
+  applyShape,
+  changedFields,
+  readShape,
   SHAPE_HANDLE_SIZE,
   shapeHandles,
   trackModifiers,
@@ -84,6 +87,7 @@ function emitSelection(documentId: string): void {
   const { document: target, selection } = documents.open(documentId);
   const { items, scope } = selection.state;
   const [single] = items;
+  const shape = single && items.length === 1 ? readShape(single) : null;
   bridge.emit("selection.changed", {
     documentId,
     items: items.map(describeElement),
@@ -91,6 +95,7 @@ function emitSelection(documentId: string): void {
     scope: scope ? describeElement(scope) : null,
     ...(single && items.length === 1 ? { rotation: rotationOf(single, target.root) } : {}),
     ...(items.length > 0 ? { style: readStyle(items) } : {}),
+    ...(shape ? { shape } : {}),
   });
 }
 
@@ -374,6 +379,24 @@ bridge.handle("selection.setStyle", ({ documentId, ...style }) =>
       strokeWidth: style.strokeWidth ?? shapeStyle.strokeWidth,
     };
     return { documentId, changed: applyStyle(selection.items, style, doc.history) };
+  }),
+);
+
+bridge.handle("selection.setShape", ({ documentId, ...change }) =>
+  withDocumentErrors(() => {
+    const { document: doc, selection } = documents.open(documentId);
+    const items = selection.items;
+    const [single] = items;
+    if (!single || items.length !== 1 || !readShape(single)) return { documentId, changed: false };
+    const revision = doc.revision;
+    // Escribir seguido en el mismo campo del panel es un solo paso del historial.
+    const result = doc.history.transact(
+      "shape",
+      () => applyShape(single, change),
+      `shape:${changedFields(change)}`,
+    );
+    if (result !== single) selection.replace(items, new Map([[single, result]]));
+    return { documentId, changed: doc.revision !== revision || result !== single };
   }),
 );
 

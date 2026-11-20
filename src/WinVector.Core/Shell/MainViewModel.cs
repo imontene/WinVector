@@ -1199,6 +1199,7 @@ public sealed partial class MainViewModel : ObservableObject
         HasSelection = false;
         ShowGeometry(null, null);
         ShowStyle(null);
+        ShowShape(null);
         OnPropertyChanged(nameof(ZoomText));
         OnPropertyChanged(nameof(CurrentArtboard));
         NotifyEditCommandsChanged();
@@ -1361,6 +1362,7 @@ public sealed partial class MainViewModel : ObservableObject
         HasSelection = selection.Items.Count > 0;
         ShowGeometry(selection.Bounds, selection.Items.Count == 1 ? selection.Rotation : null);
         ShowStyle(selection.Items.Count > 0 ? selection.Style : null);
+        ShowShape(selection.Items.Count == 1 ? selection.Shape : null);
         var items = selection.Items.Count switch
         {
             0 => string.Empty,

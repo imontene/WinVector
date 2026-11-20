@@ -37,6 +37,9 @@ internal sealed class FakeEngine
     /// <summary>Payloads de selection.setGeometry recibidos, tal cual.</summary>
     public List<string> GeometriesSet { get; } = [];
 
+    /// <summary>Payloads de selection.setShape recibidos, tal cual.</summary>
+    public List<string> ShapesSet { get; } = [];
+
     /// <summary>Payloads de artboard.set recibidos, tal cual.</summary>
     public List<string> ArtboardsSet { get; } = [];
 
@@ -188,6 +191,10 @@ internal sealed class FakeEngine
                 break;
             case "selection.setStyle":
                 StylesSet.Add(payload.GetRawText());
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
+                break;
+            case "selection.setShape":
+                ShapesSet.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
             case "selection.setGeometry":
