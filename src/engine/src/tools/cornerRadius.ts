@@ -43,10 +43,20 @@ function geometry(rect: SVGRectElement): Geometry | null {
 /** Píxeles de pantalla por unidad del rectángulo (la media de sus dos ejes). */
 const scaleOf = (m: Matrix) => Math.sqrt(Math.abs(m.a * m.d - m.b * m.c)) || 1;
 
-/** Posición del manejador en pantalla, o `null` si el rectángulo no se puede medir. */
+/**
+ * Lado menor, en píxeles, por debajo del cual no hay manejador: en un rectángulo pequeño taparía el
+ * centro y no dejaría arrastrarlo.
+ */
+export const RADIUS_HANDLE_MIN_SIZE = 3 * RADIUS_HANDLE_INSET;
+
+/**
+ * Posición del manejador en pantalla, o `null` si el rectángulo no se puede medir o es demasiado
+ * pequeño en pantalla.
+ */
 export function radiusHandlePoint(rect: SVGRectElement): Point | null {
   const g = geometry(rect);
   if (!g) return null;
+  if (Math.min(g.width, g.height) * scaleOf(g.toScreen) < RADIUS_HANDLE_MIN_SIZE) return null;
   const limit = Math.min(g.width, g.height) / 2;
   const inset = Math.min(limit, Math.max(g.radius, RADIUS_HANDLE_INSET / scaleOf(g.toScreen)));
   return applyToPoint(g.toScreen, { x: g.x + g.width - inset, y: g.y + inset });
