@@ -1,0 +1,297 @@
+{
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.8154.6 Safari/537.36",
+  "checks": {
+    "propio": {
+      "escribir con tildes y eñes": true,
+      "borrar": true,
+      "seleccionar con el teclado": true,
+      "seleccionar con el ratón": true,
+      "varias líneas (Intro y flechas)": true,
+      "IME (composición en japonés)": true,
+      "lector de pantalla (árbol de accesibilidad)": true,
+      "deshacer del navegador (Ctrl+Z)": true
+    },
+    "superpuesto": {
+      "escribir con tildes y eñes": true,
+      "borrar": true,
+      "seleccionar con el teclado": true,
+      "seleccionar con el ratón": true,
+      "varias líneas (Intro y flechas)": true,
+      "IME (composición en japonés)": true,
+      "lector de pantalla (árbol de accesibilidad)": true,
+      "deshacer del navegador (Ctrl+Z)": true
+    }
+  },
+  "accuracy": [
+    {
+      "fuente": "sans",
+      "tamaño": 24,
+      "transformación": "ninguna",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.9,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "sans",
+      "tamaño": 24,
+      "transformación": "escala 2",
+      "A: desvío máx. x (px)": 0.02,
+      "A: desvío máx. y (px)": 0.8,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "sans",
+      "tamaño": 24,
+      "transformación": "escala 0,5",
+      "A: desvío máx. x (px)": 0.01,
+      "A: desvío máx. y (px)": 0.05,
+      "A: desvío al final (px)": 0.01,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "sans",
+      "tamaño": 24,
+      "transformación": "rotación 15°",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.9,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "sans",
+      "tamaño": 24,
+      "transformación": "sesgo 20°",
+      "A: desvío máx. x (px)": 0.28,
+      "A: desvío máx. y (px)": 0.66,
+      "A: desvío al final (px)": 0.28,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "sans",
+      "tamaño": 24,
+      "transformación": "escala 2×1",
+      "A: desvío máx. x (px)": 0.15,
+      "A: desvío máx. y (px)": 0.71,
+      "A: desvío al final (px)": 0.15,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "serif",
+      "tamaño": 24,
+      "transformación": "ninguna",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.4,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "serif",
+      "tamaño": 24,
+      "transformación": "escala 2",
+      "A: desvío máx. x (px)": 0.02,
+      "A: desvío máx. y (px)": 0.2,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "serif",
+      "tamaño": 24,
+      "transformación": "escala 0,5",
+      "A: desvío máx. x (px)": 0.01,
+      "A: desvío máx. y (px)": 0.3,
+      "A: desvío al final (px)": 0.01,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "serif",
+      "tamaño": 24,
+      "transformación": "rotación 15°",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.4,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "serif",
+      "tamaño": 24,
+      "transformación": "sesgo 20°",
+      "A: desvío máx. x (px)": 0.25,
+      "A: desvío máx. y (px)": 0.09,
+      "A: desvío al final (px)": 0.24,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "serif",
+      "tamaño": 24,
+      "transformación": "escala 2×1",
+      "A: desvío máx. x (px)": 0.13,
+      "A: desvío máx. y (px)": 0.15,
+      "A: desvío al final (px)": 0.13,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "mono",
+      "tamaño": 24,
+      "transformación": "ninguna",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.9,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "mono",
+      "tamaño": 24,
+      "transformación": "escala 2",
+      "A: desvío máx. x (px)": 0.03,
+      "A: desvío máx. y (px)": 0.8,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "mono",
+      "tamaño": 24,
+      "transformación": "escala 0,5",
+      "A: desvío máx. x (px)": 0.01,
+      "A: desvío máx. y (px)": 0.45,
+      "A: desvío al final (px)": 0.01,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "mono",
+      "tamaño": 24,
+      "transformación": "rotación 15°",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.9,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "mono",
+      "tamaño": 24,
+      "transformación": "sesgo 20°",
+      "A: desvío máx. x (px)": 0.3,
+      "A: desvío máx. y (px)": 0.69,
+      "A: desvío al final (px)": 0.3,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "mono",
+      "tamaño": 24,
+      "transformación": "escala 2×1",
+      "A: desvío máx. x (px)": 0.17,
+      "A: desvío máx. y (px)": 0.33,
+      "A: desvío al final (px)": 0.17,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "japonés",
+      "tamaño": 24,
+      "transformación": "ninguna",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.4,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "24/24",
+      "B: aciertos (clic)": "8/8"
+    },
+    {
+      "fuente": "japonés",
+      "tamaño": 24,
+      "transformación": "escala 2",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.8,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "24/24",
+      "B: aciertos (clic)": "8/8"
+    },
+    {
+      "fuente": "japonés",
+      "tamaño": 24,
+      "transformación": "escala 0,5",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.3,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "24/24",
+      "B: aciertos (clic)": "8/8"
+    },
+    {
+      "fuente": "japonés",
+      "tamaño": 24,
+      "transformación": "rotación 15°",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.4,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "24/24",
+      "B: aciertos (clic)": "8/8"
+    },
+    {
+      "fuente": "japonés",
+      "tamaño": 24,
+      "transformación": "sesgo 20°",
+      "A: desvío máx. x (px)": 0.26,
+      "A: desvío máx. y (px)": 0.09,
+      "A: desvío al final (px)": 0.26,
+      "B: aciertos (cálculo)": "24/24",
+      "B: aciertos (clic)": "8/8"
+    },
+    {
+      "fuente": "japonés",
+      "tamaño": 24,
+      "transformación": "escala 2×1",
+      "A: desvío máx. x (px)": 0.14,
+      "A: desvío máx. y (px)": 0.75,
+      "A: desvío al final (px)": 0.15,
+      "B: aciertos (cálculo)": "24/24",
+      "B: aciertos (clic)": "8/8"
+    },
+    {
+      "fuente": "sans",
+      "tamaño": 11,
+      "transformación": "ninguna",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.6,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "sans",
+      "tamaño": 48,
+      "transformación": "ninguna",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.3,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    },
+    {
+      "fuente": "sans",
+      "tamaño": 24,
+      "transformación": "ninguna, espaciado 2",
+      "A: desvío máx. x (px)": 0,
+      "A: desvío máx. y (px)": 0.9,
+      "A: desvío al final (px)": 0,
+      "B: aciertos (cálculo)": "33/33",
+      "B: aciertos (clic)": "11/11"
+    }
+  ]
+}

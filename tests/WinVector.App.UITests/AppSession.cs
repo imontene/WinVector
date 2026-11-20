@@ -20,25 +20,12 @@ internal sealed class AppSession : IDisposable
     private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan UiaTimeout = TimeSpan.FromSeconds(15);
 
-    private AppSession(Application application, UIA3Automation automation, Window window, Stopwatch sinceLaunch, TimeSpan? windowShown)
+    private AppSession(Application application, UIA3Automation automation, Window window)
     {
         Application = application;
         Automation = automation;
         Window = window;
-        _sinceLaunch = sinceLaunch;
-        WindowShownAfter = windowShown;
     }
-
-    private readonly Stopwatch _sinceLaunch;
-
-    /// <summary>Tiempo transcurrido desde que se pidió a Windows que arrancara la aplicación.</summary>
-    public TimeSpan SinceLaunch => _sinceLaunch.Elapsed;
-
-    /// <summary>
-    /// Cuánto tardó en verse la ventana principal desde que se pidió arrancar la aplicación, o null si
-    /// no se pudo medir.
-    /// </summary>
-    public TimeSpan? WindowShownAfter { get; }
 
     public Application Application { get; }
 
@@ -64,39 +51,6 @@ internal sealed class AppSession : IDisposable
         }
     }
 
-    /// <summary>
-    /// Espera a que el proceso tenga una ventana principal visible, sin UI Automation (que en un
-    /// arranque en frío añade su propio retraso), y devuelve cuándo apareció.
-    /// </summary>
-    private static TimeSpan? WaitForVisibleWindow(int processId, Stopwatch sinceLaunch)
-    {
-        try
-        {
-            using var process = Process.GetProcessById(processId);
-            while (sinceLaunch.Elapsed < StartTimeout)
-            {
-                process.Refresh();
-                if (process.HasExited)
-                {
-                    return null;
-                }
-
-                if (process.MainWindowHandle != IntPtr.Zero)
-                {
-                    return sinceLaunch.Elapsed;
-                }
-
-                Thread.Sleep(5);
-            }
-        }
-        catch (ArgumentException)
-        {
-            // El proceso ya no existe.
-        }
-
-        return null;
-    }
-
     public UIA3Automation Automation { get; }
 
     public Window Window { get; }
@@ -118,9 +72,7 @@ internal sealed class AppSession : IDisposable
             DeleteRecoveryCopies(aumid);
         }
 
-        var sinceLaunch = Stopwatch.StartNew();
         var application = Application.LaunchStoreApp(aumid, arguments ?? string.Empty);
-        var windowShown = WaitForVisibleWindow(application.ProcessId, sinceLaunch);
 
         // En un arranque en frío (el primero tras instalar el paquete) la ventana tarda en responder a
         // UI Automation más que los tiempos predeterminados, y la primera conexión agota el tiempo.
@@ -133,7 +85,7 @@ internal sealed class AppSession : IDisposable
         {
             var window = GetMainWindowWithRetry(application, automation);
             window.SetForeground();
-            return new AppSession(application, automation, window, sinceLaunch, windowShown);
+            return new AppSession(application, automation, window);
         }
         catch
         {

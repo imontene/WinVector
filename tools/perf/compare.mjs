@@ -88,6 +88,15 @@ function appMetrics(results) {
       unit: "ms",
       higherIsBetter: false,
       floor: 250,
+    });
+    metrics.push({
+      group,
+      name: "Ventana lista (contenido cargado)",
+      value: startup.contentMs,
+      base: base.contentMs,
+      unit: "ms",
+      higherIsBetter: false,
+      floor: 250,
       ...(key === "cold"
         ? {
             target: {
@@ -96,15 +105,6 @@ function appMetrics(results) {
             },
           }
         : {}),
-    });
-    metrics.push({
-      group,
-      name: "Interfaz accesible",
-      value: startup.uiMs,
-      base: base.uiMs,
-      unit: "ms",
-      higherIsBetter: false,
-      floor: 250,
     });
     metrics.push({
       group,
