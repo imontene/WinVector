@@ -163,8 +163,11 @@ Sin esto no se pueden usar las cuatro áreas del MVP, así que forma parte de é
 - Rectángulo (con esquinas redondeadas `rx`/`ry`), elipse y círculo, línea, polígono regular y estrella.
 - Modificadores: `Mayús` para proporciones iguales, `Alt` para dibujar desde el centro.
 - Propiedades específicas en el panel (radio de esquina, número de lados, radio interior de la estrella).
-- Las formas se guardan como su elemento SVG nativo (`rect`, `ellipse`, `circle`, `line`, `polygon`), no como trazados.
+- Las formas se guardan como su elemento SVG nativo (`rect`, `ellipse`, `circle`, `line`, `polygon`, `polyline`), no como trazados.
 - Convertir forma a trazado.
+- Edición por vértices de polígonos, polilíneas, líneas y estrellas: mover, añadir y borrar vértices. Editar un vértice de una estrella o de un rectángulo lo convierte en un polígono normal.
+- Formas libres de líneas rectas: cada clic añade un vértice; un clic en el primero cierra la forma (`polygon`) y doble clic o `Intro` la deja abierta (`polyline`).
+- Las formas nuevas nacen con el último estilo usado, dentro del grupo en el que se ha entrado, y quedan seleccionadas. Cada forma creada es un paso del historial y `Esc` cancela el arrastre.
 
 ### 4.3 Trazados
 
@@ -221,7 +224,7 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - **Resultado:** la app abre, muestra un SVG fijo y el shell recibe eventos del motor.
 - **Conseguido:** al hacer clic en un elemento del SVG de ejemplo, la barra de estado muestra cuál es. Las pruebas de interfaz lo comprueban en cada cambio sobre el paquete instalado. Primera medición del puente: entre 20 y 40 ms de ida y vuelta para el primer `app.ping` en el runner de la CI, según la ejecución.
 
-### Fase 1 · Documento y lienzo (L)
+### Fase 1 · Documento y lienzo (L) ✅ Terminada
 - Carga y serialización con preservación de contenido desconocido; corpus de referencia y pruebas de ida y vuelta.
 - Abrir, guardar, nuevo, recientes, aviso de cambios, recuperación.
 - Zoom, desplazamiento, mesa de trabajo, reglas, cuadrícula.
@@ -230,10 +233,14 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - Portapapeles.
 - Estilo básico y selector de color.
 - **Resultado:** se pueden abrir SVG de terceros, moverlos, recolorearlos y guardarlos sin dañarlos.
+- **Conseguido:** el corpus de SVG de terceros se abre, se mueve, se recolorea y se guarda sin perder contenido desconocido; deshacer vuelve al texto exacto del archivo ([ADR 0005](adr/0005-historial.md)). Copias de recuperación cada 10 s y recarga del lienzo si falla su proceso. El lienzo es accesible desde el arranque. Mediciones de referencia en [rendimiento.md](rendimiento.md): 60 fps con 2.000 objetos y ventana lista en 0,5 s en caliente (2,4 s en frío en la CI, por confirmar en un equipo de gama media). Prototipo de edición de texto y enfoque elegido para la Fase 4 ([ADR 0006](adr/0006-edicion-de-texto.md)).
 
 ### Fase 2 · Formas (M)
 - Herramientas de rectángulo, elipse, línea, polígono y estrella, con modificadores y propiedades específicas.
 - Convertir forma a trazado.
+- Edición por vértices de las formas de segmentos rectos (polígonos, polilíneas, líneas y estrellas): mover, añadir y borrar vértices.
+- Formas libres de líneas rectas, vértice a vértice (polígonos cerrados y polilíneas abiertas).
+- La herramienta de vértices y la de formas libres se diseñan para que la herramienta de nodos y la pluma de la Fase 3 las amplíen con curvas.
 
 ### Fase 3 · Trazados (L)
 - Analizador y serializador de `d` con pruebas exhaustivas.

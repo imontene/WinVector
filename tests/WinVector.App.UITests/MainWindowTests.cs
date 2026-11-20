@@ -269,6 +269,29 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ConElRectanguloArrastrarCreaUnRectanguloYDeshacerLoQuita()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+
+        Session.GetById("ToolRectangle").Click();
+        // En el cielo despejado, a la derecha de la tarjeta y a la izquierda del sol.
+        Mouse.Drag(AppSession.SamplePoint(canvas, 205, 10), AppSession.SamplePoint(canvas, 240, 40));
+
+        // La forma nueva queda seleccionada; no tiene identificador.
+        var status = Session.WaitForName("SelectionStatus", name => name.StartsWith("rect", StringComparison.Ordinal), EngineTimeout);
+        Assert.IsTrue(status.StartsWith("rect", StringComparison.Ordinal), $"No se creó el rectángulo: la selección es '{status}'.");
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result, "Deshacer no se activó tras crear el rectángulo.");
+
+        undo.Click();
+
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, "Tras deshacer, Deshacer sigue activo.");
+        Assert.AreEqual(string.Empty, Session.WaitForName("SelectionStatus", string.IsNullOrEmpty, EngineTimeout), "El rectángulo sigue seleccionado tras deshacer.");
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();

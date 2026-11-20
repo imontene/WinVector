@@ -287,6 +287,8 @@ public enum ToolName
     Zoom,
     [JsonStringEnumMemberName("eyedropper")]
     Eyedropper,
+    [JsonStringEnumMemberName("rectangle")]
+    Rectangle,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>

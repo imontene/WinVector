@@ -103,6 +103,7 @@ public sealed partial class MainViewModel : ObservableObject
         Add("tool-hand", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Hand)));
         Add("tool-zoom", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Zoom)));
         Add("tool-eyedropper", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Eyedropper)));
+        Add("tool-rectangle", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Rectangle)));
     }
 
     /// <summary>Archivos abiertos o guardados recientemente.</summary>

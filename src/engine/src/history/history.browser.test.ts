@@ -280,6 +280,35 @@ describe("historial", () => {
     expect(doc.history.state).toMatchObject({ canUndo: false, canRedo: true });
   });
 
+  it("anular una acción deshace sus cambios sin dejar ningún paso", () => {
+    const { doc, states } = load(SOURCE);
+    const before = doc.serialize();
+    doc.history.begin("create-rectangle");
+    const created = doc.root.ownerDocument.createElementNS(SVG_NS, "rect");
+    created.setAttribute("width", "10");
+    doc.root.append(created);
+    created.setAttribute("width", "20");
+    byId(doc, "a").setAttribute("x", "7");
+    doc.history.rollback();
+
+    expect(created.isConnected).toBe(false);
+    expect(byId(doc, "a").getAttribute("x")).toBe("1");
+    expect(doc.history.state.canUndo).toBe(false);
+    expect(states).toEqual([]);
+    expect(doc.revision).toBe(0);
+    expect(doc.serialize()).toBe(before);
+  });
+
+  it("anular sin acción abierta no hace nada", () => {
+    const { doc } = load(SOURCE);
+    doc.history.transact("move", () => {
+      byId(doc, "a").setAttribute("x", "5");
+    });
+    doc.history.rollback();
+    expect(doc.history.state).toMatchObject({ canUndo: true, undoAction: "move" });
+    expect(byId(doc, "a").getAttribute("x")).toBe("5");
+  });
+
   it("avisa de cada cambio del historial", () => {
     const { doc, states } = load(SOURCE);
     doc.history.transact("move", () => {

@@ -268,7 +268,7 @@ export interface StyleChange {
 }
 
 /** Herramienta del lienzo que ya implementa el motor. */
-export type ToolName = "select" | "hand" | "zoom" | "eyedropper";
+export type ToolName = "select" | "hand" | "zoom" | "eyedropper" | "rectangle";
 
 /** Herramienta activa del lienzo. */
 export interface ToolState {
