@@ -190,8 +190,7 @@ public sealed partial class EngineCanvasView : UserControl
         {
             _engineLoaded = true;
             LoadingCover.Visibility = Visibility.Collapsed;
-            CanvasWebView.IsHitTestVisible = true;
-            CanvasWebView.IsTabStop = true;
+            CanvasWebView.Visibility = Visibility.Visible;
         }
         else
         {
