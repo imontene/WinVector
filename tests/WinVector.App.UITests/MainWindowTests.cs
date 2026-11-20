@@ -483,7 +483,17 @@ public sealed class MainWindowTests
             ?? throw new AssertFailedException("No aparece el botón de relleno.");
         Assert.AreEqual("#FFB547", Session.WaitForName("FillButton", name => name == "#FFB547", EngineTimeout));
 
-        fill.Click();
+        // El panel se desplaza: el botón puede quedar fuera de la vista. Se abre por accesibilidad.
+        fill.Patterns.ScrollItem.PatternOrDefault?.ScrollIntoView();
+        if (fill.Patterns.ExpandCollapse.PatternOrDefault is { } expand)
+        {
+            expand.Expand();
+        }
+        else
+        {
+            fill.Click();
+        }
+
         var none = Retry.WhileNull(() => Session.FindInApp("FillNone"), TimeSpan.FromSeconds(10)).Result
             ?? throw new AssertFailedException("No aparece Sin relleno.");
         none.Patterns.Invoke.Pattern.Invoke();
