@@ -37,7 +37,9 @@ const svgText = (page: Page, id = EDIT) =>
 async function open(page: Page) {
   await page.goto("/prototipos/texto/");
   await page.waitForFunction(() => "__prototipo" in window);
-  results.browser = await page.evaluate(() => navigator.userAgent);
+  const browser = page.context().browser();
+  const channel = process.env.PROTOTYPE_BROWSER_CHANNEL;
+  results.browser = `${channel ?? browser?.browserType().name() ?? "chromium"} ${browser?.version() ?? ""} en ${platform()}`;
 }
 
 async function startEditing(page: Page, mode: Mode) {
