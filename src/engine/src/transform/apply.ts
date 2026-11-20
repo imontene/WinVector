@@ -213,3 +213,45 @@ export function restore({ element, attributes }: Snapshot): void {
 export function outermost(items: readonly Element[]): Element[] {
   return items.filter((item) => !items.some((other) => other !== item && other.contains(item)));
 }
+
+/**
+ * Un círculo que una transformación ha escalado de forma distinta en cada eje (su `transform` solo
+ * escala y desplaza) pasa a ser la elipse equivalente: sin `transform`, con los mismos atributos e
+ * hijos y en el mismo sitio. Devuelve la elipse, o `null` si no hace falta o no se puede (atributos
+ * con unidades, giros).
+ */
+export function circleToEllipse(element: Element): Element | null {
+  if (element.namespaceURI !== SVG_NS || element.localName !== "circle") return null;
+  const m = localTransform(element);
+  const uneven = Math.abs(m.a - m.d) > 1e-9;
+  if (Math.abs(m.b) > 1e-9 || Math.abs(m.c) > 1e-9 || m.a <= 0 || m.d <= 0 || !uneven) return null;
+  const cx = plainNumber(element, "cx");
+  const cy = plainNumber(element, "cy");
+  const r = plainNumber(element, "r");
+  if (cx === undefined || cy === undefined || r === undefined || r === null) return null;
+
+  const ellipse = element.ownerDocument.createElementNS(SVG_NS, "ellipse");
+  const geometry: Readonly<Record<string, [string, number][]>> = {
+    cx: [["cx", m.a * (cx ?? 0) + m.e]],
+    cy: [["cy", m.d * (cy ?? 0) + m.f]],
+    r: [
+      ["rx", m.a * r],
+      ["ry", m.d * r],
+    ],
+  };
+  // Los atributos en el mismo orden; cx y cy se escriben aunque el círculo no los tuviera.
+  if (cx === null) ellipse.setAttribute("cx", formatNumber(m.e));
+  if (cy === null) ellipse.setAttribute("cy", formatNumber(m.f));
+  for (const attribute of [...element.attributes]) {
+    if (attribute.namespaceURI === null && attribute.name === "transform") continue;
+    const values = attribute.namespaceURI === null ? geometry[attribute.name] : undefined;
+    if (values) {
+      for (const [name, value] of values) ellipse.setAttribute(name, formatNumber(value));
+    } else {
+      ellipse.setAttributeNS(attribute.namespaceURI, attribute.name, attribute.value);
+    }
+  }
+  ellipse.append(...element.childNodes);
+  element.replaceWith(ellipse);
+  return ellipse;
+}

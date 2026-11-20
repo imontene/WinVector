@@ -19,8 +19,8 @@ export interface ShapeDrag {
 }
 
 export interface ShapeKind {
-  /** Elemento SVG que se crea. */
-  readonly tag: string;
+  /** Elemento SVG que crea el arrastre (puede cambiar con las teclas: elipse o círculo). */
+  tagFor(drag: ShapeDrag): string;
   /** Acción del historial ("create-rectangle"); la aplicación la traduce. */
   readonly action: string;
   /** Escribe la geometría del arrastre en el elemento. */
@@ -70,7 +70,7 @@ const setAttributes = (element: Element, values: Readonly<Record<string, number>
 };
 
 export const RECTANGLE: ShapeKind = {
-  tag: "rect",
+  tagFor: () => "rect",
   action: "create-rectangle",
   apply(element, drag) {
     const { x, y, width, height } = dragBox(drag);
@@ -79,9 +79,24 @@ export const RECTANGLE: ShapeKind = {
   isEmpty: boxIsEmpty,
 };
 
+/** Elipse inscrita en la caja del arrastre; con `Mayús`, un círculo (`<circle>`). */
+export const ELLIPSE: ShapeKind = {
+  tagFor: (drag) => (drag.proportional ? "circle" : "ellipse"),
+  action: "create-ellipse",
+  apply(element, drag) {
+    const { x, y, width, height } = dragBox(drag);
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+    if (element.localName === "circle") setAttributes(element, { cx, cy, r: width / 2 });
+    else setAttributes(element, { cx, cy, rx: width / 2, ry: height / 2 });
+  },
+  isEmpty: boxIsEmpty,
+};
+
 /** Formas de cada herramienta. */
 export const SHAPE_TOOLS: Partial<Readonly<Record<ToolName, ShapeKind>>> = {
   rectangle: RECTANGLE,
+  ellipse: ELLIPSE,
 };
 
 /** La forma que crea una herramienta, o `undefined` si no es una herramienta de forma. */

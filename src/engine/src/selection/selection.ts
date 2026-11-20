@@ -87,6 +87,19 @@ export class Selection {
   }
 
   /**
+   * Vuelve a seleccionar `items` cambiando los que se han sustituido por otros (un círculo por una
+   * elipse). Se pasan los elementos de antes porque, al quitar los sustituidos del documento, la
+   * selección ya se ha podado.
+   */
+  replace(items: readonly Element[], replaced: ReadonlyMap<Element, Element>): void {
+    if (replaced.size === 0) return;
+    this.set(
+      items.map((item) => replaced.get(item) ?? item),
+      this.#scope,
+    );
+  }
+
+  /**
    * Quita los elementos que ya no están en el documento (por ejemplo, al deshacer su creación) y sale
    * de un grupo que ya no existe. Devuelve `true` si la selección ha cambiado.
    */

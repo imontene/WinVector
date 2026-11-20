@@ -13,6 +13,7 @@ const TOOL_KEYS: Readonly<Record<string, ToolName>> = {
   z: "zoom",
   i: "eyedropper",
   r: "rectangle",
+  e: "ellipse",
 };
 
 export interface NavigationHost {
@@ -270,6 +271,7 @@ export function cursorForTool(tool: ToolName): string {
       return "zoom-in";
     case "eyedropper":
     case "rectangle":
+    case "ellipse":
       return "crosshair";
     default:
       return "";

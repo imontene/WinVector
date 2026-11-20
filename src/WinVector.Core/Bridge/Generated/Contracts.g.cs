@@ -289,6 +289,8 @@ public enum ToolName
     Eyedropper,
     [JsonStringEnumMemberName("rectangle")]
     Rectangle,
+    [JsonStringEnumMemberName("ellipse")]
+    Ellipse,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>

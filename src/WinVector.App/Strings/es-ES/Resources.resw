@@ -170,7 +170,7 @@
     <value>Rectángulo</value>
   </data>
   <data name="ToolEllipse.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Elipse (E)</value>
+    <value>Elipse (E): arrastra para dibujar; con Mayús, un círculo; con Alt, desde el centro</value>
   </data>
   <data name="ToolEllipse.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Elipse</value>
@@ -751,5 +751,17 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="PaletteShortcutToolRectangle" xml:space="preserve">
     <value>R</value>
+  </data>
+  <data name="HistoryActionCreateEllipse" xml:space="preserve">
+    <value>crear una elipse</value>
+  </data>
+  <data name="HistoryActionCornerRadius" xml:space="preserve">
+    <value>redondear las esquinas</value>
+  </data>
+  <data name="PaletteNameToolEllipse" xml:space="preserve">
+    <value>Herramienta Elipse</value>
+  </data>
+  <data name="PaletteShortcutToolEllipse" xml:space="preserve">
+    <value>E</value>
   </data>
 </root>

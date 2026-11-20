@@ -55,7 +55,7 @@ interface Press {
 }
 
 /**
- * Herramientas de forma (rectángulo…): arrastrar dibuja la forma, `Mayús` mantiene la proporción y
+ * Herramientas de forma (rectángulo, elipse…): arrastrar dibuja la forma, `Mayús` mantiene la proporción y
  * `Alt` dibuja desde el centro; las teclas se pueden pulsar y soltar durante el arrastre. `Esc` lo
  * cancela. La forma nace con el último estilo usado, dentro del grupo en el que se ha entrado, queda
  * seleccionada y es un solo paso del historial. Un clic sin arrastrar no crea nada.
@@ -89,10 +89,16 @@ export function installShapeTool(target: Window, host: ShapeToolHost): () => voi
       proportional: current.last.shift,
       fromCenter: current.last.alt,
     };
+    const tag = current.kind.tagFor(drag);
     if (!current.element) {
       current.history.begin(current.kind.action);
-      current.element = createShape(page, current.kind, host.style());
+      current.element = createShape(page, tag, host.style());
       current.parent.append(current.element);
+    } else if (current.element.localName !== tag) {
+      // Elipse o círculo según Mayús: se cambia el elemento, con el mismo estilo.
+      const replacement = createShape(page, tag, host.style());
+      current.element.replaceWith(replacement);
+      current.element = replacement;
     }
     current.kind.apply(current.element, drag);
   };
@@ -212,8 +218,8 @@ export function installShapeTool(target: Window, host: ShapeToolHost): () => voi
 }
 
 /** Crea el elemento de una forma con el estilo dado, como atributos de presentación. */
-export function createShape(page: Document, kind: ShapeKind, style: ShapeStyle): Element {
-  const element = page.createElementNS(SVG_NS, kind.tag);
+export function createShape(page: Document, tag: string, style: ShapeStyle): Element {
+  const element = page.createElementNS(SVG_NS, tag);
   element.setAttribute("fill", style.fill);
   element.setAttribute("stroke", style.stroke);
   element.setAttribute("stroke-width", formatNumber(style.strokeWidth));

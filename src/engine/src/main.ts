@@ -28,6 +28,9 @@ import {
   installSelectTool,
   installShapeTool,
   installShortcuts,
+  radiusHandlePoint,
+  radiusTarget,
+  RADIUS_HANDLE_SIZE,
   trackModifiers,
   type ShapeStyle,
 } from "./tools";
@@ -120,8 +123,17 @@ function refreshOverlay(): void {
       active && activeTool === "select" && items.length > 0 && !marquee
         ? selectionScreenRect(items, active.document.root)
         : null;
+    const radiusRect = handles ? radiusTarget(items) : null;
     overlay.render(
-      active ? { ...active.selection.state, marquee, handles } : { ...EMPTY_SCENE, marquee: null },
+      active
+        ? {
+            ...active.selection.state,
+            marquee,
+            handles,
+            radius: radiusRect ? radiusHandlePoint(radiusRect) : null,
+            radiusSize: RADIUS_HANDLE_SIZE,
+          }
+        : { ...EMPTY_SCENE, marquee: null },
     );
     guides.render(
       active?.viewport.documentToScreen() ?? null,
@@ -223,7 +235,10 @@ bridge.handle("selection.selectAll", ({ documentId }) =>
 bridge.handle("selection.setGeometry", ({ documentId, ...target }) =>
   withDocumentErrors(() => {
     const { document: doc, selection } = documents.open(documentId);
-    setGeometry(selection.items, doc.root, doc.history, target);
+    const items = selection.items;
+    const replaced = new Map<Element, Element>();
+    setGeometry(items, doc.root, doc.history, target, replaced);
+    selection.replace(items, replaced);
     return { documentId };
   }),
 );
