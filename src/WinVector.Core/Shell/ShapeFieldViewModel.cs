@@ -8,12 +8,11 @@ namespace WinVector.Core.Shell;
 /// </summary>
 public sealed partial class ShapeFieldViewModel : ObservableObject
 {
-    public ShapeFieldViewModel(string key, string label, double minimum = double.MinValue, double maximum = double.MaxValue, double smallChange = 1, double largeChange = 10)
+    /// <remarks>Sin mínimo ni máximo: los valores fuera de límites los rechaza el modelo de vista.</remarks>
+    public ShapeFieldViewModel(string key, string label, double smallChange = 1, double largeChange = 10)
     {
         Key = key;
         Label = label;
-        Minimum = minimum;
-        Maximum = maximum;
         SmallChange = smallChange;
         LargeChange = largeChange;
     }
@@ -26,10 +25,6 @@ public sealed partial class ShapeFieldViewModel : ObservableObject
 
     /// <summary>AutomationId del campo en el panel: "Shape" y el identificador ("ShapeCornerRadius").</summary>
     public string AutomationId => "Shape" + char.ToUpperInvariant(Key[0]) + Key[1..];
-
-    public double Minimum { get; }
-
-    public double Maximum { get; }
 
     public double SmallChange { get; }
 
