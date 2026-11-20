@@ -1,0 +1,6 @@
+{
+  "thresholds": { "warn": 0.25, "fail": 0.6 },
+  "targets": { "fps": 55, "fpsObjects": 2000, "coldStartMs": 2000 },
+  "engine": {},
+  "app": {}
+}

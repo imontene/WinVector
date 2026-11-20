@@ -11,6 +11,7 @@ on:
       - "Directory.Packages.props"
       - "global.json"
       - "WinVector.slnx"
+      - "tools/perf/**"
       - ".github/workflows/app.yml"
   pull_request:
     paths:
@@ -21,6 +22,7 @@ on:
       - "Directory.Packages.props"
       - "global.json"
       - "WinVector.slnx"
+      - "tools/perf/**"
       - ".github/workflows/app.yml"
   workflow_dispatch:
     inputs:
@@ -130,19 +132,34 @@ jobs:
           "WINVECTOR_AUMID=$($app.PackageFamilyName)!App" >> $env:GITHUB_ENV
           "WINVECTOR_PACKAGE=$($app.PackageFullName)" >> $env:GITHUB_ENV
 
+      - name: Compilar las pruebas de interfaz
+        if: matrix.platform == 'x64'
+        run: dotnet build tests/WinVector.App.UITests -c Release
+
+      # Antes de las demás pruebas, para que el primer arranque tras instalar sea en frío.
+      - name: Medir el arranque
+        if: matrix.platform == 'x64'
+        shell: pwsh
+        env:
+          WINVECTOR_PERF_OUTPUT: ${{ github.workspace }}\artifacts\rendimiento\aplicacion.json
+        run: |
+          dotnet test tests/WinVector.App.UITests -c Release --no-build --filter "TestCategory=Rendimiento" `
+            --logger "console;verbosity=detailed" --results-directory artifacts/ui-tests
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          node tools/perf/compare.mjs $env:WINVECTOR_PERF_OUTPUT
+
       - name: Pruebas de interfaz (FlaUI)
         if: matrix.platform == 'x64'
         shell: pwsh
         env:
           UI_TEST_RUNS: ${{ inputs.ui_test_runs || '1' }}
         run: |
-          dotnet build tests/WinVector.App.UITests -c Release
           $runs = [int]$env:UI_TEST_RUNS
           $results = @()
           for ($i = 1; $i -le $runs; $i++) {
             $watch = [Diagnostics.Stopwatch]::StartNew()
             $verbosity = if ($i -eq 1) { 'detailed' } else { 'minimal' }
-            dotnet test tests/WinVector.App.UITests -c Release --no-build `
+            dotnet test tests/WinVector.App.UITests -c Release --no-build --filter "TestCategory!=Rendimiento" `
               --logger "trx;LogFileName=ui-$i.trx" --logger "console;verbosity=$verbosity" `
               --results-directory artifacts/ui-tests
             $results += [pscustomobject]@{ Ejecucion = $i; Correcta = ($LASTEXITCODE -eq 0); Segundos = [math]::Round($watch.Elapsed.TotalSeconds, 1) }
@@ -165,6 +182,15 @@ jobs:
           path: artifacts/ui-tests
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Publicar las mediciones del arranque
+        if: always() && matrix.platform == 'x64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendimiento-aplicacion
+          path: artifacts/rendimiento
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Publicar el MSIX
         uses: actions/upload-artifact@v7
