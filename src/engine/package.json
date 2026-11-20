@@ -15,6 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "perf": "playwright test --config playwright.perf.config.ts",
+    "perf:compare": "node ../../tools/perf/compare.mjs perf/resultados/motor.json",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",

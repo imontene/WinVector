@@ -125,6 +125,10 @@ public sealed partial class MainWindow : Window
             {
                 ShowActiveTool(ViewModel.ActiveTool);
             }
+            else if (e.PropertyName == nameof(MainViewModel.IsEngineReady) && ViewModel.IsEngineReady)
+            {
+                StartupTrace.EngineReady(AppDataFolder());
+            }
         };
     }
 
@@ -135,6 +139,7 @@ public sealed partial class MainWindow : Window
     private async void OnFirstLoaded(object sender, RoutedEventArgs e)
     {
         RootGrid.Loaded -= OnFirstLoaded;
+        StartupTrace.Mark(StartupTrace.Window);
 #pragma warning disable CA1031 // La recuperación nunca debe impedir que la aplicación arranque.
         try
         {

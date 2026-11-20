@@ -204,7 +204,7 @@ Sin esto no se pueden usar las cuatro áreas del MVP, así que forma parte de é
 | Accesibilidad | Toda la interfaz nativa operable con teclado y lector de pantalla; contraste correcto en ambos temas |
 | Distribución | MSIX instalable desde GitHub Releases |
 
-Los valores de rendimiento son objetivos iniciales; se ajustarán tras las primeras mediciones de la Fase 1.
+Los valores de rendimiento son objetivos iniciales; se ajustarán tras las primeras mediciones de la Fase 1. Las mediciones y su vigilancia en la CI están en [rendimiento.md](rendimiento.md).
 
 ---
 

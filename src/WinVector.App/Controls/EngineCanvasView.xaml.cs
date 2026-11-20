@@ -61,6 +61,7 @@ public sealed partial class EngineCanvasView : UserControl
         }
 
         _initializationStarted = true;
+        StartupTrace.Mark(StartupTrace.Canvas);
 
         // Cualquier fallo al preparar el lienzo se muestra en él; no debe cerrar la aplicación.
 #pragma warning disable CA1031
@@ -92,6 +93,7 @@ public sealed partial class EngineCanvasView : UserControl
         }
 
         await CanvasWebView.EnsureCoreWebView2Async();
+        StartupTrace.Mark(StartupTrace.WebView);
         var core = CanvasWebView.CoreWebView2;
 
         var settings = core.Settings;
