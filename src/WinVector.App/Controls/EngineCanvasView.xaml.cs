@@ -122,6 +122,7 @@ public sealed partial class EngineCanvasView : UserControl
         _transport.FilesDropped += (_, paths) => FilesDropped?.Invoke(this, paths);
         Bridge = new BridgeClient(_transport, App.Logging.CreateLogger<BridgeClient>());
         BridgeCreated?.Invoke(this, Bridge);
+        StartupTrace.Mark(StartupTrace.Bridge);
 
         core.NavigationStarting += OnNavigationStarting;
         core.NewWindowRequested += OnNewWindowRequested;
@@ -191,6 +192,7 @@ public sealed partial class EngineCanvasView : UserControl
         if (args.IsSuccess)
         {
             _engineLoaded = true;
+            StartupTrace.Mark(StartupTrace.Page);
             LoadingCover.Visibility = Visibility.Collapsed;
             CanvasWebView.Visibility = Visibility.Visible;
         }

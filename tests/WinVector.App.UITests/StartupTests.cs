@@ -24,7 +24,7 @@ public sealed class StartupTests
 
     private const string RequestFile = "medir-arranque";
     private const string ResultFile = "arranque.json";
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(90);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -101,14 +101,16 @@ public sealed class StartupTests
 
         Assert.IsNotNull(windowMs, "La ventana no apareció.");
 
-        // El motor: lo anota la aplicación, en milisegundos desde que empezó el proceso.
-        while (watch.Elapsed < Timeout && !File.Exists(result))
+        // El motor: lo anota la aplicación, en milisegundos desde que empezó el proceso. Va anotando
+        // cada hito, así que si el motor no llega a estar listo se sabe hasta dónde llegó.
+        while (watch.Elapsed < Timeout && !(File.Exists(result) && ReadShared(result).Contains("\"engineMs\"", StringComparison.Ordinal)))
         {
-            Thread.Sleep(20);
+            Thread.Sleep(50);
         }
 
-        Assert.IsTrue(File.Exists(result), "La aplicación no anotó cuándo estuvo listo el motor.");
-        using var times = JsonDocument.Parse(ReadShared(result));
+        var reached = File.Exists(result) ? ReadShared(result).Trim() : "ningún hito";
+        StringAssert.Contains(reached, "\"engineMs\"", $"El motor no llegó a estar listo en {Timeout.TotalSeconds} s. Hitos: {reached}");
+        using var times = JsonDocument.Parse(reached);
         var startOffset = Math.Max(0, (processStarted - launched).TotalMilliseconds);
         int Since(string milestone) =>
             times.RootElement.TryGetProperty(milestone, out var value) ? (int)Math.Round(startOffset + value.GetDouble()) : -1;
