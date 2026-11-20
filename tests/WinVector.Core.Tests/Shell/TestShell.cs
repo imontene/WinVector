@@ -58,6 +58,8 @@ internal sealed class TestTexts : IShellTexts
     public string ShapeName(ShapeType type) => type.ToString();
 
     public string ShapeField(string key) => key;
+
+    public string ShapeConverted(ShapeType from) => $"{from} → polígono";
 }
 
 /// <summary>Diálogos con respuestas preparadas que anotan lo que se les pregunta.</summary>

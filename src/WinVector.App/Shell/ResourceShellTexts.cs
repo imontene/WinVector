@@ -42,6 +42,8 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string ShapeName(ShapeType type) => TryGetString($"ShapeName{type}") is { Length: > 0 } name ? name : type.ToString();
 
+    public string ShapeConverted(ShapeType from) => TryGetString($"ShapeConverted{from}");
+
     public string ShapeField(string key) => TryGetString($"ShapeField{ToPascalCase(key)}") is { Length: > 0 } name ? name : key;
 
     public string UndoCommand(string? action) => HistoryCommand("UndoCommand", action);

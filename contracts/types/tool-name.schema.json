@@ -12,6 +12,7 @@
     "ellipse",
     "line",
     "polygon",
-    "star"
+    "star",
+    "vertex"
   ]
 }

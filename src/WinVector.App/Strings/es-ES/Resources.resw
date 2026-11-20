@@ -151,11 +151,11 @@
   <data name="ToolSelect.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Selección</value>
   </data>
-  <data name="ToolNode.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Nodos (A)</value>
+  <data name="ToolVertex.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Vértices (A): arrastra los vértices de polígonos, líneas, estrellas y rectángulos; doble clic en un lado añade uno y Supr quita los seleccionados</value>
   </data>
-  <data name="ToolNode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Nodos</value>
+  <data name="ToolVertex.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Vértices</value>
   </data>
   <data name="ToolPen.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Pluma (P)</value>
@@ -901,5 +901,29 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="HistoryActionToPath" xml:space="preserve">
     <value>convertir en trazado</value>
+  </data>
+  <data name="PaletteNameToolVertex" xml:space="preserve">
+    <value>Herramienta Vértices</value>
+  </data>
+  <data name="PaletteShortcutToolVertex" xml:space="preserve">
+    <value>A</value>
+  </data>
+  <data name="HistoryActionMoveVertices" xml:space="preserve">
+    <value>mover vértices</value>
+  </data>
+  <data name="HistoryActionAddVertex" xml:space="preserve">
+    <value>añadir un vértice</value>
+  </data>
+  <data name="HistoryActionDeleteVertices" xml:space="preserve">
+    <value>quitar vértices</value>
+  </data>
+  <data name="ShapeConvertedRect" xml:space="preserve">
+    <value>Al editar sus vértices, el rectángulo pasa a ser un polígono.</value>
+  </data>
+  <data name="ShapeConvertedPolygon" xml:space="preserve">
+    <value>Al editar sus vértices, el polígono regular pasa a ser un polígono normal.</value>
+  </data>
+  <data name="ShapeConvertedStar" xml:space="preserve">
+    <value>Al editar sus vértices, la estrella pasa a ser un polígono.</value>
   </data>
 </root>

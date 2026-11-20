@@ -393,6 +393,28 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ConVerticesUnaEsquinaDeLaTarjetaSeArrastraYPasaAPoligono()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        // Doble clic entra en g#contenido y selecciona la tarjeta.
+        Mouse.DoubleClick(AppSession.SamplePoint(canvas, 120, 70));
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("rect#tarjeta", StringComparison.Ordinal), EngineTimeout);
+
+        Session.GetById("ToolVertex").Click();
+        Mouse.Drag(AppSession.SamplePoint(canvas, 198, 146), AppSession.SamplePoint(canvas, 225, 170));
+
+        var status = Session.WaitForName("SelectionStatus", name => name.StartsWith("polygon#tarjeta", StringComparison.Ordinal), EngineTimeout);
+        Assert.IsTrue(status.StartsWith("polygon#tarjeta", StringComparison.Ordinal), $"La tarjeta no pasó a ser un polígono: la selección es '{status}'.");
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result, "Deshacer no se activó.");
+        // Deshacer devuelve el rectángulo en un solo paso (el historial no guarda la selección).
+        undo.Click();
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, "Mover la esquina no era un solo paso.");
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();

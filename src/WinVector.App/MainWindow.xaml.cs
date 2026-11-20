@@ -126,6 +126,11 @@ public sealed partial class MainWindow : Window
             {
                 ShowActiveTool(ViewModel.ActiveTool);
             }
+            else if (e.PropertyName == nameof(MainViewModel.CanvasNotice) && ViewModel.CanvasNotice.Length > 0)
+            {
+                // El aviso ocupa el sitio del nombre de la herramienta hasta que se cambia de herramienta.
+                ToolStatusText.Text = ViewModel.CanvasNotice;
+            }
             else if (e.PropertyName == nameof(MainViewModel.IsEngineReady) && ViewModel.IsEngineReady)
             {
                 StartupTrace.Mark(StartupTrace.Engine);

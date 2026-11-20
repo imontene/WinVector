@@ -69,6 +69,9 @@ public interface IShellTexts
     /// <summary>Nombre de un tipo de forma para el panel de propiedades ("Rectángulo").</summary>
     string ShapeName(ShapeType type);
 
+    /// <summary>Aviso cuando una forma pasa a ser un polígono normal al editar sus vértices.</summary>
+    string ShapeConverted(ShapeType from);
+
     /// <summary>Etiqueta de un campo de la forma ("Radio de las esquinas"), por su identificador ("cornerRadius").</summary>
     string ShapeField(string key);
 }

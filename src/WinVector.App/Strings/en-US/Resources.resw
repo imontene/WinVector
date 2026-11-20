@@ -150,11 +150,11 @@
   <data name="ToolSelect.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Select</value>
   </data>
-  <data name="ToolNode.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Nodes (A)</value>
+  <data name="ToolVertex.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Vertices (A): drag the vertices of polygons, lines, stars and rectangles; double-click a side to add one and press Delete to remove the selected ones</value>
   </data>
-  <data name="ToolNode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Nodes</value>
+  <data name="ToolVertex.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Vertices</value>
   </data>
   <data name="ToolPen.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Pen (P)</value>
@@ -899,5 +899,29 @@ Licensed under the Apache License 2.0.</value>
   </data>
   <data name="HistoryActionToPath" xml:space="preserve">
     <value>convert to path</value>
+  </data>
+  <data name="PaletteNameToolVertex" xml:space="preserve">
+    <value>Vertices tool</value>
+  </data>
+  <data name="PaletteShortcutToolVertex" xml:space="preserve">
+    <value>A</value>
+  </data>
+  <data name="HistoryActionMoveVertices" xml:space="preserve">
+    <value>move vertices</value>
+  </data>
+  <data name="HistoryActionAddVertex" xml:space="preserve">
+    <value>add vertex</value>
+  </data>
+  <data name="HistoryActionDeleteVertices" xml:space="preserve">
+    <value>delete vertices</value>
+  </data>
+  <data name="ShapeConvertedRect" xml:space="preserve">
+    <value>Editing its vertices turns the rectangle into a polygon.</value>
+  </data>
+  <data name="ShapeConvertedPolygon" xml:space="preserve">
+    <value>Editing its vertices turns the regular polygon into a plain polygon.</value>
+  </data>
+  <data name="ShapeConvertedStar" xml:space="preserve">
+    <value>Editing its vertices turns the star into a polygon.</value>
   </data>
 </root>

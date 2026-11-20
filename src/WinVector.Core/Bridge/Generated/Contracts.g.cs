@@ -305,6 +305,13 @@ public sealed record ShapeChange(
     [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null,
     [property: JsonPropertyName("rounding"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rounding = null);
 
+/// <summary>Una forma ha pasado a ser un polígono normal al editar sus vértices (pierde lo que la hacía rectángulo o estrella).</summary>
+/// <param name="DocumentId">Documento de la forma.</param>
+/// <param name="From">Lo que era: rect, polygon (regular) o star.</param>
+public sealed record ShapeConverted(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("from")] ShapeType From);
+
 /// <summary>Propiedades propias de la forma seleccionada, en las unidades de sus atributos (las de su grupo, sin su transform). Solo están las de su tipo.</summary>
 /// <param name="Type">Tipo de forma.</param>
 /// <param name="X">Rectángulo: x de la esquina superior izquierda.</param>
@@ -399,6 +406,8 @@ public enum ToolName
     Polygon,
     [JsonStringEnumMemberName("star")]
     Star,
+    [JsonStringEnumMemberName("vertex")]
+    Vertex,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>
@@ -559,6 +568,9 @@ public static class BridgeEvents
     /// <summary>La selección del documento ha cambiado.</summary>
     public static readonly BridgeEvent<SelectionChanged> SelectionChanged = new("selection.changed");
 
+    /// <summary>Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado.</summary>
+    public static readonly BridgeEvent<ShapeConverted> ShapeConverted = new("shape.converted");
+
     /// <summary>El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno.</summary>
     public static readonly BridgeEvent<BridgeError> Error = new("error");
 
@@ -617,6 +629,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(SelectionGeometry))]
 [JsonSerializable(typeof(SelectionStyle))]
 [JsonSerializable(typeof(ShapeChange))]
+[JsonSerializable(typeof(ShapeConverted))]
 [JsonSerializable(typeof(ShapeProperties))]
 [JsonSerializable(typeof(StyleChange))]
 [JsonSerializable(typeof(ToolState))]

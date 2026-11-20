@@ -28,6 +28,7 @@ import {
   installSelectTool,
   installShapeTool,
   installShortcuts,
+  installVertexTool,
   applyShape,
   changedFields,
   readShape,
@@ -136,6 +137,7 @@ function refreshOverlay(): void {
             handles,
             shapeHandles: own?.points() ?? [],
             shapeHandleSize: SHAPE_HANDLE_SIZE,
+            vertices: activeTool === "vertex" ? vertexTool.scene() : null,
           }
         : { ...EMPTY_SCENE, marquee: null },
     );
@@ -533,12 +535,32 @@ installShapeTool(window, {
   snapSpacing,
   style: () => shapeStyle,
 });
+const vertexTool = installVertexTool(window, {
+  tool: () => activeTool,
+  active: activeDocument,
+  snapSpacing,
+  showMarquee: (rect) => {
+    marquee = rect;
+    refreshOverlay();
+  },
+  changed: refreshOverlay,
+  converted: (from) => {
+    const id = documents.active?.id;
+    if (id) bridge.emit("shape.converted", { documentId: id, from });
+  },
+});
 installSelectTool(document, {
   active: activeDocument,
   snapSpacing,
   showMarquee: (rect) => {
     marquee = rect;
     refreshOverlay();
+  },
+  editVertices: (element) => {
+    const active = documents.active;
+    if (!active) return;
+    active.selection.set([element], element.parentElement ?? active.document.root);
+    setTool("vertex", true);
   },
 });
 

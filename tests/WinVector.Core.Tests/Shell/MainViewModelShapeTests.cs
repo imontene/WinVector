@@ -141,4 +141,19 @@ public sealed class MainViewModelShapeTests : IDisposable
         await _viewModel.EngineWork;
         Assert.IsEmpty(_engine.ShapesSet);
     }
+
+    [TestMethod]
+    public async Task AlConvertirUnaFormaSeAvisaHastaCambiarDeHerramienta()
+    {
+        await ReadyAsync();
+        _transport.SendEvent("shape.converted", """{"documentId":"d1","from":"star"}""");
+        Assert.AreEqual("Star → polígono", _viewModel.CanvasNotice);
+
+        _transport.SendEvent("tool.changed", """{"tool":"select"}""");
+        _transport.SendEvent("tool.changed", """{"tool":"vertex"}""");
+        Assert.AreEqual(string.Empty, _viewModel.CanvasNotice);
+
+        _transport.SendEvent("shape.converted", """{"documentId":"otro","from":"rect"}""");
+        Assert.AreEqual(string.Empty, _viewModel.CanvasNotice, "Un aviso de otro documento no se muestra.");
+    }
 }
