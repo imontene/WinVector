@@ -182,7 +182,7 @@ public sealed partial class ShapeTests
 
     private string StatusText() => Session.FindById("ToolStatusText")?.Name ?? string.Empty;
 
-    private static int Count(string text, string pattern) => Regex.Matches(text, pattern).Count;
+    private static int Count(string text, string pattern) => Regex.Count(text, pattern);
 
     [GeneratedRegex("<polygon [^>]*data-winvector-shape=\"polygon\"")]
     private static partial Regex RegularPolygon();
