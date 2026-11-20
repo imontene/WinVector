@@ -588,7 +588,8 @@
                                                 x:Uid="FillNone"
                                                 HorizontalAlignment="Stretch"
                                                 AutomationProperties.AutomationId="FillNone"
-                                                Click="OnPaintNoneClick" />
+                                                Click="OnPaintNoneClick"
+                                                Tag="fill" />
                                             <TextBlock x:Uid="RecentColorsLabel" Style="{StaticResource CaptionTextBlockStyle}" />
                                             <StackPanel x:Name="FillRecent" Orientation="Horizontal" Spacing="4" />
                                         </StackPanel>
@@ -632,7 +633,8 @@
                                                 x:Uid="StrokeNone"
                                                 HorizontalAlignment="Stretch"
                                                 AutomationProperties.AutomationId="StrokeNone"
-                                                Click="OnPaintNoneClick" />
+                                                Click="OnPaintNoneClick"
+                                                Tag="stroke" />
                                             <TextBlock x:Uid="RecentColorsLabel" Style="{StaticResource CaptionTextBlockStyle}" />
                                             <StackPanel x:Name="StrokeRecent" Orientation="Horizontal" Spacing="4" />
                                         </StackPanel>
