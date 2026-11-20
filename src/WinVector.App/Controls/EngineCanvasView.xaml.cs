@@ -182,8 +182,7 @@ public sealed partial class EngineCanvasView : UserControl
         if (args.IsSuccess)
         {
             _engineLoaded = true;
-            LoadingPanel.Visibility = Visibility.Collapsed;
-            CanvasWebView.Opacity = 1;
+            LoadingCover.Visibility = Visibility.Collapsed;
             CanvasWebView.IsHitTestVisible = true;
             CanvasWebView.IsTabStop = true;
         }

@@ -5,17 +5,19 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--
-        Lienzo: un WebView2 que ejecuta el motor de edición. Permanece invisible (no colapsado, para
-        que se inicialice) hasta que el motor termina de cargar, y así no hay destellos en blanco.
+        Lienzo: un WebView2 que ejecuta el motor de edición. Es visible desde el principio, tapado por
+        un panel opaco hasta que el motor termina de cargar (así no hay destellos en blanco). No se
+        oculta con Opacity="0": si UI Automation consulta el control así, su contenido no vuelve a
+        aparecer en el árbol de accesibilidad (#40).
     -->
     <Grid>
         <WebView2
             x:Name="CanvasWebView"
             AutomationProperties.AutomationId="EngineCanvas"
             IsHitTestVisible="False"
-            IsTabStop="False"
-            Opacity="0" />
+            IsTabStop="False" />
 
+        <Grid x:Name="LoadingCover" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <StackPanel
             x:Name="LoadingPanel"
             HorizontalAlignment="Center"
@@ -59,5 +61,6 @@
                 NavigateUri="https://developer.microsoft.com/microsoft-edge/webview2/"
                 Visibility="Collapsed" />
         </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

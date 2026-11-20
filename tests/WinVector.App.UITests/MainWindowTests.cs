@@ -461,6 +461,10 @@ public sealed class MainWindowTests
         var shown = Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(sun), orange), TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(250)).Result;
 
         Assert.IsTrue(shown, $"El sol del documento de ejemplo no se ve en el lienzo: el color es {AppSession.ColorAt(sun)}.");
+
+        // Y está en el árbol de accesibilidad: un lector de pantalla lo encuentra (#40).
+        var text = Retry.WhileNull(() => Session.FindSampleText(), TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(250)).Result;
+        Assert.IsNotNull(text, "El documento se ve, pero su contenido no aparece en el árbol de UI Automation.");
     }
 
     /// <summary>
