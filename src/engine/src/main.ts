@@ -30,6 +30,7 @@ import {
   installShortcuts,
   installVertexTool,
   installPenTool,
+  installContextMenu,
   applyShape,
   changedFields,
   readShape,
@@ -350,6 +351,19 @@ document.documentElement.addEventListener("pointerleave", () => {
   lastPointer = null;
 });
 
+/**
+ * Punto del último clic derecho: al pegar desde el menú contextual, el puntero ya está sobre el
+ * menú (fuera de la página). Se olvida con el siguiente clic.
+ */
+let contextPoint: { x: number; y: number } | null = null;
+window.addEventListener(
+  "pointerdown",
+  (event) => {
+    if (event.button !== 2) contextPoint = null;
+  },
+  { capture: true },
+);
+
 /** Pegados seguidos del mismo contenido se van desplazando para no quedar uno encima de otro. */
 let lastPaste: { documentId: string; svg: string; count: number } | null = null;
 
@@ -372,10 +386,10 @@ bridge.handle("clipboard.copy", ({ documentId }) =>
 bridge.handle("clipboard.paste", ({ documentId, svg }) =>
   withDocumentErrors(() => {
     const { document: doc, selection, viewport } = documents.open(documentId);
+    const pointer = contextPoint ?? lastPointer;
+    contextPoint = null;
     const at =
-      lastPointer && documents.active?.id === documentId
-        ? viewport.screenToDocument(lastPointer)
-        : null;
+      pointer && documents.active?.id === documentId ? viewport.screenToDocument(pointer) : null;
     const count =
       lastPaste?.documentId === documentId && lastPaste.svg === svg ? lastPaste.count + 1 : 1;
     const pasted = doc.history.transact("paste", () =>
@@ -572,6 +586,17 @@ installSelectTool(document, {
     if (!active) return;
     active.selection.set([element], element.parentElement ?? active.document.root);
     setTool("vertex", true);
+  },
+});
+
+installContextMenu(window, {
+  active: activeDocument,
+  open: ({ x, y, keyboard, canEditVertices }) => {
+    const id = documents.active?.id;
+    if (!id) return;
+    // Pegar desde el menú pone lo pegado donde se hizo clic.
+    contextPoint = keyboard ? null : { x, y };
+    bridge.emit("canvas.contextMenu", { documentId: id, x, y, keyboard, canEditVertices });
   },
 });
 

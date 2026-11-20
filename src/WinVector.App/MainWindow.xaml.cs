@@ -114,6 +114,7 @@ public sealed partial class MainWindow : Window
         };
         RootGrid.KeyboardAccelerators.Add(palette);
         ViewModel.CommandPaletteRequested += (_, _) => OpenCommandPalette();
+        ViewModel.ContextMenuRequested += OnContextMenuRequested;
 
         // Ctrl++ y Ctrl+- (en el teclado principal y en el numérico) no tienen nombre en VirtualKey.
         AddAccelerator(ZoomInMenuItem, (VirtualKey)187, VirtualKey.Add);
@@ -347,6 +348,16 @@ public sealed partial class MainWindow : Window
         {
             ViewModel.SetSelectionGeometry(field, args.NewValue);
         }
+    }
+
+    /// <summary>Abre el menú contextual del lienzo donde lo pide el motor (clic derecho o teclado).</summary>
+    private void OnContextMenuRequested(object? sender, ContextMenuRequestedEventArgs e)
+    {
+        CanvasContextMenu.ShowAt(EngineCanvas, new FlyoutShowOptions
+        {
+            Position = new Windows.Foundation.Point(e.X, e.Y),
+            ShowMode = e.Keyboard ? FlyoutShowMode.Standard : FlyoutShowMode.Transient,
+        });
     }
 
     private void OnShapeFieldChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)

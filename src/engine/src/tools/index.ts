@@ -23,3 +23,4 @@ export * from "./shapeProperties";
 export * from "./vertices";
 export * from "./vertexTool";
 export * from "./penTool";
+export * from "./contextMenu";

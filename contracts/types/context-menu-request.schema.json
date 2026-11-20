@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContextMenuRequest",
+  "description": "Petición de abrir el menú contextual del lienzo. El motor ya ha seleccionado lo que había bajo el puntero.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "x",
+    "y",
+    "keyboard",
+    "canEditVertices"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Documento visible."
+    },
+    "x": {
+      "type": "number",
+      "description": "Posición horizontal del menú en el lienzo, en píxeles independientes del dispositivo desde su esquina superior izquierda."
+    },
+    "y": {
+      "type": "number",
+      "description": "Posición vertical del menú en el lienzo, en píxeles independientes del dispositivo."
+    },
+    "keyboard": {
+      "type": "boolean",
+      "description": "True si se pidió con el teclado (Mayús+F10 o la tecla de menú): el menú se abre junto a la selección."
+    },
+    "canEditVertices": {
+      "type": "boolean",
+      "description": "True si lo seleccionado es una sola forma que se puede editar por vértices."
+    }
+  }
+}
