@@ -375,7 +375,8 @@ export type ToolName =
   | "line"
   | "polygon"
   | "star"
-  | "vertex";
+  | "vertex"
+  | "pen";
 
 /** Herramienta activa del lienzo. */
 export interface ToolState {

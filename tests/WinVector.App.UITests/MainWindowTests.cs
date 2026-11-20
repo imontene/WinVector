@@ -415,6 +415,24 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ConLaPlumaTresClicsYCerrarCreanUnPoligono()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+
+        Session.GetById("ToolPen").Click();
+        // En el cielo despejado: tres vértices y clic en el primero para cerrar.
+        Mouse.Click(AppSession.SamplePoint(canvas, 205, 10));
+        Mouse.Click(AppSession.SamplePoint(canvas, 240, 10));
+        Mouse.Click(AppSession.SamplePoint(canvas, 222, 40));
+        Mouse.Click(AppSession.SamplePoint(canvas, 205, 10));
+
+        var status = Session.WaitForName("SelectionStatus", name => name.StartsWith("polygon", StringComparison.Ordinal), EngineTimeout);
+        Assert.IsTrue(status.StartsWith("polygon", StringComparison.Ordinal), $"No se creó el polígono: la selección es '{status}'.");
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();

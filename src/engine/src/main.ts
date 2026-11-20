@@ -29,6 +29,7 @@ import {
   installShapeTool,
   installShortcuts,
   installVertexTool,
+  installPenTool,
   applyShape,
   changedFields,
   readShape,
@@ -138,6 +139,7 @@ function refreshOverlay(): void {
             shapeHandles: own?.points() ?? [],
             shapeHandleSize: SHAPE_HANDLE_SIZE,
             vertices: activeTool === "vertex" ? vertexTool.scene() : null,
+            pen: penTool.scene(),
           }
         : { ...EMPTY_SCENE, marquee: null },
     );
@@ -155,6 +157,8 @@ window.addEventListener("resize", () => {
 
 /** Cambia la herramienta activa. Si el cambio viene del lienzo, se avisa a la aplicación. */
 function setTool(tool: ToolName, fromCanvas: boolean): void {
+  // Una forma libre a medias se termina al cambiar de herramienta.
+  if (tool !== "pen") penTool.finish();
   activeTool = tool;
   const cursor = cursorForTool(tool);
   if (cursor) document.body.dataset.cursor = cursor;
@@ -534,6 +538,13 @@ installShapeTool(window, {
   active: activeDocument,
   snapSpacing,
   style: () => shapeStyle,
+});
+const penTool = installPenTool(window, {
+  tool: () => activeTool,
+  active: activeDocument,
+  snapSpacing,
+  style: () => shapeStyle,
+  changed: refreshOverlay,
 });
 const vertexTool = installVertexTool(window, {
   tool: () => activeTool,

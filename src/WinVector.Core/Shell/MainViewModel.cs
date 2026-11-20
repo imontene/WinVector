@@ -110,6 +110,7 @@ public sealed partial class MainViewModel : ObservableObject
         Add("tool-polygon", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Polygon)));
         Add("tool-star", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Star)));
         Add("tool-vertex", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Vertex)));
+        Add("tool-pen", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Pen)));
     }
 
     /// <summary>Archivos abiertos o guardados recientemente.</summary>

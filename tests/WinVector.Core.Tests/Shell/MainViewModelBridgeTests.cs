@@ -600,7 +600,7 @@ public sealed class MainViewModelBridgeTests : IDisposable
     public void LaPaletaTieneLasOrdenesDeLosMenus()
     {
         var ids = _viewModel.Commands.All.Select(entry => entry.Id).ToList();
-        foreach (var id in (string[])["new", "open", "save", "undo", "redo", "copy", "paste", "group", "bring-to-front", "zoom-fit", "toggle-grid", "tool-eyedropper", "tool-rectangle", "tool-ellipse", "tool-line", "tool-polygon", "tool-star", "tool-vertex", "object-to-path"])
+        foreach (var id in (string[])["new", "open", "save", "undo", "redo", "copy", "paste", "group", "bring-to-front", "zoom-fit", "toggle-grid", "tool-eyedropper", "tool-rectangle", "tool-ellipse", "tool-line", "tool-polygon", "tool-star", "tool-vertex", "tool-pen", "object-to-path"])
         {
             CollectionAssert.Contains(ids, id);
         }

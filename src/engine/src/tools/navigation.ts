@@ -18,6 +18,7 @@ const TOOL_KEYS: Readonly<Record<string, ToolName>> = {
   g: "polygon",
   s: "star",
   a: "vertex",
+  p: "pen",
 };
 
 export interface NavigationHost {
@@ -281,6 +282,7 @@ export function cursorForTool(tool: ToolName): string {
     case "line":
     case "polygon":
     case "star":
+    case "pen":
       return "crosshair";
     default:
       return "";

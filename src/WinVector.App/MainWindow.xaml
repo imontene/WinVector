@@ -425,8 +425,10 @@
                     </ToggleButton>
                     <ToggleButton
                         x:Uid="ToolPen"
+                        AutomationProperties.AutomationId="ToolPen"
                         Click="OnToolClick"
-                        Style="{StaticResource ToolButtonStyle}">
+                        Style="{StaticResource ToolButtonStyle}"
+                        Tag="pen">
                         <PathIcon Data="M8,1 L13,9 L8,15 L3,9 Z M8,7.3 A1.2,1.2 0 1 0 8,9.7 A1.2,1.2 0 1 0 8,7.3 Z" />
                     </ToggleButton>
                     <ToggleButton

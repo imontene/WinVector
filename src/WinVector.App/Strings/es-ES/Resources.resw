@@ -158,7 +158,7 @@
     <value>Vértices</value>
   </data>
   <data name="ToolPen.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Pluma (P)</value>
+    <value>Pluma (P): cada clic añade un vértice; clic en el primero para cerrar la forma, doble clic o Intro para dejarla abierta, Retroceso quita el último y Esc cancela</value>
   </data>
   <data name="ToolPen.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Pluma</value>
@@ -925,5 +925,14 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="ShapeConvertedStar" xml:space="preserve">
     <value>Al editar sus vértices, la estrella pasa a ser un polígono.</value>
+  </data>
+  <data name="PaletteNameToolPen" xml:space="preserve">
+    <value>Herramienta Pluma</value>
+  </data>
+  <data name="PaletteShortcutToolPen" xml:space="preserve">
+    <value>P</value>
+  </data>
+  <data name="HistoryActionCreatePolyline" xml:space="preserve">
+    <value>crear una forma abierta</value>
   </data>
 </root>

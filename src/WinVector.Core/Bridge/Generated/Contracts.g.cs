@@ -408,6 +408,8 @@ public enum ToolName
     Star,
     [JsonStringEnumMemberName("vertex")]
     Vertex,
+    [JsonStringEnumMemberName("pen")]
+    Pen,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>
