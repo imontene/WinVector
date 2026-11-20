@@ -735,31 +735,30 @@
                                     AutomationProperties.AutomationId="ShapeTitle"
                                     Style="{StaticResource BodyStrongTextBlockStyle}"
                                     Text="{x:Bind ViewModel.ShapeTitle, Mode=OneWay}" />
-                                <ItemsRepeater ItemsSource="{x:Bind ViewModel.ShapeFields}">
-                                    <ItemsRepeater.Layout>
-                                        <UniformGridLayout
-                                            ItemsStretch="Fill"
-                                            MaximumRowsOrColumns="2"
-                                            MinColumnSpacing="8"
-                                            MinItemWidth="100"
-                                            MinRowSpacing="8" />
-                                    </ItemsRepeater.Layout>
-                                    <ItemsRepeater.ItemTemplate>
+                                <!--
+                                    ItemsControl y no ItemsRepeater: al cambiar de forma, cada campo es un control nuevo. Un
+                                    control reciclado cambiaría de valor con la clave de otro campo, y eso parecería una edición.
+                                -->
+                                <ItemsControl IsTabStop="False" ItemsSource="{x:Bind ViewModel.ShapeFields}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Spacing="8" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="shell:ShapeFieldViewModel">
                                             <NumberBox
                                                 AutomationProperties.AutomationId="{x:Bind AutomationId}"
                                                 Header="{x:Bind Label}"
                                                 LargeChange="{x:Bind LargeChange}"
-                                                Maximum="{x:Bind Maximum}"
-                                                Minimum="{x:Bind Minimum}"
                                                 SmallChange="{x:Bind SmallChange}"
                                                 SpinButtonPlacementMode="Compact"
                                                 Tag="{x:Bind Key}"
                                                 ValueChanged="OnShapeFieldChanged"
                                                 Value="{x:Bind Value, Mode=OneWay}" />
                                         </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
                         </StackPanel>
 
