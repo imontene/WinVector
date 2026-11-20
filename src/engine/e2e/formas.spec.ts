@@ -340,3 +340,24 @@ test("cambiar solo el ancho de un círculo en el panel lo convierte en elipse se
     )
     .toMatchObject({ items: [{ tagName: "ellipse", id: "sol" }] });
 });
+
+test("un rectángulo pequeño no tiene manejador del radio y se puede arrastrar", async ({
+  page,
+}) => {
+  const k = await scale(page);
+  await selectTool(page, "rectangle");
+  // 10 unidades: menos de 42 píxeles de pantalla con el zoom de la prueba.
+  const size = Math.min(10, 30 / k);
+  await drawDrag(page, { x: 20, y: 200 }, { x: 20 + size, y: 200 + size });
+  await selectTool(page, "select");
+  await expect(page.locator(".overlay .overlay-shape-handle")).toHaveCount(0);
+
+  const center = await toScreen(page, 20 + size / 2, 200 + size / 2);
+  await page.mouse.move(center.x, center.y);
+  await page.mouse.down();
+  await page.mouse.move(center.x + 40, center.y, { steps: 4 });
+  await page.mouse.up();
+  const [rect] = await createdOf(page, "rect");
+  expect(number(rect?.x)).toBeGreaterThan(25);
+  expect(rect?.rx).toBeUndefined();
+});
