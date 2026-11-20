@@ -18,6 +18,12 @@ public sealed class StartupTests
 
     private static readonly TimeSpan EngineStartTimeout = TimeSpan.FromSeconds(60);
 
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
     public TestContext TestContext { get; set; } = null!;
 
     [TestMethod]
@@ -33,9 +39,7 @@ public sealed class StartupTests
         if (!string.IsNullOrEmpty(output))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
-            var json = JsonSerializer.Serialize(
-                new { measuredAt = DateTimeOffset.UtcNow, cold, warm },
-                new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var json = JsonSerializer.Serialize(new { measuredAt = DateTimeOffset.UtcNow, cold, warm }, JsonOptions);
             File.WriteAllText(output, json + "\n");
         }
     }
