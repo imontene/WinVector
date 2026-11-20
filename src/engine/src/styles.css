@@ -205,8 +205,8 @@ body[data-handle="move"] {
   cursor: move;
 }
 
-/* Radio de las esquinas de un rectángulo (src/tools/cornerRadius.ts). */
-.overlay-radius {
+/* Manejadores propios de una forma: radio, extremos de línea (src/tools/shapeHandles.ts). */
+.overlay-shape-handle {
   fill: var(--selection);
   stroke: var(--handle-fill, #fff);
 }

@@ -1,5 +1,6 @@
 import { applyToPoint, invert, type Matrix, type Point } from "../geometry";
 import { formatNumber } from "../transform";
+import type { ShapeHandles } from "./shapeHandles";
 
 /**
  * Radio de las esquinas de un rectángulo, con un manejador en el lienzo: un círculo dentro de la
@@ -9,9 +10,6 @@ import { formatNumber } from "../transform";
 
 /** Distancia mínima del manejador a la esquina, en píxeles: así no tapa al manejador de escalar. */
 export const RADIUS_HANDLE_INSET = 14;
-/** Radio del manejador en pantalla y margen para acertar con el puntero. */
-export const RADIUS_HANDLE_SIZE = 4;
-const HIT_TOLERANCE = 4;
 
 interface Geometry {
   readonly x: number;
@@ -22,12 +20,6 @@ interface Geometry {
   readonly radius: number;
   /** Del rectángulo a la pantalla. */
   readonly toScreen: Matrix;
-}
-
-/** El rectángulo cuyo radio se puede editar: un solo `rect` seleccionado y medible. */
-export function radiusTarget(items: readonly Element[]): SVGRectElement | null {
-  const [only] = items;
-  return items.length === 1 && only instanceof SVGRectElement ? only : null;
 }
 
 function geometry(rect: SVGRectElement): Geometry | null {
@@ -60,11 +52,17 @@ export function radiusHandlePoint(rect: SVGRectElement): Point | null {
   return applyToPoint(g.toScreen, { x: g.x + g.width - inset, y: g.y + inset });
 }
 
-/** True si el punto de la pantalla está sobre el manejador. */
-export function isOverRadiusHandle(rect: SVGRectElement, point: Point): boolean {
-  const handle = radiusHandlePoint(rect);
-  if (!handle) return false;
-  return Math.hypot(point.x - handle.x, point.y - handle.y) <= RADIUS_HANDLE_SIZE + HIT_TOLERANCE;
+/** Manejador del radio de un rectángulo, o `null` si no se puede medir. */
+export function radiusHandles(rect: SVGRectElement): ShapeHandles | null {
+  const point = radiusHandlePoint(rect);
+  if (!point) return null;
+  return {
+    action: "corner-radius",
+    cursor: "radius",
+    replacesBox: false,
+    points: () => [point],
+    start: (_, pointer) => new RadiusDrag(rect, pointer),
+  };
 }
 
 /**

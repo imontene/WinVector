@@ -249,7 +249,7 @@ test("el manejador de la esquina redondea un rectángulo; Esc lo deja como estab
   await selectTool(page, "rectangle");
   await drawDrag(page, { x: 20, y: 160 }, { x: 120, y: 220 });
   await selectTool(page, "select");
-  const handle = page.locator(".overlay .overlay-radius");
+  const handle = page.locator(".overlay .overlay-shape-handle");
   await expect(handle).toHaveCount(1);
   const box = await handle.boundingBox();
   if (!box) throw new Error("Sin manejador");
@@ -339,4 +339,87 @@ test("cambiar solo el ancho de un círculo en el panel lo convierte en elipse se
       async () => (await sent(page)).filter((m) => m.name === "selection.changed").at(-1)?.payload,
     )
     .toMatchObject({ items: [{ tagName: "ellipse", id: "sol" }] });
+});
+
+test("la línea va de un punto a otro; Mayús fija el ángulo y Alt la centra", async ({ page }) => {
+  await selectTool(page, "line");
+  await drawDrag(page, { x: 20, y: 20 }, { x: 80, y: 50 });
+  await drawDrag(page, { x: 20, y: 100 }, { x: 80, y: 104 }, ["Shift"]);
+  await drawDrag(page, { x: 200, y: 200 }, { x: 230, y: 210 }, ["Alt"]);
+
+  const [free, level, centered] = await createdOf(page, "line");
+  expect(number(free?.x1)).toBeCloseTo(20, 0);
+  expect(number(free?.y2)).toBeCloseTo(50, 0);
+  // La línea nace con trazo y sin relleno.
+  expect(free).toMatchObject({ stroke: "#000000", "stroke-width": "1" });
+  expect(free?.fill).toBeUndefined();
+  // Con Mayús, casi horizontal pasa a horizontal.
+  expect(level?.y2).toBe(level?.y1);
+  // Con Alt, el punto inicial es el centro.
+  expect((number(centered?.x1) + number(centered?.x2)) / 2).toBeCloseTo(200, 0);
+  expect((number(centered?.y1) + number(centered?.y2)) / 2).toBeCloseTo(200, 0);
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "create-line" });
+});
+
+test("sin trazo en el último estilo, la línea toma el color del relleno", async ({ page }) => {
+  await page.locator("#sol").dblclick();
+  await hostSend(
+    page,
+    command("c-style", "selection.setStyle", {
+      documentId: "d1",
+      fill: "#ff0000",
+      stroke: "none",
+      strokeWidth: null,
+      opacity: null,
+    }),
+  );
+  await selectTool(page, "line");
+  await drawDrag(page, { x: 20, y: 200 }, { x: 60, y: 240 });
+  expect((await createdOf(page, "line"))[0]).toMatchObject({ stroke: "#ff0000" });
+});
+
+test("los extremos de una línea se arrastran; sin manejadores de escalar", async ({ page }) => {
+  await selectTool(page, "line");
+  await drawDrag(page, { x: 20, y: 160 }, { x: 100, y: 200 });
+  await selectTool(page, "select");
+  await expect(page.locator(".overlay .overlay-shape-handle")).toHaveCount(2);
+  await expect(page.locator(".overlay [data-handle]")).toHaveCount(0);
+
+  const end = await toScreen(page, 100, 200);
+  const target = await toScreen(page, 140, 150);
+  await page.mouse.move(end.x, end.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 4 });
+  await page.mouse.up();
+  const [line] = await createdOf(page, "line");
+  expect(number(line?.x2)).toBeCloseTo(140, 0);
+  expect(number(line?.y2)).toBeCloseTo(150, 0);
+  expect(number(line?.x1)).toBeCloseTo(20, 0);
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "line-end" });
+
+  await page.keyboard.press("Control+Z");
+  await expect.poll(async () => number((await createdOf(page, "line"))[0]?.x2)).toBeCloseTo(100, 0);
+});
+
+test("una línea fina se selecciona aunque el clic caiga unos píxeles al lado", async ({ page }) => {
+  await selectTool(page, "line");
+  await drawDrag(page, { x: 20, y: 160 }, { x: 120, y: 160 });
+  await selectTool(page, "select");
+  // Clic en el fondo para deseleccionar y después a 3 píxeles de la línea.
+  await page.mouse.click(5, 5);
+  const middle = await toScreen(page, 70, 160);
+  await page.mouse.click(middle.x, middle.y + 3);
+  await expect
+    .poll(
+      async () => (await sent(page)).filter((m) => m.name === "selection.changed").at(-1)?.payload,
+    )
+    .toMatchObject({ items: [{ tagName: "line" }] });
+});
+
+test("L elige la línea", async ({ page }) => {
+  await page.locator("#sol").click();
+  await page.keyboard.press("l");
+  await expect
+    .poll(() => lastSent(page))
+    .toMatchObject({ name: "tool.changed", payload: { tool: "line" } });
 });

@@ -320,6 +320,20 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ConLaLineaArrastrarCreaUnaLineaSeleccionada()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+
+        Session.GetById("ToolLine").Click();
+        Mouse.Drag(AppSession.SamplePoint(canvas, 205, 10), AppSession.SamplePoint(canvas, 240, 40));
+
+        var status = Session.WaitForName("SelectionStatus", name => name.StartsWith("line", StringComparison.Ordinal), EngineTimeout);
+        Assert.IsTrue(status.StartsWith("line", StringComparison.Ordinal), $"No se creó la línea: la selección es '{status}'.");
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();

@@ -291,6 +291,8 @@ public enum ToolName
     Rectangle,
     [JsonStringEnumMemberName("ellipse")]
     Ellipse,
+    [JsonStringEnumMemberName("line")]
+    Line,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>

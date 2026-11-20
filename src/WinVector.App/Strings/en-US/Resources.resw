@@ -174,6 +174,12 @@
   <data name="ToolEllipse.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Ellipse</value>
   </data>
+  <data name="ToolLine.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Line (L): drag to draw; Shift for 15° steps; Alt to draw from the center</value>
+  </data>
+  <data name="ToolLine.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Line</value>
+  </data>
   <data name="ToolText.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Text (T)</value>
   </data>
@@ -761,5 +767,17 @@ Licensed under the Apache License 2.0.</value>
   </data>
   <data name="PaletteShortcutToolEllipse" xml:space="preserve">
     <value>E</value>
+  </data>
+  <data name="HistoryActionCreateLine" xml:space="preserve">
+    <value>create line</value>
+  </data>
+  <data name="HistoryActionLineEnd" xml:space="preserve">
+    <value>move line end</value>
+  </data>
+  <data name="PaletteNameToolLine" xml:space="preserve">
+    <value>Line tool</value>
+  </data>
+  <data name="PaletteShortcutToolLine" xml:space="preserve">
+    <value>L</value>
   </data>
 </root>

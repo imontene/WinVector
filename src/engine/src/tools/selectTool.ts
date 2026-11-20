@@ -9,11 +9,12 @@ import {
   selectableChildren,
   selectionBounds,
   selectionScreenRect,
+  thinElementAt,
   type HandleId,
   type Selection,
 } from "../selection";
 import { moveBy, rotateAround, scaleAround, transformItems, TransformSession } from "../transform";
-import { isOverRadiusHandle, radiusTarget, RadiusDrag } from "./cornerRadius";
+import { shapeHandleAt, shapeHandles, type HandleDrag } from "./shapeHandles";
 import { isPressed } from "./modifiers";
 
 /** Distancia en píxeles a partir de la cual pulsar y mover es un arrastre y no un clic. */
@@ -56,9 +57,9 @@ type Press =
       session: TransformSession | null;
     }
   | {
-      /** Pulsación sobre el manejador del radio de un rectángulo: redondea sus esquinas. */
-      readonly kind: "radius";
-      readonly drag: RadiusDrag;
+      /** Pulsación sobre un manejador propio de la forma: radio de las esquinas, extremo de línea. */
+      readonly kind: "shape";
+      readonly drag: HandleDrag;
       readonly history: History;
     }
   | {
@@ -87,8 +88,8 @@ const angle = (p: Point, center: Point) =>
  * - `Ctrl+A`: selecciona todos los objetos del grupo actual.
  * - Arrastrar un objeto mueve la selección; las flechas la mueven 1 unidad (10 con `Mayús`).
  * - Los manejadores escalan (`Mayús`: proporcional; `Alt`: desde el centro) y el de arriba gira
- *   (`Mayús`: de 15° en 15°). Con un solo rectángulo, el círculo de la esquina superior derecha
- *   redondea sus esquinas.
+ *   (`Mayús`: de 15° en 15°). Algunas formas tienen manejadores propios (ver
+ *   shapeHandles.ts): el radio de las esquinas de un rectángulo, los extremos de una línea.
  *
  * Cada transformación es un paso del historial. Devuelve una función que desinstala la herramienta.
  */
@@ -110,8 +111,19 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     const shift = isPressed(event, "Shift");
 
     // Los manejadores tienen prioridad: están por encima de los objetos.
+    const own = shapeHandles(selection.items);
+    const ownIndex = own ? shapeHandleAt(own, point(event)) : -1;
+    if (own && ownIndex !== -1) {
+      event.preventDefault();
+      active.history.begin(own.action);
+      press = { kind: "shape", drag: own.start(ownIndex, point(event)), history: active.history };
+      target.documentElement.setPointerCapture(event.pointerId);
+      return;
+    }
     const screenRect =
-      selection.items.length > 0 ? selectionScreenRect(selection.items, root) : null;
+      selection.items.length > 0 && !own?.replacesBox
+        ? selectionScreenRect(selection.items, root)
+        : null;
     // Con Mayús también: es la tecla de escalar en proporción y de girar de 15 en 15 grados.
     const handle = screenRect ? handleAt(point(event), screenRect) : null;
     const bounds = selectionBounds(selection.items, root);
@@ -122,21 +134,10 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
       return;
     }
 
-    const radiusRect = radiusTarget(selection.items);
-    if (radiusRect && isOverRadiusHandle(radiusRect, point(event))) {
-      event.preventDefault();
-      active.history.begin("corner-radius");
-      press = {
-        kind: "radius",
-        drag: new RadiusDrag(radiusRect, point(event)),
-        history: active.history,
-      };
-      target.documentElement.setPointerCapture(event.pointerId);
-      return;
-    }
-
-    // El documento está en un shadow root: el destino real es el primero de composedPath().
-    const pick = pickAt(event.composedPath()[0] ?? null, root, {
+    // El documento está en un shadow root: el destino real es el primero de composedPath(). Una
+    // línea fina cercana que esté por encima cuenta como tocada.
+    const hit = event.composedPath()[0] ?? null;
+    const pick = pickAt(thinElementAt(point(event), root, hit) ?? hit, root, {
       scope: selection.scope,
       deep: isPressed(event, "Control") || isPressed(event, "Meta"),
     });
@@ -175,19 +176,20 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     const active = host.active();
     if (!press) {
       // Cursor sobre los manejadores.
+      const own = active ? shapeHandles(active.selection.items) : null;
+      if (own && shapeHandleAt(own, point(event)) !== -1) {
+        setHandleCursor(own.cursor);
+        return;
+      }
       const rect =
-        active && active.selection.items.length > 0
+        active && active.selection.items.length > 0 && !own?.replacesBox
           ? selectionScreenRect(active.selection.items, active.root)
           : null;
-      const radiusRect = active ? radiusTarget(active.selection.items) : null;
-      const overRadius = radiusRect !== null && isOverRadiusHandle(radiusRect, point(event));
-      setHandleCursor(
-        rect ? (handleAt(point(event), rect) ?? (overRadius ? "radius" : null)) : null,
-      );
+      setHandleCursor(rect ? handleAt(point(event), rect) : null);
       return;
     }
-    if (press.kind === "radius") {
-      press.drag.update(point(event));
+    if (press.kind === "shape") {
+      press.drag.update(point(event), isPressed(event, "Shift"));
       return;
     }
     if (!active) return;
@@ -292,7 +294,7 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     if (!current || !active) return;
     const { root, selection } = active;
 
-    if (current.kind === "radius") {
+    if (current.kind === "shape") {
       current.history.commit();
       return;
     }
@@ -325,7 +327,8 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     const active = host.active();
     if (event.button !== 0 || !active) return;
     const { root, selection } = active;
-    const path = event.composedPath()[0] ?? null;
+    const hit = event.composedPath()[0] ?? null;
+    const path = thinElementAt(point(event), root, hit) ?? hit;
     const pick = pickAt(path, root, { scope: selection.scope });
     if (!pick || !isContainer(pick.element)) return;
     selection.enter(pick.element);
@@ -335,7 +338,7 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
 
   const cancelPress = () => {
     if (press?.kind === "marquee") host.showMarquee(null);
-    else if (press?.kind === "radius") press.history.rollback();
+    else if (press?.kind === "shape") press.history.rollback();
     else press?.session?.cancel();
     press = null;
     setHandleCursor(null);

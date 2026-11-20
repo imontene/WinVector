@@ -28,9 +28,8 @@ import {
   installSelectTool,
   installShapeTool,
   installShortcuts,
-  radiusHandlePoint,
-  radiusTarget,
-  RADIUS_HANDLE_SIZE,
+  SHAPE_HANDLE_SIZE,
+  shapeHandles,
   trackModifiers,
   type ShapeStyle,
 } from "./tools";
@@ -119,19 +118,18 @@ function refreshOverlay(): void {
     const active = documents.active;
     const items = active?.selection.items ?? [];
     // Los manejadores solo tienen sentido con la herramienta Selección y fuera de un marco.
+    const showHandles = active && activeTool === "select" && items.length > 0 && !marquee;
+    const own = showHandles ? shapeHandles(items) : null;
     const handles =
-      active && activeTool === "select" && items.length > 0 && !marquee
-        ? selectionScreenRect(items, active.document.root)
-        : null;
-    const radiusRect = handles ? radiusTarget(items) : null;
+      showHandles && !own?.replacesBox ? selectionScreenRect(items, active.document.root) : null;
     overlay.render(
       active
         ? {
             ...active.selection.state,
             marquee,
             handles,
-            radius: radiusRect ? radiusHandlePoint(radiusRect) : null,
-            radiusSize: RADIUS_HANDLE_SIZE,
+            shapeHandles: own?.points() ?? [],
+            shapeHandleSize: SHAPE_HANDLE_SIZE,
           }
         : { ...EMPTY_SCENE, marquee: null },
     );
