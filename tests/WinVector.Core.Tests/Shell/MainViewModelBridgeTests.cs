@@ -579,6 +579,56 @@ public sealed class MainViewModelBridgeTests : IDisposable
     }
 
     [TestMethod]
+    public async Task EscribirDeshacerEnLaPaletaDeshaceElUltimoCambio()
+    {
+        await ReadyAsync();
+        _engine.Modify("d1", "<svg>1</svg>", "move");
+
+        var found = _viewModel.Commands.Search("deshacer");
+        Assert.AreEqual("undo", found[0].Id);
+        Assert.AreEqual("Ctrl+Z", found[0].Shortcut);
+        Assert.IsTrue(found[0].Execute());
+        await _viewModel.EngineWork;
+
+        Assert.IsFalse(_viewModel.CanUndo);
+        Assert.IsEmpty(_viewModel.Commands.Search("deshacer"), "Sin nada que deshacer, la orden no aparece.");
+    }
+
+    [TestMethod]
+    public void LaPaletaTieneLasOrdenesDeLosMenus()
+    {
+        var ids = _viewModel.Commands.All.Select(entry => entry.Id).ToList();
+        foreach (var id in (string[])["new", "open", "save", "undo", "redo", "copy", "paste", "group", "bring-to-front", "zoom-fit", "toggle-grid", "tool-eyedropper"])
+        {
+            CollectionAssert.Contains(ids, id);
+        }
+    }
+
+    [TestMethod]
+    public async Task CtrlKConElLienzoEnfocadoPideLaPaleta()
+    {
+        await ReadyAsync();
+        var requested = 0;
+        _viewModel.CommandPaletteRequested += (_, _) => requested++;
+
+        Assert.IsTrue(await _viewModel.HandleShortcutAsync(new KeyboardShortcut("k", true, false, false)));
+
+        Assert.AreEqual(1, requested);
+    }
+
+    [TestMethod]
+    public async Task LasOrdenesDeVistaYHerramientasDeLaPaletaFuncionan()
+    {
+        await ReadyAsync();
+        _viewModel.Commands.All.Single(entry => entry.Id == "toggle-grid").Execute();
+        _viewModel.Commands.All.Single(entry => entry.Id == "tool-hand").Execute();
+        await _viewModel.EngineWork;
+
+        Assert.IsTrue(_viewModel.ShowGrid);
+        Assert.AreEqual(ToolName.Hand, _viewModel.ActiveTool);
+    }
+
+    [TestMethod]
     public async Task MideLaLatenciaDelPuente()
     {
         _engine.BeforePingResponse = () => _time.Advance(TimeSpan.FromMilliseconds(4));

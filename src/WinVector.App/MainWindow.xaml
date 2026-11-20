@@ -351,13 +351,35 @@
                         IsEnabled="False" />
                 </CommandBar>
 
+                <!-- Paleta de comandos (Ctrl+K): las mismas órdenes que los menús, buscadas por su nombre. -->
                 <AutoSuggestBox
+                    x:Name="CommandSearch"
                     x:Uid="CommandSearch"
                     Grid.Column="2"
                     Width="240"
                     VerticalAlignment="Center"
-                    IsEnabled="False"
-                    QueryIcon="Find" />
+                    AutomationProperties.AutomationId="CommandSearch"
+                    QueryIcon="Find"
+                    QuerySubmitted="OnCommandSearchSubmitted"
+                    TextChanged="OnCommandSearchTextChanged"
+                    UpdateTextOnSelect="False">
+                    <AutoSuggestBox.ItemTemplate>
+                        <DataTemplate x:DataType="shell:CommandEntry">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind Shortcut}" />
+                            </Grid>
+                        </DataTemplate>
+                    </AutoSuggestBox.ItemTemplate>
+                </AutoSuggestBox>
             </Grid>
         </Border>
 

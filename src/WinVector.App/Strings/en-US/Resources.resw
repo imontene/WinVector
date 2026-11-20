@@ -538,4 +538,184 @@ Licensed under the Apache License 2.0.</value>
   <data name="HistoryActionStyle" xml:space="preserve">
     <value>style change</value>
   </data>
+  <data name="PaletteNameNew" xml:space="preserve">
+    <value>New document</value>
+  </data>
+  <data name="PaletteShortcutNew" xml:space="preserve">
+    <value>Ctrl+N</value>
+  </data>
+  <data name="PaletteNameNewWithSize" xml:space="preserve">
+    <value>New document with size</value>
+  </data>
+  <data name="PaletteShortcutNewWithSize" xml:space="preserve">
+    <value>Ctrl+Shift+N</value>
+  </data>
+  <data name="PaletteNameOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="PaletteShortcutOpen" xml:space="preserve">
+    <value>Ctrl+O</value>
+  </data>
+  <data name="PaletteNameSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="PaletteShortcutSave" xml:space="preserve">
+    <value>Ctrl+S</value>
+  </data>
+  <data name="PaletteNameSaveAs" xml:space="preserve">
+    <value>Save as</value>
+  </data>
+  <data name="PaletteShortcutSaveAs" xml:space="preserve">
+    <value>Ctrl+Shift+S</value>
+  </data>
+  <data name="PaletteNameCloseTab" xml:space="preserve">
+    <value>Close tab</value>
+  </data>
+  <data name="PaletteShortcutCloseTab" xml:space="preserve">
+    <value>Ctrl+W</value>
+  </data>
+  <data name="PaletteNameUndo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="PaletteShortcutUndo" xml:space="preserve">
+    <value>Ctrl+Z</value>
+  </data>
+  <data name="PaletteNameRedo" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="PaletteShortcutRedo" xml:space="preserve">
+    <value>Ctrl+Y</value>
+  </data>
+  <data name="PaletteNameCut" xml:space="preserve">
+    <value>Cut</value>
+  </data>
+  <data name="PaletteShortcutCut" xml:space="preserve">
+    <value>Ctrl+X</value>
+  </data>
+  <data name="PaletteNameCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="PaletteShortcutCopy" xml:space="preserve">
+    <value>Ctrl+C</value>
+  </data>
+  <data name="PaletteNamePaste" xml:space="preserve">
+    <value>Paste</value>
+  </data>
+  <data name="PaletteShortcutPaste" xml:space="preserve">
+    <value>Ctrl+V</value>
+  </data>
+  <data name="PaletteNameDuplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="PaletteShortcutDuplicate" xml:space="preserve">
+    <value>Ctrl+D</value>
+  </data>
+  <data name="PaletteNameDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="PaletteShortcutDelete" xml:space="preserve">
+    <value>Del</value>
+  </data>
+  <data name="PaletteNameSelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="PaletteShortcutSelectAll" xml:space="preserve">
+    <value>Ctrl+A</value>
+  </data>
+  <data name="PaletteNameGroup" xml:space="preserve">
+    <value>Group</value>
+  </data>
+  <data name="PaletteShortcutGroup" xml:space="preserve">
+    <value>Ctrl+G</value>
+  </data>
+  <data name="PaletteNameUngroup" xml:space="preserve">
+    <value>Ungroup</value>
+  </data>
+  <data name="PaletteShortcutUngroup" xml:space="preserve">
+    <value>Ctrl+Shift+G</value>
+  </data>
+  <data name="PaletteNameBringToFront" xml:space="preserve">
+    <value>Bring to front</value>
+  </data>
+  <data name="PaletteShortcutBringToFront" xml:space="preserve">
+    <value>Ctrl+Shift+PgUp</value>
+  </data>
+  <data name="PaletteNameBringForward" xml:space="preserve">
+    <value>Bring forward</value>
+  </data>
+  <data name="PaletteShortcutBringForward" xml:space="preserve">
+    <value>Ctrl+PgUp</value>
+  </data>
+  <data name="PaletteNameSendBackward" xml:space="preserve">
+    <value>Send backward</value>
+  </data>
+  <data name="PaletteShortcutSendBackward" xml:space="preserve">
+    <value>Ctrl+PgDn</value>
+  </data>
+  <data name="PaletteNameSendToBack" xml:space="preserve">
+    <value>Send to back</value>
+  </data>
+  <data name="PaletteShortcutSendToBack" xml:space="preserve">
+    <value>Ctrl+Shift+PgDn</value>
+  </data>
+  <data name="PaletteNameZoomIn" xml:space="preserve">
+    <value>Zoom in</value>
+  </data>
+  <data name="PaletteShortcutZoomIn" xml:space="preserve">
+    <value>Ctrl++</value>
+  </data>
+  <data name="PaletteNameZoomOut" xml:space="preserve">
+    <value>Zoom out</value>
+  </data>
+  <data name="PaletteShortcutZoomOut" xml:space="preserve">
+    <value>Ctrl+-</value>
+  </data>
+  <data name="PaletteNameZoomFit" xml:space="preserve">
+    <value>Fit to window</value>
+  </data>
+  <data name="PaletteShortcutZoomFit" xml:space="preserve">
+    <value>Ctrl+0</value>
+  </data>
+  <data name="PaletteNameZoomActual" xml:space="preserve">
+    <value>Actual size</value>
+  </data>
+  <data name="PaletteShortcutZoomActual" xml:space="preserve">
+    <value>Ctrl+1</value>
+  </data>
+  <data name="PaletteNameToggleRulers" xml:space="preserve">
+    <value>Show or hide rulers</value>
+  </data>
+  <data name="PaletteShortcutToggleRulers" xml:space="preserve">
+    <value>Ctrl+R</value>
+  </data>
+  <data name="PaletteNameToggleGrid" xml:space="preserve">
+    <value>Show or hide grid</value>
+  </data>
+  <data name="PaletteNameToggleSnap" xml:space="preserve">
+    <value>Snap to grid</value>
+  </data>
+  <data name="PaletteNameToolSelect" xml:space="preserve">
+    <value>Selection tool</value>
+  </data>
+  <data name="PaletteShortcutToolSelect" xml:space="preserve">
+    <value>V</value>
+  </data>
+  <data name="PaletteNameToolHand" xml:space="preserve">
+    <value>Hand tool</value>
+  </data>
+  <data name="PaletteShortcutToolHand" xml:space="preserve">
+    <value>H</value>
+  </data>
+  <data name="PaletteNameToolZoom" xml:space="preserve">
+    <value>Zoom tool</value>
+  </data>
+  <data name="PaletteShortcutToolZoom" xml:space="preserve">
+    <value>Z</value>
+  </data>
+  <data name="PaletteNameToolEyedropper" xml:space="preserve">
+    <value>Eyedropper</value>
+  </data>
+  <data name="PaletteShortcutToolEyedropper" xml:space="preserve">
+    <value>I</value>
+  </data>
 </root>

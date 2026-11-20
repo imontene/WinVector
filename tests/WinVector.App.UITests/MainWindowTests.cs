@@ -376,6 +376,30 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void EscribirDeshacerEnLaPaletaDeshaceElUltimoCambio()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.DoubleClick(AppSession.SamplePoint(canvas, 300, 96));
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_D);
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result, "Ctrl+D no duplicó el sol.");
+
+        // "Deshacer" o "Undo": se escribe en el idioma de la interfaz.
+        var query = undo.Name.StartsWith("Des", StringComparison.Ordinal) ? "deshacer" : "undo";
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_K);
+        var search = Session.GetById("CommandSearch");
+        Assert.IsTrue(Retry.WhileFalse(() => search.Properties.HasKeyboardFocus.ValueOrDefault || search.FindFirstDescendant(cf => cf.ByControlType(ControlType.Edit))?.Properties.HasKeyboardFocus.ValueOrDefault == true, TimeSpan.FromSeconds(5)).Result, "Ctrl+K no enfocó la paleta de comandos.");
+        Keyboard.Type(query);
+        Thread.Sleep(300);
+        Keyboard.Press(VirtualKeyShort.ENTER);
+
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, $"Escribir \"{query}\" e Intro no deshizo el último cambio.");
+    }
+
+    [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {
         ClickSample(300, 96);

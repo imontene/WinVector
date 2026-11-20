@@ -95,6 +95,16 @@ public sealed partial class MainWindow : Window
         RootGrid.SizeChanged += (_, _) => UpdateTitleBarInsets();
         UpdateToolStatus(ToolRail.Children.OfType<ToggleButton>().FirstOrDefault(b => b.IsChecked == true));
 
+        // Ctrl+K abre la paleta de comandos, también con el lienzo enfocado (el motor reenvía el atajo).
+        var palette = new KeyboardAccelerator { Key = VirtualKey.K, Modifiers = VirtualKeyModifiers.Control };
+        palette.Invoked += (_, args) =>
+        {
+            OpenCommandPalette();
+            args.Handled = true;
+        };
+        RootGrid.KeyboardAccelerators.Add(palette);
+        ViewModel.CommandPaletteRequested += (_, _) => OpenCommandPalette();
+
         // Ctrl++ y Ctrl+- (en el teclado principal y en el numérico) no tienen nombre en VirtualKey.
         AddAccelerator(ZoomInMenuItem, (VirtualKey)187, VirtualKey.Add);
         AddAccelerator(ZoomOutMenuItem, (VirtualKey)189, VirtualKey.Subtract);
@@ -133,6 +143,38 @@ public sealed partial class MainWindow : Window
     }
 
     private void OnArtboardLostFocus(object sender, RoutedEventArgs e) => ApplyArtboard();
+
+    private void OpenCommandPalette()
+    {
+        CommandSearch.Focus(FocusState.Keyboard);
+        CommandSearch.ItemsSource = ViewModel.Commands.Search(CommandSearch.Text);
+        CommandSearch.IsSuggestionListOpen = !string.IsNullOrWhiteSpace(CommandSearch.Text);
+    }
+
+    private void OnCommandSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+        {
+            sender.ItemsSource = ViewModel.Commands.Search(sender.Text);
+        }
+    }
+
+    /// <summary>Intro o un clic en un resultado: ejecuta la orden elegida, o la primera que coincide.</summary>
+    private void OnCommandSearchSubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        var found = ViewModel.Commands.Search(args.QueryText);
+        var entry = args.ChosenSuggestion as CommandEntry ?? (found.Count > 0 ? found[0] : null);
+        if (entry is null)
+        {
+            return;
+        }
+
+        sender.Text = string.Empty;
+        sender.ItemsSource = null;
+        // El foco vuelve al lienzo antes de ejecutar: las órdenes del lienzo se hacen ahí.
+        EngineCanvas.Focus(FocusState.Programmatic);
+        entry.Execute();
+    }
 
     /// <summary>Texto de una pintura en el panel: el color, "Ninguno", "Varios" o "Degradado o patrón".</summary>
     private string PaintText(string? paint) => paint switch
