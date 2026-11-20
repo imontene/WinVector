@@ -163,7 +163,7 @@
     <value>Pen</value>
   </data>
   <data name="ToolRectangle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Rectangle (R)</value>
+    <value>Rectangle (R): drag to draw; Shift for a square; Alt to draw from the center</value>
   </data>
   <data name="ToolRectangle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Rectangle</value>
@@ -740,5 +740,14 @@ Licensed under the Apache License 2.0.</value>
   </data>
   <data name="EngineRestartNeeded" xml:space="preserve">
     <value>Close and reopen WinVector. You will be offered to recover your unsaved changes.</value>
+  </data>
+  <data name="HistoryActionCreateRectangle" xml:space="preserve">
+    <value>create rectangle</value>
+  </data>
+  <data name="PaletteNameToolRectangle" xml:space="preserve">
+    <value>Rectangle tool</value>
+  </data>
+  <data name="PaletteShortcutToolRectangle" xml:space="preserve">
+    <value>R</value>
   </data>
 </root>

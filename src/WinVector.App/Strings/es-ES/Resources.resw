@@ -164,7 +164,7 @@
     <value>Pluma</value>
   </data>
   <data name="ToolRectangle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Rectángulo (R)</value>
+    <value>Rectángulo (R): arrastra para dibujar; con Mayús, un cuadrado; con Alt, desde el centro</value>
   </data>
   <data name="ToolRectangle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Rectángulo</value>
@@ -742,5 +742,14 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="EngineRestartNeeded" xml:space="preserve">
     <value>Cierra y vuelve a abrir WinVector. Tus cambios sin guardar se te ofrecerán para recuperarlos.</value>
+  </data>
+  <data name="HistoryActionCreateRectangle" xml:space="preserve">
+    <value>crear un rectángulo</value>
+  </data>
+  <data name="PaletteNameToolRectangle" xml:space="preserve">
+    <value>Herramienta Rectángulo</value>
+  </data>
+  <data name="PaletteShortcutToolRectangle" xml:space="preserve">
+    <value>R</value>
   </data>
 </root>

@@ -22,11 +22,14 @@ import sampleSvg from "./sample.svg?raw";
 import { describeElement, selectionBounds, selectionScreenRect } from "./selection";
 import {
   cursorForTool,
+  DEFAULT_SHAPE_STYLE,
   installEyedropper,
   installNavigation,
   installSelectTool,
+  installShapeTool,
   installShortcuts,
   trackModifiers,
+  type ShapeStyle,
 } from "./tools";
 import { copySelection, duplicate, pasteSvg, remove } from "./clipboard";
 import { applyStyle, readStyle } from "./style";
@@ -46,6 +49,8 @@ let marquee: Rect | null = null;
 let activeTool: ToolName = "select";
 /** Ajuste a la cuadrícula: lo usarán las herramientas que mueven y dibujan. */
 let snapToGrid = false;
+/** Estilo con el que nacen las formas nuevas: el último que se ha aplicado. */
+let shapeStyle: ShapeStyle = DEFAULT_SHAPE_STYLE;
 /** Último zoom y última mesa de trabajo anunciados de cada documento, para avisar solo si cambian. */
 const announcedZoom = new Map<string, number>();
 const announcedArtboard = new Map<string, ArtboardSettings>();
@@ -272,6 +277,12 @@ bridge.handle("object.ungroup", ({ documentId }) =>
   })),
 );
 
+/** Separación de la cuadrícula en unidades del documento si está activo el ajuste, o `null`. */
+function snapSpacing(): number | null {
+  const scale = documents.active?.viewport.documentToScreen()?.a;
+  return snapToGrid && scale ? gridSpacing(scale) : null;
+}
+
 /** Duplica la selección y selecciona las copias. */
 function duplicateSelection(documentId: string): boolean {
   const { document: doc, selection } = documents.open(documentId);
@@ -344,6 +355,11 @@ bridge.handle("clipboard.paste", ({ documentId, svg }) =>
 bridge.handle("selection.setStyle", ({ documentId, ...style }) =>
   withDocumentErrors(() => {
     const { document: doc, selection } = documents.open(documentId);
+    shapeStyle = {
+      fill: style.fill ?? shapeStyle.fill,
+      stroke: style.stroke ?? shapeStyle.stroke,
+      strokeWidth: style.strokeWidth ?? shapeStyle.strokeWidth,
+    };
     return { documentId, changed: applyStyle(selection.items, style, doc.history) };
   }),
 );
@@ -401,19 +417,18 @@ bridge.handle("artboard.set", ({ documentId, width, height, viewBox }) =>
   }),
 );
 
+/** Documento visible con su selección y su historial, para las herramientas. */
+function activeDocument() {
+  const active = documents.active;
+  return active
+    ? { root: active.document.root, selection: active.selection, history: active.document.history }
+    : null;
+}
+
 trackModifiers(window);
 installEyedropper(window, {
   tool: () => activeTool,
-  active: () => {
-    const active = documents.active;
-    return active
-      ? {
-          root: active.document.root,
-          selection: active.selection,
-          history: active.document.history,
-        }
-      : null;
-  },
+  active: activeDocument,
 });
 installShortcuts(window, {
   undo: () => documents.active?.document.history.undo(),
@@ -457,21 +472,17 @@ installNavigation(window, {
     refreshOverlay();
   },
 });
+// Después de la navegación: la barra espaciadora y el botón central desplazan con cualquier
+// herramienta.
+installShapeTool(window, {
+  tool: () => activeTool,
+  active: activeDocument,
+  snapSpacing,
+  style: () => shapeStyle,
+});
 installSelectTool(document, {
-  active: () => {
-    const active = documents.active;
-    return active
-      ? {
-          root: active.document.root,
-          selection: active.selection,
-          history: active.document.history,
-        }
-      : null;
-  },
-  snapSpacing: () => {
-    const scale = documents.active?.viewport.documentToScreen()?.a;
-    return snapToGrid && scale ? gridSpacing(scale) : null;
-  },
+  active: activeDocument,
+  snapSpacing,
   showMarquee: (rect) => {
     marquee = rect;
     refreshOverlay();

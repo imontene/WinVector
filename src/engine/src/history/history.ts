@@ -132,6 +132,30 @@ export class History {
     if (step) this.#push(step, this.#openMerged);
   }
 
+  /**
+   * Anula la acción empezada con `begin`: deshace sus cambios y no deja ningún paso (`Esc` en mitad
+   * de un gesto que crea elementos). Una acción que se estaba fundiendo con el paso anterior no se
+   * puede separar de él: se cierra como con `commit`.
+   */
+  rollback(): void {
+    if (this.#openDepth === 0) return;
+    this.#host.flush();
+    const step = this.#open;
+    const merged = this.#openMerged;
+    this.#open = null;
+    this.#openDepth = 0;
+    if (!step) return;
+    if (merged) {
+      this.#push(step, true);
+      return;
+    }
+    finalize(step);
+    this.#host.applyHistory(() => {
+      revert(step);
+    }, step.revisionBefore);
+    this.#mergeable = false;
+  }
+
   /** Ejecuta `change` como un solo paso con el nombre `action` (ver `begin`). */
   transact<T>(action: string, change: () => T, mergeKey?: string): T {
     this.begin(action, mergeKey);
