@@ -1,0 +1,73 @@
+name: Prototipo de texto
+
+# Prototipo de edición de texto del issue #35 (ADR 0006): comprueba los dos enfoques y mide su
+# precisión en Windows con Edge (el motor de WebView2 y las fuentes de Windows) y en Linux.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/engine/prototipos/**"
+      - "tools/prototipos/**"
+      - ".github/workflows/prototipo-texto.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prototipo-texto-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: src/engine
+
+jobs:
+  measure:
+    name: Medir (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            channel: msedge
+          - os: ubuntu-latest
+            channel: ""
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: src/engine/.nvmrc
+          cache: npm
+          cache-dependency-path: src/engine/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar Chromium para Playwright
+        if: matrix.channel == ''
+        run: npx playwright install --with-deps chromium
+
+      - name: Probar y medir
+        env:
+          PROTOTYPE_BROWSER_CHANNEL: ${{ matrix.channel }}
+        run: npm run prototipos
+
+      - name: Resumen
+        if: always()
+        shell: bash
+        run: |
+          for file in prototipos/texto/resultados/*.json; do node ../../tools/prototipos/resumen-texto.mjs "$file"; done
+
+      - name: Publicar los resultados
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: prototipo-texto-${{ matrix.os }}
+          path: src/engine/prototipos/texto/resultados
+          if-no-files-found: ignore
+          retention-days: 30

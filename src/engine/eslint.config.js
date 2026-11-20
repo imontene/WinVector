@@ -4,7 +4,16 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "playwright-report", "test-results", "coverage", "perf/resultados"] },
+  {
+    ignores: [
+      "dist",
+      "playwright-report",
+      "test-results",
+      "coverage",
+      "perf/resultados",
+      "prototipos/texto/resultados",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,

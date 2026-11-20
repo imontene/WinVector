@@ -17,6 +17,7 @@
     "test:e2e": "playwright test",
     "perf": "playwright test --config playwright.perf.config.ts",
     "perf:compare": "node ../../tools/perf/compare.mjs perf/resultados/motor.json",
+    "prototipos": "playwright test --config playwright.prototipos.config.ts",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",

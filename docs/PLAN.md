@@ -241,6 +241,7 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 
 ### Fase 4 · Texto (M)
 - Herramienta de texto, edición en el lienzo, varias líneas, fuentes del sistema, propiedades tipográficas.
+- Edición con cursor y selección propios sobre el SVG y un `textarea` invisible para la entrada ([ADR 0006](adr/0006-edicion-de-texto.md)).
 
 ### Fase 5 · Degradados (M)
 - Degradados lineales y radiales, editor de paradas, manejadores en el lienzo, biblioteca y limpieza de `defs`.
@@ -320,7 +321,7 @@ Tras el MVP 1 se podrán abordar las siguientes funciones. El orden es una propu
 | Latencia del puente al arrastrar | Las interacciones de puntero se resuelven por completo en el motor; al shell solo llegan eventos resumidos y limitados en frecuencia |
 | Documentos grandes lentos | Medición desde la Fase 1, superposición de edición separada del documento, actualización solo de los elementos afectados |
 | Daño a SVG de terceros | Preservación de contenido desconocido y pruebas de ida y vuelta en CI desde la Fase 1 |
-| Medición y edición de texto en el lienzo | Prototipo temprano en la Fase 1 para validar el enfoque antes de la Fase 4 |
+| Medición y edición de texto en el lienzo | Prototipo temprano en la Fase 1 para validar el enfoque antes de la Fase 4: hecho, enfoque elegido en el [ADR 0006](adr/0006-edicion-de-texto.md) |
 | Dos lenguajes en el equipo | Contrato generado, límites claros y un ADR por decisión transversal |
 | Coste y trámites de firma de código | Decisión anticipada antes de la Fase 6 |
 

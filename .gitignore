@@ -18,6 +18,7 @@ coverage/
 playwright-report/
 test-results/
 src/engine/perf/resultados/
+src/engine/prototipos/texto/resultados/
 .vitest/
 
 # Sistema
