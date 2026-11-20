@@ -27,6 +27,12 @@
       "payload": "ShapeConverted"
     },
     {
+      "name": "canvas.contextMenu",
+      "kind": "event",
+      "description": "El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado.",
+      "payload": "ContextMenuRequest"
+    },
+    {
       "name": "selection.selectAll",
       "kind": "command",
       "description": "Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno.",

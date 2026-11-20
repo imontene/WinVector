@@ -101,6 +101,19 @@ public sealed record ClipboardPasteResult(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("count")] int Count);
 
+/// <summary>Petición de abrir el menú contextual del lienzo. El motor ya ha seleccionado lo que había bajo el puntero.</summary>
+/// <param name="DocumentId">Documento visible.</param>
+/// <param name="X">Posición horizontal del menú en el lienzo, en píxeles independientes del dispositivo desde su esquina superior izquierda.</param>
+/// <param name="Y">Posición vertical del menú en el lienzo, en píxeles independientes del dispositivo.</param>
+/// <param name="Keyboard">True si se pidió con el teclado (Mayús+F10 o la tecla de menú): el menú se abre junto a la selección.</param>
+/// <param name="CanEditVertices">True si lo seleccionado es una sola forma que se puede editar por vértices.</param>
+public sealed record ContextMenuRequest(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("x")] double X,
+    [property: JsonPropertyName("y")] double Y,
+    [property: JsonPropertyName("keyboard")] bool Keyboard,
+    [property: JsonPropertyName("canEditVertices")] bool CanEditVertices);
+
 /// <summary>Texto de un documento para guardarlo.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Svg">Texto completo del SVG.</param>
@@ -573,6 +586,9 @@ public static class BridgeEvents
     /// <summary>Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado.</summary>
     public static readonly BridgeEvent<ShapeConverted> ShapeConverted = new("shape.converted");
 
+    /// <summary>El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado.</summary>
+    public static readonly BridgeEvent<ContextMenuRequest> CanvasContextMenu = new("canvas.contextMenu");
+
     /// <summary>El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno.</summary>
     public static readonly BridgeEvent<BridgeError> Error = new("error");
 
@@ -613,6 +629,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(ClipboardContent))]
 [JsonSerializable(typeof(ClipboardPaste))]
 [JsonSerializable(typeof(ClipboardPasteResult))]
+[JsonSerializable(typeof(ContextMenuRequest))]
 [JsonSerializable(typeof(DocumentContent))]
 [JsonSerializable(typeof(DocumentLoad))]
 [JsonSerializable(typeof(DocumentLoadResult))]

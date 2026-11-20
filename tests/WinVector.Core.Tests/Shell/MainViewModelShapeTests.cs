@@ -156,4 +156,38 @@ public sealed class MainViewModelShapeTests : IDisposable
         _transport.SendEvent("shape.converted", """{"documentId":"otro","from":"rect"}""");
         Assert.AreEqual(string.Empty, _viewModel.CanvasNotice, "Un aviso de otro documento no se muestra.");
     }
+
+    [TestMethod]
+    public async Task ElLienzoPideElMenuContextualYEditarVerticesEligeLaHerramienta()
+    {
+        await ReadyAsync();
+        ContextMenuRequestedEventArgs? requested = null;
+        _viewModel.ContextMenuRequested += (_, e) => requested = e;
+
+        Select("polygon", """{"type":"polygon","cx":50,"cy":50,"r":20,"sides":6,"rotation":0,"rounding":0}""");
+        Assert.IsTrue(_viewModel.EditVerticesCommand.CanExecute(null));
+        _transport.SendEvent("canvas.contextMenu", """{"documentId":"d1","x":120.5,"y":80,"keyboard":false,"canEditVertices":true}""");
+
+        Assert.IsNotNull(requested);
+        Assert.AreEqual(120.5, requested.X);
+        Assert.AreEqual(80, requested.Y);
+        Assert.IsFalse(requested.Keyboard);
+
+        await _viewModel.EditVerticesAsync();
+        await _viewModel.EngineWork;
+        Assert.AreEqual(ToolName.Vertex, _viewModel.ActiveTool);
+
+        Select("circle", """{"type":"circle","cx":5,"cy":6,"r":7}""");
+        Assert.IsFalse(_viewModel.EditVerticesCommand.CanExecute(null), "Un círculo no se edita por vértices.");
+    }
+
+    [TestMethod]
+    public async Task UnMenuDeOtroDocumentoNoSeAbre()
+    {
+        await ReadyAsync();
+        var opened = false;
+        _viewModel.ContextMenuRequested += (_, _) => opened = true;
+        _transport.SendEvent("canvas.contextMenu", """{"documentId":"otro","x":1,"y":2,"keyboard":true,"canEditVertices":false}""");
+        Assert.IsFalse(opened);
+    }
 }

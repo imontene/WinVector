@@ -933,4 +933,97 @@ Licensed under the Apache License 2.0.</value>
   <data name="HistoryActionCreatePolyline" xml:space="preserve">
     <value>create open shape</value>
   </data>
+  <data name="ContextCut.Text" xml:space="preserve">
+    <value>Cut</value>
+  </data>
+  <data name="ContextCut.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+X</value>
+  </data>
+  <data name="ContextCopy.Text" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="ContextCopy.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+C</value>
+  </data>
+  <data name="ContextPaste.Text" xml:space="preserve">
+    <value>Paste</value>
+  </data>
+  <data name="ContextPaste.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+V</value>
+  </data>
+  <data name="ContextDuplicate.Text" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="ContextDuplicate.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+D</value>
+  </data>
+  <data name="ContextDelete.Text" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="ContextDelete.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Del</value>
+  </data>
+  <data name="ContextSelectAll.Text" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="ContextSelectAll.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+A</value>
+  </data>
+  <data name="ContextGroup.Text" xml:space="preserve">
+    <value>Group</value>
+  </data>
+  <data name="ContextGroup.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+G</value>
+  </data>
+  <data name="ContextUngroup.Text" xml:space="preserve">
+    <value>Ungroup</value>
+  </data>
+  <data name="ContextUngroup.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+Shift+G</value>
+  </data>
+  <data name="ContextBringToFront.Text" xml:space="preserve">
+    <value>Bring to front</value>
+  </data>
+  <data name="ContextBringToFront.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+Shift+PgUp</value>
+  </data>
+  <data name="ContextBringForward.Text" xml:space="preserve">
+    <value>Bring forward</value>
+  </data>
+  <data name="ContextBringForward.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+PgUp</value>
+  </data>
+  <data name="ContextSendBackward.Text" xml:space="preserve">
+    <value>Send backward</value>
+  </data>
+  <data name="ContextSendBackward.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+PgDn</value>
+  </data>
+  <data name="ContextSendToBack.Text" xml:space="preserve">
+    <value>Send to back</value>
+  </data>
+  <data name="ContextSendToBack.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+Shift+PgDn</value>
+  </data>
+  <data name="ContextObjectToPath.Text" xml:space="preserve">
+    <value>Object to path</value>
+  </data>
+  <data name="ContextObjectToPath.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+Shift+C</value>
+  </data>
+  <data name="ContextEditVertices.Text" xml:space="preserve">
+    <value>Edit vertices</value>
+  </data>
+  <data name="ContextEditVertices.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>A</value>
+  </data>
+  <data name="ContextArrange.Text" xml:space="preserve">
+    <value>Arrange</value>
+  </data>
+  <data name="PaletteNameEditVertices" xml:space="preserve">
+    <value>Edit vertices</value>
+  </data>
+  <data name="PaletteShortcutEditVertices" xml:space="preserve">
+    <value>A</value>
+  </data>
 </root>

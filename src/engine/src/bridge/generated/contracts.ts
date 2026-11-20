@@ -75,6 +75,20 @@ export interface ClipboardPasteResult {
   readonly count: number;
 }
 
+/** Petición de abrir el menú contextual del lienzo. El motor ya ha seleccionado lo que había bajo el puntero. */
+export interface ContextMenuRequest {
+  /** Documento visible. */
+  readonly documentId: string;
+  /** Posición horizontal del menú en el lienzo, en píxeles independientes del dispositivo desde su esquina superior izquierda. */
+  readonly x: number;
+  /** Posición vertical del menú en el lienzo, en píxeles independientes del dispositivo. */
+  readonly y: number;
+  /** True si se pidió con el teclado (Mayús+F10 o la tecla de menú): el menú se abre junto a la selección. */
+  readonly keyboard: boolean;
+  /** True si lo seleccionado es una sola forma que se puede editar por vértices. */
+  readonly canEditVertices: boolean;
+}
+
 /** Texto de un documento para guardarlo. */
 export interface DocumentContent {
   /** Identificador del documento, asignado por la aplicación. */
@@ -486,6 +500,8 @@ export interface BridgeEvents {
   readonly "selection.changed": SelectionChanged;
   /** Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado. */
   readonly "shape.converted": ShapeConverted;
+  /** El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado. */
+  readonly "canvas.contextMenu": ContextMenuRequest;
   /** El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno. */
   readonly error: BridgeError;
   /** Un documento ha cambiado. La revisión identifica su estado: cambia con cada edición y, al deshacer o rehacer, vuelve a la de ese estado. */
@@ -536,6 +552,7 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "engine.ready",
   "selection.changed",
   "shape.converted",
+  "canvas.contextMenu",
   "error",
   "document.changed",
   "files.dropped",

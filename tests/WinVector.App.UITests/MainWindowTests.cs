@@ -433,6 +433,66 @@ public sealed class MainWindowTests
     }
 
     [TestMethod]
+    public void ClicDerechoEnElSolLoTraeAlFrenteYSeDeshace()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var sun = AppSession.SamplePoint(canvas, 300, 96);
+        Mouse.DoubleClick(sun);
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+
+        Mouse.RightClick(sun);
+        var arrange = Retry.WhileNull(() => Session.FindInApp("ContextArrange"), EngineTimeout, TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException("No se abrió el menú contextual.");
+        arrange.Patterns.ExpandCollapse.Pattern.Expand();
+        var front = Retry.WhileNull(() => Session.FindInApp("ContextBringToFront"), TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException("No aparece Traer al frente.");
+        front.Patterns.Invoke.Pattern.Invoke();
+
+        var undo = Session.GetById("UndoButton");
+        Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result, "Traer al frente no cambió nada.");
+        undo.Click();
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, "Deshacer no lo devolvió a su sitio.");
+    }
+
+    [TestMethod]
+    public void ClicDerechoSobreLaSeleccionLaAgrupa()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.Click(AppSession.SamplePoint(canvas, 300, 96));
+        Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout);
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
+        Session.WaitForName("SelectionStatus", name => name.StartsWith('2'), EngineTimeout);
+
+        // Sobre un objeto ya seleccionado, la selección no cambia: se agrupan los dos.
+        Mouse.RightClick(AppSession.SamplePoint(canvas, 120, 70));
+        var group = Retry.WhileNull(() => Session.FindInApp("ContextGroup"), EngineTimeout, TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException("No se abrió el menú contextual.");
+        group.Patterns.Invoke.Pattern.Invoke();
+
+        Assert.AreEqual("g", Session.WaitForName("SelectionStatus", name => name == "g", EngineTimeout));
+    }
+
+    [TestMethod]
+    public void MayusF10AbreElMenuContextualConElTeclado()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.Click(AppSession.SamplePoint(canvas, 300, 96));
+        Session.WaitForName("SelectionStatus", name => name == "g#fondo", EngineTimeout);
+
+        Keyboard.TypeSimultaneously(VirtualKeyShort.SHIFT, VirtualKeyShort.F10);
+
+        var duplicate = Retry.WhileNull(() => Session.FindInApp("ContextDuplicate"), EngineTimeout, TimeSpan.FromMilliseconds(250)).Result;
+        Assert.IsNotNull(duplicate, "Mayús+F10 no abrió el menú contextual.");
+        Keyboard.Type(VirtualKeyShort.ESCAPE);
+    }
+
+    [TestMethod]
     public void EscribirXEnElPanelMueveElSolYSePuedeDeshacer()
     {
         WaitForEngine();

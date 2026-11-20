@@ -328,6 +328,13 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "event",
+    id: "e6",
+    name: "canvas.contextMenu",
+    payload: { documentId: "d1", x: 10, y: 20, keyboard: false, canEditVertices: true },
+  },
+  {
+    ...base,
+    kind: "event",
     id: "e4",
     name: "error",
     payload: { code: "unknown-message", message: "Mensaje desconocido", relatedId: null },
@@ -422,6 +429,8 @@ function summarize(message: BridgeMessage): string {
       return `motor ${message.payload.engineVersion}`;
     case "shape.converted":
       return `${message.payload.from} pasa a polígono`;
+    case "canvas.contextMenu":
+      return `menú en ${String(message.payload.x)},${String(message.payload.y)}`;
     case "selection.changed":
       return `${String(message.payload.items.length)} seleccionados en ${message.payload.documentId}, dentro de ${String(message.payload.scope?.id)}`;
     case "document.changed":
@@ -493,6 +502,7 @@ describe("contrato del puente", () => {
       "forma r=12",
       "object.toPath d1",
       "star pasa a polígono",
+      "menú en 10,20",
       "error unknown-message",
     ]);
   });

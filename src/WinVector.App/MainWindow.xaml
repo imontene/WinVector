@@ -510,7 +510,89 @@
                 </StackPanel>
             </Border>
 
-            <controls:EngineCanvasView x:Name="EngineCanvas" Grid.Column="1" />
+            <!--
+                Menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). Lo pide el motor
+                (canvas.contextMenu) después de seleccionar lo que hay bajo el puntero; los atajos se
+                muestran como texto porque ya los atienden el menú principal y el motor.
+            -->
+            <controls:EngineCanvasView x:Name="EngineCanvas" Grid.Column="1">
+                <FlyoutBase.AttachedFlyout>
+                    <MenuFlyout x:Name="CanvasContextMenu">
+                        <MenuFlyoutItem
+                            x:Uid="ContextCut"
+                            AutomationProperties.AutomationId="ContextCut"
+                            Command="{x:Bind ViewModel.CutCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextCopy"
+                            AutomationProperties.AutomationId="ContextCopy"
+                            Command="{x:Bind ViewModel.CopyCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextPaste"
+                            AutomationProperties.AutomationId="ContextPaste"
+                            Command="{x:Bind ViewModel.PasteCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextDuplicate"
+                            AutomationProperties.AutomationId="ContextDuplicate"
+                            Command="{x:Bind ViewModel.DuplicateCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextDelete"
+                            AutomationProperties.AutomationId="ContextDelete"
+                            Command="{x:Bind ViewModel.DeleteCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextSelectAll"
+                            AutomationProperties.AutomationId="ContextSelectAll"
+                            Command="{x:Bind ViewModel.SelectAllCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleUnless(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutSeparator Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextGroup"
+                            AutomationProperties.AutomationId="ContextGroup"
+                            Command="{x:Bind ViewModel.GroupCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextUngroup"
+                            AutomationProperties.AutomationId="ContextUngroup"
+                            Command="{x:Bind ViewModel.UngroupCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutSubItem
+                            x:Uid="ContextArrange"
+                            AutomationProperties.AutomationId="ContextArrange"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}">
+                            <MenuFlyoutItem
+                                x:Uid="ContextBringToFront"
+                                AutomationProperties.AutomationId="ContextBringToFront"
+                                Command="{x:Bind ViewModel.BringToFrontCommand}" />
+                            <MenuFlyoutItem
+                                x:Uid="ContextBringForward"
+                                AutomationProperties.AutomationId="ContextBringForward"
+                                Command="{x:Bind ViewModel.BringForwardCommand}" />
+                            <MenuFlyoutItem
+                                x:Uid="ContextSendBackward"
+                                AutomationProperties.AutomationId="ContextSendBackward"
+                                Command="{x:Bind ViewModel.SendBackwardCommand}" />
+                            <MenuFlyoutItem
+                                x:Uid="ContextSendToBack"
+                                AutomationProperties.AutomationId="ContextSendToBack"
+                                Command="{x:Bind ViewModel.SendToBackCommand}" />
+                        </MenuFlyoutSubItem>
+                        <MenuFlyoutSeparator Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextObjectToPath"
+                            AutomationProperties.AutomationId="ContextObjectToPath"
+                            Command="{x:Bind ViewModel.ConvertToPathCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}" />
+                        <MenuFlyoutItem
+                            x:Uid="ContextEditVertices"
+                            AutomationProperties.AutomationId="ContextEditVertices"
+                            Command="{x:Bind ViewModel.EditVerticesCommand}"
+                            Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.CanEditVertices), Mode=OneWay}" />
+                    </MenuFlyout>
+                </FlyoutBase.AttachedFlyout>
+            </controls:EngineCanvasView>
 
             <Border
                 Grid.Column="2"
