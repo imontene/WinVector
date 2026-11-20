@@ -62,6 +62,7 @@ public sealed partial class MainWindow : Window
             clipboard: new WinUIClipboard(),
             recovery: _recovery);
 
+        StartupTrace.Start(AppDataFolder());
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
@@ -132,7 +133,7 @@ public sealed partial class MainWindow : Window
             }
             else if (e.PropertyName == nameof(MainViewModel.IsEngineReady) && ViewModel.IsEngineReady)
             {
-                StartupTrace.EngineReady(AppDataFolder());
+                StartupTrace.Mark(StartupTrace.Engine);
             }
         };
     }
@@ -350,8 +351,9 @@ public sealed partial class MainWindow : Window
 
     private void OnShapeFieldChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
-        // La clave del campo va en Tag: no depende de cómo asigna ItemsRepeater el DataContext.
-        if (sender.Tag is string key && !double.IsNaN(args.NewValue))
+        // Sin valor anterior es el primero que pone el enlace, no una edición. Los límites de cada campo
+        // los comprueba el modelo: con Minimum y Maximum, NumberBox ajustaría el valor por su cuenta.
+        if (sender.Tag is string key && !double.IsNaN(args.NewValue) && !double.IsNaN(args.OldValue))
         {
             ViewModel.SetShapeField(key, args.NewValue);
         }
