@@ -42,6 +42,7 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Copias de recuperación de los documentos con cambios (#24).</summary>
     private readonly RecoveryStore _recovery = new(Path.Combine(AppDataFolder(), "Recuperacion"));
+    private readonly StartupTrace _startup = new(AppDataFolder());
 
     /// <summary>Mientras se prepara el selector al abrirlo, sus cambios no se aplican a la selección.</summary>
     private bool _preparingPicker;
@@ -125,6 +126,10 @@ public sealed partial class MainWindow : Window
             {
                 ShowActiveTool(ViewModel.ActiveTool);
             }
+            else if (e.PropertyName == nameof(MainViewModel.IsEngineReady) && ViewModel.IsEngineReady)
+            {
+                _startup.EngineReady();
+            }
         };
     }
 
@@ -135,6 +140,7 @@ public sealed partial class MainWindow : Window
     private async void OnFirstLoaded(object sender, RoutedEventArgs e)
     {
         RootGrid.Loaded -= OnFirstLoaded;
+        _startup.WindowLoaded();
 #pragma warning disable CA1031 // La recuperación nunca debe impedir que la aplicación arranque.
         try
         {

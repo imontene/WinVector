@@ -1,6 +1,7 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
-using FlaUI.Core.Tools;
+using FlaUI.Core;
 
 namespace WinVector.App.UITests;
 
@@ -9,6 +10,11 @@ namespace WinVector.App.UITests;
 /// En la CI se ejecuta aparte, justo después de instalar el paquete, para que el primer arranque sea
 /// en frío; si <see cref="OutputVariable"/> indica un archivo, escribe ahí los resultados en JSON.
 /// </summary>
+/// <remarks>
+/// No usa UI Automation: consultar el árbol de accesibilidad activa la de WebView2 y retrasa la
+/// carga del lienzo. La ventana se detecta por su identificador de ventana y el motor lo anota la
+/// propia aplicación (StartupTrace) cuando existe el archivo de petición en su carpeta de datos.
+/// </remarks>
 [TestClass]
 [TestCategory(Category)]
 public sealed class StartupTests
@@ -16,7 +22,9 @@ public sealed class StartupTests
     public const string Category = "Rendimiento";
     public const string OutputVariable = "WINVECTOR_PERF_OUTPUT";
 
-    private static readonly TimeSpan EngineStartTimeout = TimeSpan.FromSeconds(60);
+    private const string RequestFile = "medir-arranque";
+    private const string ResultFile = "arranque.json";
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -29,49 +37,127 @@ public sealed class StartupTests
     [TestMethod]
     public void MideElArranqueEnFrioYEnCaliente()
     {
-        var cold = Measure();
-        var warm = Measure();
-
-        TestContext.WriteLine($"En frío: {cold}");
-        TestContext.WriteLine($"En caliente: {warm}");
-
-        var output = Environment.GetEnvironmentVariable(OutputVariable);
-        if (!string.IsNullOrEmpty(output))
+        var aumid = Environment.GetEnvironmentVariable(AppSession.AumidVariable);
+        if (string.IsNullOrEmpty(aumid))
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
-            var json = JsonSerializer.Serialize(new { measuredAt = DateTimeOffset.UtcNow, cold, warm }, JsonOptions);
-            File.WriteAllText(output, json + "\n");
+            Assert.Inconclusive($"Instala WinVector y define {AppSession.AumidVariable} para medir el arranque.");
+        }
+
+        var data = Path.GetDirectoryName(AppSession.RecoveryFolder(aumid))!;
+        Directory.CreateDirectory(data);
+        var request = Path.Combine(data, RequestFile);
+        File.WriteAllText(request, string.Empty);
+        try
+        {
+            var cold = Measure(aumid, data);
+            var warm = Measure(aumid, data);
+            TestContext.WriteLine($"En frío: {cold}");
+            TestContext.WriteLine($"En caliente: {warm}");
+
+            var output = Environment.GetEnvironmentVariable(OutputVariable);
+            if (!string.IsNullOrEmpty(output))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
+                File.WriteAllText(output, JsonSerializer.Serialize(new { measuredAt = DateTimeOffset.UtcNow, cold, warm }, JsonOptions) + "\n");
+            }
+        }
+        finally
+        {
+            File.Delete(request);
         }
     }
 
     /// <summary>Arranca la aplicación, mide cuándo está lista y la cierra.</summary>
-    private static Startup Measure()
+    private static Startup Measure(string aumid, string data)
     {
-        using var session = AppSession.Start();
-        var window = session.WindowShownAfter ?? session.SinceLaunch;
-        var ui = session.SinceLaunch;
+        var result = Path.Combine(data, ResultFile);
+        File.Delete(result);
+        if (Directory.Exists(AppSession.RecoveryFolder(aumid)))
+        {
+            Directory.Delete(AppSession.RecoveryFolder(aumid), recursive: true);
+        }
 
-        // El motor está listo cuando responde al ping: la barra de estado muestra la latencia.
-        var ready = Retry.WhileFalse(
-            () => !string.IsNullOrEmpty(session.FindById("EngineStatus")?.Properties.HelpText.ValueOrDefault),
-            EngineStartTimeout,
-            TimeSpan.FromMilliseconds(20)).Result;
-        Assert.IsTrue(ready, "El motor no llegó a estar listo.");
-        var engine = session.SinceLaunch;
+        var launched = DateTime.UtcNow;
+        var watch = Stopwatch.StartNew();
+        using var application = Application.LaunchStoreApp(aumid);
+        using var process = Process.GetProcessById(application.ProcessId);
+        var processStarted = process.StartTime.ToUniversalTime();
 
-        return new Startup(Milliseconds(window), Milliseconds(ui), Milliseconds(engine));
+        // La ventana: cuando el proceso tiene una ventana principal visible.
+        double? windowMs = null;
+        while (watch.Elapsed < Timeout && windowMs is null)
+        {
+            process.Refresh();
+            Assert.IsFalse(process.HasExited, "La aplicación se cerró al arrancar.");
+            if (process.MainWindowHandle != IntPtr.Zero)
+            {
+                windowMs = watch.Elapsed.TotalMilliseconds;
+            }
+            else
+            {
+                Thread.Sleep(5);
+            }
+        }
+
+        Assert.IsNotNull(windowMs, "La ventana no apareció.");
+
+        // El motor: lo anota la aplicación, en milisegundos desde que empezó el proceso.
+        while (watch.Elapsed < Timeout && !File.Exists(result))
+        {
+            Thread.Sleep(20);
+        }
+
+        Assert.IsTrue(File.Exists(result), "La aplicación no anotó cuándo estuvo listo el motor.");
+        using var times = JsonDocument.Parse(ReadShared(result));
+        var startOffset = Math.Max(0, (processStarted - launched).TotalMilliseconds);
+        var startup = new Startup(
+            (int)Math.Round(windowMs.Value),
+            (int)Math.Round(startOffset + times.RootElement.GetProperty("windowMs").GetDouble()),
+            (int)Math.Round(startOffset + times.RootElement.GetProperty("engineMs").GetDouble()));
+
+        application.Close();
+        if (!process.WaitForExit(TimeSpan.FromSeconds(10)))
+        {
+            application.Kill();
+        }
+
+        return startup;
     }
 
-    private static int Milliseconds(TimeSpan time) => (int)Math.Round(time.TotalMilliseconds);
+    /// <summary>Lee el archivo aunque la aplicación aún lo tenga abierto.</summary>
+    private static string ReadShared(string path)
+    {
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            try
+            {
+                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var reader = new StreamReader(stream);
+                var text = reader.ReadToEnd();
+                if (text.Length > 0)
+                {
+                    return text;
+                }
+            }
+            catch (IOException)
+            {
+                // La aplicación aún lo está escribiendo.
+            }
+
+            Thread.Sleep(20);
+        }
+
+        throw new AssertFailedException($"No se pudo leer {path}.");
+    }
 
     /// <summary>Tiempos desde que se pide arrancar la aplicación, en milisegundos.</summary>
     /// <param name="WindowMs">Hasta que se ve la ventana principal.</param>
-    /// <param name="UiMs">Hasta que su interfaz responde a UI Automation.</param>
+    /// <param name="ContentMs">Hasta que la ventana ha cargado su contenido.</param>
     /// <param name="EngineMs">Hasta que el motor del lienzo responde.</param>
-    private sealed record Startup(int WindowMs, int UiMs, int EngineMs)
+    private sealed record Startup(int WindowMs, int ContentMs, int EngineMs)
     {
         public override string ToString() => string.Create(
             CultureInfo.InvariantCulture,
-            $"ventana {WindowMs} ms, interfaz {UiMs} ms, motor {EngineMs} ms");
+            $"ventana {WindowMs} ms, contenido {ContentMs} ms, motor {EngineMs} ms");
     }
 }
