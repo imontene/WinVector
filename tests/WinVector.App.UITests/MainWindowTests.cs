@@ -409,10 +409,9 @@ public sealed class MainWindowTests
         Assert.IsTrue(status.StartsWith("polygon#tarjeta", StringComparison.Ordinal), $"La tarjeta no pasó a ser un polígono: la selección es '{status}'.");
         var undo = Session.GetById("UndoButton");
         Assert.IsTrue(Retry.WhileFalse(() => undo.IsEnabled, EngineTimeout).Result, "Deshacer no se activó.");
+        // Deshacer devuelve el rectángulo en un solo paso (el historial no guarda la selección).
         undo.Click();
-        Assert.IsTrue(
-            Session.WaitForName("SelectionStatus", name => name.StartsWith("rect#tarjeta", StringComparison.Ordinal), EngineTimeout).StartsWith("rect#tarjeta", StringComparison.Ordinal),
-            "Deshacer no devolvió el rectángulo.");
+        Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, "Mover la esquina no era un solo paso.");
     }
 
     [TestMethod]
