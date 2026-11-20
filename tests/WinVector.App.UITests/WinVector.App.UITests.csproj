@@ -18,6 +18,8 @@
   <ItemGroup>
     <PackageReference Include="FlaUI.UIA3" />
     <PackageReference Include="MSTest" />
+    <!-- Para encontrar el proceso de renderizado del lienzo y simular que falla (#24). -->
+    <PackageReference Include="System.Management" />
   </ItemGroup>
 
 </Project>

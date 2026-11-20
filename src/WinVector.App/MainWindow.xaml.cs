@@ -40,6 +40,9 @@ public sealed partial class MainWindow : Window
     private readonly WinUIShellDialogs _dialogs;
     private IDisposable? _bridgeAttachment;
 
+    /// <summary>Copias de recuperación de los documentos con cambios (#24).</summary>
+    private readonly RecoveryStore _recovery = new(Path.Combine(AppDataFolder(), "Recuperacion"));
+
     /// <summary>Mientras se prepara el selector al abrirlo, sus cambios no se aplican a la selección.</summary>
     private bool _preparingPicker;
 
@@ -56,7 +59,8 @@ public sealed partial class MainWindow : Window
             _dialogs,
             new RecentFiles(new TextFileRecentFilesStore(Path.Combine(AppDataFolder(), "archivos-recientes.txt"))),
             App.Logging.CreateLogger<MainViewModel>(),
-            clipboard: new WinUIClipboard());
+            clipboard: new WinUIClipboard(),
+            recovery: _recovery);
 
         InitializeComponent();
 
@@ -76,8 +80,12 @@ public sealed partial class MainWindow : Window
             _bridgeAttachment = ViewModel.AttachBridge(bridge);
         };
         EngineCanvas.FilesDropped += async (_, paths) => await OpenFilesAsync(paths);
+        EngineCanvas.EngineFailed += (_, reloading) => ViewModel.OnEngineFailed(reloading);
         Closed += (_, _) =>
         {
+            // Cierre normal: las copias de recuperación de esta sesión ya no hacen falta.
+            ViewModel.EndRecovery();
+            _recovery.Dispose();
             _bridgeAttachment?.Dispose();
             _dialogs.Dispose();
         };
@@ -92,6 +100,7 @@ public sealed partial class MainWindow : Window
 #endif
 
         RootGrid.Loaded += (_, _) => UpdateTitleBarInsets();
+        RootGrid.Loaded += OnFirstLoaded;
         RootGrid.SizeChanged += (_, _) => UpdateTitleBarInsets();
         UpdateToolStatus(ToolRail.Children.OfType<ToggleButton>().FirstOrDefault(b => b.IsChecked == true));
 
@@ -117,6 +126,26 @@ public sealed partial class MainWindow : Window
                 ShowActiveTool(ViewModel.ActiveTool);
             }
         };
+    }
+
+    /// <summary>
+    /// Al mostrarse la ventana: empieza a guardar copias de recuperación y, si la ejecución anterior
+    /// terminó de forma inesperada, ofrece recuperar sus documentos.
+    /// </summary>
+    private async void OnFirstLoaded(object sender, RoutedEventArgs e)
+    {
+        RootGrid.Loaded -= OnFirstLoaded;
+#pragma warning disable CA1031 // La recuperación nunca debe impedir que la aplicación arranque.
+        try
+        {
+            ViewModel.StartRecovery();
+            await ViewModel.OfferRecoveryAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"No se pudo preparar la recuperación de documentos: {ex}");
+        }
+#pragma warning restore CA1031
     }
 
     private static void AddAccelerator(MenuFlyoutItem item, params VirtualKey[] keys)

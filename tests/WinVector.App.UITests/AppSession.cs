@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Diagnostics;
 using System.Drawing;
 using FlaUI.Core;
@@ -56,12 +57,19 @@ internal sealed class AppSession : IDisposable
 
     /// <summary>Arranca WinVector o marca la prueba como no concluyente si no está instalado.</summary>
     /// <param name="arguments">Argumentos de arranque, por ejemplo la ruta de un archivo para abrir.</param>
-    public static AppSession Start(string? arguments = null)
+    public static AppSession Start(string? arguments = null, bool keepRecovery = false)
     {
         var aumid = Environment.GetEnvironmentVariable(AumidVariable);
         if (string.IsNullOrEmpty(aumid))
         {
             Assert.Inconclusive($"Instala WinVector y define {AumidVariable} para ejecutar las pruebas de interfaz.");
+        }
+
+        // Una prueba que termina con cambios sin guardar cierra la aplicación a la fuerza y deja copias
+        // de recuperación: la siguiente no debe encontrarse con "¿Recuperar documentos?".
+        if (!keepRecovery)
+        {
+            DeleteRecoveryCopies(aumid);
         }
 
         var application = Application.LaunchStoreApp(aumid, arguments ?? string.Empty);
@@ -184,6 +192,79 @@ internal sealed class AppSession : IDisposable
         var path = Path.Combine(folder, $"{name}.png");
         FlaUI.Core.Capturing.Capture.Screen().ToFile(path);
         context.AddResultFile(path);
+    }
+
+    /// <summary>
+    /// Carpeta de las copias de recuperación de la aplicación instalada: la carpeta local del paquete
+    /// (%LOCALAPPDATA%\Packages\&lt;familia&gt;\LocalState\Recuperacion).
+    /// </summary>
+    public static string RecoveryFolder(string aumid) =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Packages",
+            aumid.Split('!')[0],
+            "LocalState",
+            "Recuperacion");
+
+    private static void DeleteRecoveryCopies(string aumid)
+    {
+        var folder = RecoveryFolder(aumid);
+        if (Directory.Exists(folder))
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>Mata la aplicación, como un cierre inesperado: no pregunta nada ni guarda nada.</summary>
+    public void Kill()
+    {
+        var processId = Application.ProcessId;
+        Application.Kill();
+        WaitForExit(processId);
+    }
+
+    /// <summary>
+    /// Mata los procesos de renderizado de WebView2 de esta aplicación, como si el lienzo fallara.
+    /// Devuelve cuántos ha matado.
+    /// </summary>
+    public int KillCanvasRenderers()
+    {
+        var killed = 0;
+        using var searcher = new System.Management.ManagementObjectSearcher(
+            "SELECT ProcessId, ParentProcessId, CommandLine FROM Win32_Process WHERE Name = 'msedgewebview2.exe'");
+        var processes = searcher.Get().Cast<System.Management.ManagementObject>()
+            .Select(process => (
+                Id: Convert.ToInt32(process["ProcessId"], CultureInfo.InvariantCulture),
+                Parent: Convert.ToInt32(process["ParentProcessId"], CultureInfo.InvariantCulture),
+                CommandLine: process["CommandLine"] as string ?? string.Empty))
+            .ToList();
+        // Los procesos de WebView2 de la aplicación descienden del navegador que lanzó su proceso.
+        var ours = new HashSet<int> { Application.ProcessId };
+        bool added;
+        do
+        {
+            added = false;
+            foreach (var process in processes.Where(process => ours.Contains(process.Parent) && ours.Add(process.Id)))
+            {
+                added = true;
+            }
+        }
+        while (added);
+
+        foreach (var renderer in processes.Where(process => ours.Contains(process.Id) && process.CommandLine.Contains("--type=renderer", StringComparison.Ordinal)))
+        {
+            try
+            {
+                Process.GetProcessById(renderer.Id).Kill();
+                killed++;
+            }
+            catch (ArgumentException)
+            {
+                // Ya había terminado.
+            }
+        }
+
+        return killed;
     }
 
     public void Dispose()

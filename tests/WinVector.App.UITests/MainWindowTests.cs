@@ -399,6 +399,79 @@ public sealed class MainWindowTests
         Assert.IsTrue(Retry.WhileFalse(() => !undo.IsEnabled, EngineTimeout).Result, $"Escribir \"{query}\" e Intro no deshizo el último cambio.");
     }
 
+    /// <summary>Espera a que la aplicación guarde las copias de recuperación (cada 10 s, #24).</summary>
+    private static readonly TimeSpan RecoveryWait = TimeSpan.FromSeconds(14);
+
+    /// <summary>
+    /// Duplica el sol (Ctrl+D lo pone 10 unidades a la derecha y abajo). El punto (357, 96) del ejemplo
+    /// queda fuera del sol original pero dentro de la copia: es naranja solo si existe la copia.
+    /// </summary>
+    private System.Drawing.Point DuplicateSun()
+    {
+        WaitForEngine();
+        Session.OpenSample();
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        Mouse.DoubleClick(AppSession.SamplePoint(canvas, 300, 96));
+        Session.WaitForName("SelectionStatus", name => name.StartsWith("circle#sol", StringComparison.Ordinal), EngineTimeout);
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_D);
+        var copy = AppSession.SamplePoint(canvas, 357, 96);
+        Assert.IsTrue(Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(copy), SunOrange), EngineTimeout).Result, "Ctrl+D no duplicó el sol.");
+        return copy;
+    }
+
+    private static readonly System.Drawing.Color SunOrange = System.Drawing.Color.FromArgb(0xff, 0xb5, 0x47);
+
+    private bool SomeTabIsModified() =>
+        Tabs().Any(tab => tab.Name.EndsWith('•'));
+
+    [TestMethod]
+    public void SiSeMataLaAplicacionConCambiosSeOfreceRecuperarlos()
+    {
+        DuplicateSun();
+        Thread.Sleep(RecoveryWait);
+
+        Session.Kill();
+        Session.Dispose();
+        _session = AppSession.Start(keepRecovery: true);
+
+        var dialog = Retry.WhileNull(() => Session.FindInApp("RecoveryDialog"), EngineStartTimeout, TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException("Al volver a abrir no se ofrece recuperar los documentos.");
+        var recover = dialog.FindFirstDescendant(cf => cf.ByAutomationId("PrimaryButton"))
+            ?? throw new AssertFailedException("El diálogo de recuperación no tiene el botón Recuperar.");
+        recover.Patterns.Invoke.Pattern.Invoke();
+
+        WaitForEngine();
+        Assert.IsTrue(Retry.WhileFalse(SomeTabIsModified, EngineTimeout).Result, "El documento recuperado no aparece con cambios sin guardar.");
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        var copy = AppSession.SamplePoint(canvas, 357, 96);
+        Assert.IsTrue(
+            Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(copy), SunOrange), EngineTimeout).Result,
+            "El documento recuperado no tiene la copia del sol.");
+    }
+
+    [TestMethod]
+    public void SiFallaElProcesoDelLienzoSeRecargaConLosCambios()
+    {
+        var copy = DuplicateSun();
+        Thread.Sleep(RecoveryWait);
+        var ready = Session.FindById("EngineStatus")?.Properties.Name.ValueOrDefault ?? string.Empty;
+
+        Assert.IsGreaterThan(0, Session.KillCanvasRenderers(), "No se encontró el proceso de renderizado del lienzo.");
+
+        // La aplicación avisa, el estado deja de ser "Listo" y vuelve cuando el motor recarga.
+        var notice = Retry.WhileNull(() => Session.FindInApp("ErrorDialog"), EngineStartTimeout, TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException("No se avisó de que el lienzo dejó de funcionar.");
+        var ok = notice.FindFirstDescendant(cf => cf.ByAutomationId("CloseButton"))
+            ?? throw new AssertFailedException("El aviso no tiene el botón Aceptar.");
+        ok.Patterns.Invoke.Pattern.Invoke();
+        Assert.AreEqual(ready, Session.WaitForName("EngineStatus", name => name == ready, EngineStartTimeout), "El motor no volvió a cargar.");
+
+        Assert.IsTrue(
+            Retry.WhileFalse(() => AppSession.IsClose(AppSession.ColorAt(copy), SunOrange), EngineTimeout).Result,
+            "Tras recargar, el documento no tiene la copia del sol (la última copia de recuperación).");
+        Assert.IsTrue(SomeTabIsModified(), "Tras recargar, el documento debe seguir con cambios sin guardar.");
+    }
+
     [TestMethod]
     public void ClicFueraDelDocumentoVaciaLaSeleccion()
     {

@@ -42,4 +42,10 @@ public interface IShellDialogs
 
     /// <summary>Muestra un error al usuario.</summary>
     Task ShowErrorAsync(string title, string message);
+
+    /// <summary>
+    /// Tras un cierre inesperado, pregunta si recuperar los documentos con cambios sin guardar.
+    /// Devuelve true para recuperarlos y false para descartarlos.
+    /// </summary>
+    Task<bool> AskToRecoverAsync(IReadOnlyList<string> documentNames);
 }

@@ -50,6 +50,15 @@ public interface IShellTexts
     /// <summary>Zoom para la barra de estado ("150 %"); 1 es el 100 %.</summary>
     string ZoomPercent(double zoom);
 
+    /// <summary>Título del aviso cuando el lienzo deja de funcionar.</summary>
+    string EngineFailedTitle { get; }
+
+    /// <summary>Aviso cuando el lienzo deja de funcionar y se recarga desde las copias de recuperación.</summary>
+    string EngineReloaded { get; }
+
+    /// <summary>Aviso cuando el lienzo deja de funcionar y no se puede recargar: hay que reiniciar.</summary>
+    string EngineRestartNeeded { get; }
+
     /// <summary>Nombre de una orden para la paleta de comandos ("Deshacer"), por su identificador ("undo").</summary>
     string CommandName(string id);
 

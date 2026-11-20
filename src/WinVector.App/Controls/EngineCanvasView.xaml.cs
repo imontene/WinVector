@@ -42,6 +42,12 @@ public sealed partial class EngineCanvasView : UserControl
     /// </summary>
     public event EventHandler<BridgeClient>? BridgeCreated;
 
+    /// <summary>
+    /// El proceso del lienzo ha fallado. El argumento es true si el lienzo se va a recargar solo (falló
+    /// el proceso de renderizado) y false si hay que reiniciar la aplicación (falló el del navegador).
+    /// </summary>
+    public event EventHandler<bool>? EngineFailed;
+
     /// <summary>Archivos soltados sobre el lienzo, con su ruta.</summary>
     public event EventHandler<IReadOnlyList<string>>? FilesDropped;
 
@@ -118,6 +124,7 @@ public sealed partial class EngineCanvasView : UserControl
         core.NavigationStarting += OnNavigationStarting;
         core.NewWindowRequested += OnNewWindowRequested;
         core.NavigationCompleted += OnNavigationCompleted;
+        core.ProcessFailed += OnProcessFailed;
 
         ApplyColorScheme();
         core.Navigate(EngineLocation.EntryPage.AbsoluteUri);
@@ -189,6 +196,31 @@ public sealed partial class EngineCanvasView : UserControl
         else
         {
             ShowError(_resources.GetString("CanvasErrorTitle"), args.WebErrorStatus.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Si se cae el proceso de renderizado (o deja de responder), se recarga la página del motor: la
+    /// aplicación vuelve a cargar los documentos desde sus copias de recuperación (#24). Si se cae el
+    /// proceso del navegador, el WebView2 ya no sirve y hay que reiniciar.
+    /// </summary>
+    private void OnProcessFailed(CoreWebView2 sender, CoreWebView2ProcessFailedEventArgs args)
+    {
+        switch (args.ProcessFailedKind)
+        {
+            case CoreWebView2ProcessFailedKind.RenderProcessExited:
+            case CoreWebView2ProcessFailedKind.RenderProcessUnresponsive:
+                EngineFailed?.Invoke(this, true);
+                sender.Reload();
+                break;
+            case CoreWebView2ProcessFailedKind.BrowserProcessExited:
+                EngineFailed?.Invoke(this, false);
+                ShowError(_resources.GetString("EngineFailedTitle"), _resources.GetString("EngineRestartNeeded"));
+                LoadingCover.Visibility = Visibility.Visible;
+                break;
+            default:
+                // Los demás procesos (GPU, utilidades, marcos de otros orígenes) los reinicia WebView2.
+                break;
         }
     }
 

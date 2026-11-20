@@ -718,4 +718,27 @@ Licensed under the Apache License 2.0.</value>
   <data name="PaletteShortcutToolEyedropper" xml:space="preserve">
     <value>I</value>
   </data>
+  <data name="RecoveryTitle" xml:space="preserve">
+    <value>Recover documents</value>
+  </data>
+  <data name="RecoveryBody" xml:space="preserve">
+    <value>WinVector closed unexpectedly. Do you want to recover the unsaved changes of these documents?
+
+{0}</value>
+  </data>
+  <data name="RecoveryRecover" xml:space="preserve">
+    <value>Recover</value>
+  </data>
+  <data name="RecoveryDiscard" xml:space="preserve">
+    <value>Discard</value>
+  </data>
+  <data name="EngineFailedTitle" xml:space="preserve">
+    <value>The canvas stopped working</value>
+  </data>
+  <data name="EngineReloaded" xml:space="preserve">
+    <value>The canvas was reloaded with your documents. Changes from the last few seconds may have been lost.</value>
+  </data>
+  <data name="EngineRestartNeeded" xml:space="preserve">
+    <value>Close and reopen WinVector. You will be offered to recover your unsaved changes.</value>
+  </data>
 </root>

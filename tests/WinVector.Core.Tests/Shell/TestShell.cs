@@ -12,6 +12,12 @@ internal sealed class TestTexts : IShellTexts
 
     public string SaveFailedTitle => "No se pudo guardar";
 
+    public string EngineFailedTitle => "El lienzo dejó de funcionar";
+
+    public string EngineReloaded => "Recargado";
+
+    public string EngineRestartNeeded => "Reinicia";
+
     public string UntitledDocument(int number) => $"Sin título {number}";
 
     public string MultipleSelection(int count) => $"{count} objetos";
@@ -92,6 +98,15 @@ internal sealed class FakeDialogs : IShellDialogs
     {
         Errors.Add((title, message));
         return Task.CompletedTask;
+    }
+
+    /// <summary>Respuesta a la pregunta de recuperar documentos.</summary>
+    public bool RecoverAnswer { get; set; } = true;
+
+    public Task<bool> AskToRecoverAsync(IReadOnlyList<string> documentNames)
+    {
+        Calls.Add($"¿recuperar {string.Join(", ", documentNames)}?");
+        return Task.FromResult(RecoverAnswer);
     }
 }
 
