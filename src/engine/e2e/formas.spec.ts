@@ -422,6 +422,7 @@ test("L elige la línea", async ({ page }) => {
   await expect
     .poll(() => lastSent(page))
     .toMatchObject({ name: "tool.changed", payload: { tool: "line" } });
+});
 
 test("un rectángulo pequeño no tiene manejador del radio y se puede arrastrar", async ({
   page,
