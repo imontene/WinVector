@@ -13,6 +13,8 @@ export * from "./navigation";
 export * from "./shortcuts";
 export * from "./eyedropper";
 export * from "./shapes";
+export * from "./shapeRegistry";
+export * from "./polygons";
 export * from "./shapeTool";
 export * from "./cornerRadius";
 export * from "./lineEnds";

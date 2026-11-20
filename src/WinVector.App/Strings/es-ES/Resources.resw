@@ -181,6 +181,18 @@
   <data name="ToolLine.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Línea</value>
   </data>
+  <data name="ToolPolygon.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Polígono (G): arrastra desde el centro hasta un vértice; ↑ y ↓ cambian los lados; con Mayús, gira de 15° en 15°</value>
+  </data>
+  <data name="ToolPolygon.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Polígono</value>
+  </data>
+  <data name="ToolStar.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Estrella (S): arrastra desde el centro hasta una punta; ↑ y ↓ cambian las puntas; con Mayús, gira de 15° en 15°</value>
+  </data>
+  <data name="ToolStar.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Estrella</value>
+  </data>
   <data name="ToolText.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Texto (T)</value>
   </data>
@@ -781,5 +793,23 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="PaletteShortcutToolLine" xml:space="preserve">
     <value>L</value>
+  </data>
+  <data name="HistoryActionCreatePolygon" xml:space="preserve">
+    <value>crear un polígono</value>
+  </data>
+  <data name="PaletteNameToolPolygon" xml:space="preserve">
+    <value>Herramienta Polígono</value>
+  </data>
+  <data name="PaletteShortcutToolPolygon" xml:space="preserve">
+    <value>G</value>
+  </data>
+  <data name="HistoryActionCreateStar" xml:space="preserve">
+    <value>crear una estrella</value>
+  </data>
+  <data name="PaletteNameToolStar" xml:space="preserve">
+    <value>Herramienta Estrella</value>
+  </data>
+  <data name="PaletteShortcutToolStar" xml:space="preserve">
+    <value>S</value>
   </data>
 </root>

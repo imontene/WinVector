@@ -4,7 +4,8 @@ import type { History } from "../history";
 import { screenToRoot, type Selection } from "../selection";
 import { elementToRoot, formatNumber } from "../transform";
 import { isPressed } from "./modifiers";
-import { shapeForTool, type ShapeKind, type ShapeStyle } from "./shapes";
+import { shapeForTool } from "./shapeRegistry";
+import type { ShapeKind, ShapeStyle } from "./shapes";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -48,7 +49,7 @@ interface Press {
 }
 
 /**
- * Herramientas de forma (rectángulo, elipse, línea…): arrastrar dibuja la forma, `Mayús` mantiene la proporción y
+ * Herramientas de forma (rectángulo, elipse, línea, polígono, estrella): arrastrar dibuja la forma, `Mayús` mantiene la proporción y
  * `Alt` dibuja desde el centro; las teclas se pueden pulsar y soltar durante el arrastre. `Esc` lo
  * cancela. La forma nace con el último estilo usado, dentro del grupo en el que se ha entrado, queda
  * seleccionada y es un solo paso del historial. Un clic sin arrastrar no crea nada.
@@ -173,6 +174,12 @@ export function installShapeTool(target: Window, host: ShapeToolHost): () => voi
     if (!press) return;
     if (event.type === "keydown" && event.key === "Escape") {
       cancel();
+      consume(event);
+      return;
+    }
+    // Teclas propias de la forma (las flechas cambian los lados de un polígono).
+    if (event.type === "keydown" && press.kind.adjust?.(event.key)) {
+      if (press.element) draw(press);
       consume(event);
       return;
     }

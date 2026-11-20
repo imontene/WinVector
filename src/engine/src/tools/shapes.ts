@@ -1,4 +1,3 @@
-import type { ToolName } from "../bridge";
 import type { Point, Rect } from "../geometry";
 import { formatNumber } from "../transform";
 
@@ -29,6 +28,11 @@ export interface ShapeKind {
   isEmpty(drag: ShapeDrag): boolean;
   /** Atributos de estilo con los que nace; si no se indica, relleno, trazo y grosor del estilo. */
   paint?(style: ShapeStyle): Readonly<Record<string, string>>;
+  /**
+   * Tecla pulsada durante el arrastre (las flechas cambian los lados de un polígono). Devuelve
+   * `true` si la ha usado: la forma se vuelve a dibujar.
+   */
+  adjust?(key: string): boolean;
 }
 
 /** Estilo con el que nacen las formas: el último que se ha usado. */
@@ -140,13 +144,3 @@ export const LINE: ShapeKind = {
     "stroke-width": formatNumber(style.strokeWidth),
   }),
 };
-
-/** Formas de cada herramienta. */
-export const SHAPE_TOOLS: Partial<Readonly<Record<ToolName, ShapeKind>>> = {
-  rectangle: RECTANGLE,
-  ellipse: ELLIPSE,
-  line: LINE,
-};
-
-/** La forma que crea una herramienta, o `undefined` si no es una herramienta de forma. */
-export const shapeForTool = (tool: ToolName): ShapeKind | undefined => SHAPE_TOOLS[tool];
