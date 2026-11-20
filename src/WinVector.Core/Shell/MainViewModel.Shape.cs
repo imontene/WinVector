@@ -117,17 +117,16 @@ public sealed partial class MainViewModel
 
     private IEnumerable<ShapeFieldViewModel> CreateFields(ShapeType type)
     {
-        ShapeFieldViewModel Field(string key, double minimum = double.MinValue, double maximum = double.MaxValue, double small = 1, double large = 10) =>
-            new(key, _texts.ShapeField(key), minimum, maximum, small, large);
+        ShapeFieldViewModel Field(string key, double small = 1, double large = 10) => new(key, _texts.ShapeField(key), small, large);
 
         return type switch
         {
-            ShapeType.Rect => [Field("x"), Field("y"), Field("width", 0), Field("height", 0), Field("cornerRadius", 0)],
-            ShapeType.Ellipse => [Field("cx"), Field("cy"), Field("rx", 0), Field("ry", 0)],
-            ShapeType.Circle => [Field("cx"), Field("cy"), Field("r", 0)],
-            ShapeType.Line => [Field("x1"), Field("y1"), Field("x2"), Field("y2"), Field("length", 0), Field("angle", -180, 180, 1, 15)],
-            ShapeType.Polygon => [Field("cx"), Field("cy"), Field("r", 0), Field("sides", 3, 100, 1, 1), Field("rotation", -360, 360, 1, 15), Field("rounding", 0, 100, 5, 10)],
-            _ => [Field("cx"), Field("cy"), Field("r", 0), Field("sides", 3, 100, 1, 1), Field("inner", 1, 100, 5, 10), Field("rotation", -360, 360, 1, 15), Field("rounding", 0, 100, 5, 10)],
+            ShapeType.Rect => [Field("x"), Field("y"), Field("width"), Field("height"), Field("cornerRadius")],
+            ShapeType.Ellipse => [Field("cx"), Field("cy"), Field("rx"), Field("ry")],
+            ShapeType.Circle => [Field("cx"), Field("cy"), Field("r")],
+            ShapeType.Line => [Field("x1"), Field("y1"), Field("x2"), Field("y2"), Field("length"), Field("angle", 1, 15)],
+            ShapeType.Polygon => [Field("cx"), Field("cy"), Field("r"), Field("sides", 1, 1), Field("rotation", 1, 15), Field("rounding", 5, 10)],
+            _ => [Field("cx"), Field("cy"), Field("r"), Field("sides", 1, 1), Field("inner", 5, 10), Field("rotation", 1, 15), Field("rounding", 5, 10)],
         };
     }
 
