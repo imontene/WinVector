@@ -230,7 +230,7 @@ public sealed partial class MainWindow : Window
 
     private void OnPaintNoneClick(object sender, RoutedEventArgs e)
     {
-        if (ReferenceEquals(sender, FillNone))
+        if (sender is FrameworkElement { Tag: "fill" })
         {
             ViewModel.SetSelectionFill("none");
             FillFlyout.Hide();
