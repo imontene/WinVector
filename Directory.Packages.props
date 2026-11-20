@@ -16,6 +16,7 @@
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.9457" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.7.0" />
     <PackageVersion Include="MSTest" Version="4.5.3" />
+    <PackageVersion Include="System.Management" Version="10.0.15" />
   </ItemGroup>
 
 </Project>

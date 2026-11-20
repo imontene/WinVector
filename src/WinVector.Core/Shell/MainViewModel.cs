@@ -29,6 +29,10 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ILogger _logger;
     private readonly TimeProvider _time;
     private readonly IShellClipboard _clipboard;
+    private readonly RecoveryStore? _recovery;
+    private ITimer? _recoveryTimer;
+    private SynchronizationContext? _uiContext;
+    private int _autosaving;
     private BridgeClient? _bridge;
     private Task _engineWork = Task.CompletedTask;
     private int _untitledCount;
@@ -40,7 +44,8 @@ public sealed partial class MainViewModel : ObservableObject
         RecentFiles? recentFiles = null,
         ILogger<MainViewModel>? logger = null,
         TimeProvider? timeProvider = null,
-        IShellClipboard? clipboard = null)
+        IShellClipboard? clipboard = null,
+        RecoveryStore? recovery = null)
     {
         ArgumentNullException.ThrowIfNull(texts);
         _texts = texts;
@@ -49,6 +54,7 @@ public sealed partial class MainViewModel : ObservableObject
         _logger = logger ?? NullLogger<MainViewModel>.Instance;
         _time = timeProvider ?? TimeProvider.System;
         _clipboard = clipboard ?? new MemoryClipboard();
+        _recovery = recovery;
         Commands = new CommandRegistry();
         NewDocument();
         RegisterCommands();
@@ -382,6 +388,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         document.SavedRevision = content.Revision;
+        document.LoadsModified = false;
+        ForgetRecovery(document);
         document.FilePath = fullPath;
         document.Title = fileName;
         RecentFiles.Add(fullPath);
@@ -441,7 +449,7 @@ public sealed partial class MainViewModel : ObservableObject
         };
     }
 
-    private DocumentTabViewModel AddDocument(string title, string svg, string? filePath, FileEncoding encoding, bool isNewBlank)
+    private DocumentTabViewModel AddDocument(string title, string svg, string? filePath, FileEncoding encoding, bool isNewBlank, bool loadsModified = false)
     {
         _documentCount++;
         var document = new DocumentTabViewModel(
@@ -452,6 +460,7 @@ public sealed partial class MainViewModel : ObservableObject
             FilePath = filePath,
             FileEncoding = encoding,
             IsNewBlank = isNewBlank,
+            LoadsModified = loadsModified,
         };
         Documents.Add(document);
         if (IsEngineReady)
@@ -483,6 +492,8 @@ public sealed partial class MainViewModel : ObservableObject
 
         var wasSelected = ReferenceEquals(document, SelectedDocument);
         Documents.RemoveAt(index);
+        // Cerrar una pestaña descarta sus cambios (se pregunta antes en RequestCloseDocumentAsync).
+        ForgetRecovery(document);
         if (IsEngineReady && document.IsLoaded)
         {
             Enqueue(() => SendAsync(BridgeCommands.DocumentClose, new DocumentRef(document.DocumentId)));
@@ -496,6 +507,188 @@ public sealed partial class MainViewModel : ObservableObject
         {
             SelectedDocument = Documents[Math.Min(index, Documents.Count - 1)];
         }
+    }
+
+    /// <summary>Cada cuánto se guardan las copias de recuperación de los documentos con cambios.</summary>
+    public static readonly TimeSpan RecoveryInterval = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// Empieza a guardar copias de recuperación de los documentos con cambios, cada
+    /// <see cref="RecoveryInterval"/>. Se llama desde la interfaz, que es donde se ejecutan después.
+    /// </summary>
+    public void StartRecovery()
+    {
+        if (_recovery is null || _recoveryTimer is not null)
+        {
+            return;
+        }
+
+        _recovery.StartSession();
+        _uiContext = SynchronizationContext.Current;
+        _recoveryTimer = _time.CreateTimer(
+            _ =>
+            {
+                if (_uiContext is { } context)
+                {
+                    context.Post(__ => _ = AutosaveAsync(), null);
+                }
+                else
+                {
+                    _ = AutosaveAsync();
+                }
+            },
+            null,
+            RecoveryInterval,
+            RecoveryInterval);
+    }
+
+    /// <summary>Cierre normal de la aplicación: deja de guardar copias y borra las de esta sesión.</summary>
+    public void EndRecovery()
+    {
+        _recoveryTimer?.Dispose();
+        _recoveryTimer = null;
+        _recovery?.EndSession();
+    }
+
+    /// <summary>
+    /// Guarda una copia de recuperación de cada documento con cambios que hayan cambiado desde la
+    /// última. Pide el texto al motor en la cola de órdenes y escribe el archivo sin bloquear la
+    /// interfaz. Los documentos sin cambios no tienen copia.
+    /// </summary>
+    public async Task AutosaveAsync()
+    {
+        if (_recovery?.SessionFolder is null || !IsEngineReady || Interlocked.Exchange(ref _autosaving, 1) == 1)
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var document in Documents.ToArray())
+            {
+                if (!document.IsLoaded || !document.IsModified)
+                {
+                    ForgetRecovery(document);
+                    continue;
+                }
+
+                if (document.RecoveredRevision == document.Revision)
+                {
+                    continue;
+                }
+
+                DocumentContent content;
+                try
+                {
+                    content = await SerializeAsync(document);
+                }
+                catch (BridgeException ex)
+                {
+                    LogCommandFailed(BridgeCommands.DocumentSerialize.Name, ex.Code, ex.Message);
+                    continue;
+                }
+
+                // Mientras se pedía el texto, el documento pudo cerrarse o guardarse.
+                if (!Documents.Contains(document) || !document.IsModified)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    await _recovery.SaveAsync(document.RecoveryKey, document.Title, document.FilePath, document.FileEncoding, content.Svg);
+                    document.RecoveredRevision = content.Revision;
+                    document.RecoveredSvg = content.Svg;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    LogFileFailed("guardar la copia de recuperación de", document.Title, FileErrorKind.Other, ex.Message);
+                }
+            }
+        }
+        finally
+        {
+            Volatile.Write(ref _autosaving, 0);
+        }
+    }
+
+    /// <summary>
+    /// Al arrancar: si una ejecución anterior terminó de forma inesperada con documentos sin guardar,
+    /// pregunta si recuperarlos y los abre con sus cambios. Las copias se borran en los dos casos.
+    /// </summary>
+    /// <returns>Los documentos recuperados.</returns>
+    public async Task<IReadOnlyList<DocumentTabViewModel>> OfferRecoveryAsync()
+    {
+        if (_recovery is null)
+        {
+            return [];
+        }
+
+        var orphans = _recovery.FindOrphans();
+        if (orphans.Count == 0)
+        {
+            _recovery.DiscardOrphans();
+            return [];
+        }
+
+        var recovered = new List<DocumentTabViewModel>();
+        if (await _dialogs.AskToRecoverAsync(orphans.Select(orphan => orphan.Title).ToList()))
+        {
+            var pristine = Documents.Count == 1 && Documents[0].IsPristine ? Documents[0] : null;
+            foreach (var orphan in orphans)
+            {
+                recovered.Add(AddDocument(orphan.Title, orphan.Svg, orphan.FilePath, orphan.Encoding, isNewBlank: false, loadsModified: true));
+            }
+
+            if (pristine is not null && pristine.IsPristine && Documents.Contains(pristine))
+            {
+                CloseDocument(pristine);
+            }
+        }
+
+        _recovery.DiscardOrphans();
+        // Los documentos recuperados tienen cambios: su copia se guarda ya en esta sesión.
+        await AutosaveAsync();
+        return recovered;
+    }
+
+    /// <summary>
+    /// El proceso del lienzo ha fallado. Si la interfaz lo va a recargar (<paramref name="reloading"/>),
+    /// los documentos se cargarán de nuevo desde su última copia de recuperación, con sus cambios sin
+    /// guardar; si no, se avisa de que hay que reiniciar (las copias se ofrecerán al volver a abrir).
+    /// </summary>
+    public void OnEngineFailed(bool reloading)
+    {
+        IsEngineReady = false;
+        EngineStatus = _texts.EngineFailedTitle;
+        _engineWork = Task.CompletedTask;
+        foreach (var document in Documents)
+        {
+            if (document.RecoveredSvg is { } svg)
+            {
+                document.ReplaceInitialSvg(svg);
+            }
+
+            document.LoadsModified = document.IsModified;
+            document.IsLoaded = false;
+            document.History = DocumentHistory.Empty;
+            document.RecoveredRevision = null;
+        }
+
+        NotifyEditCommandsChanged();
+        _ = _dialogs.ShowErrorAsync(_texts.EngineFailedTitle, reloading ? _texts.EngineReloaded : _texts.EngineRestartNeeded);
+    }
+
+    private void ForgetRecovery(DocumentTabViewModel document)
+    {
+        if (document.RecoveredRevision is null && document.RecoveredSvg is null)
+        {
+            return;
+        }
+
+        document.RecoveredRevision = null;
+        document.RecoveredSvg = null;
+        _recovery?.Delete(document.RecoveryKey);
     }
 
     /// <summary>Pide al motor el texto actual de un documento, por ejemplo para guardarlo.</summary>
@@ -1067,7 +1260,8 @@ public sealed partial class MainViewModel : ObservableObject
         document.IsLoaded = result.Loaded;
         document.LoadError = result.Error?.Message;
         document.Revision = result.Revision;
-        document.SavedRevision = result.Revision;
+        // Un documento recuperado tiene cambios sin guardar respecto a su archivo.
+        document.SavedRevision = document.LoadsModified ? result.Revision - 1 : result.Revision;
         document.History = DocumentHistory.Empty;
         if (ReferenceEquals(document, SelectedDocument))
         {
@@ -1282,6 +1476,8 @@ public sealed partial class MainViewModel : ObservableObject
         public Task<DocumentSize?> AskNewDocumentSizeAsync() => Task.FromResult<DocumentSize?>(null);
 
         public Task ShowErrorAsync(string title, string message) => Task.CompletedTask;
+
+        public Task<bool> AskToRecoverAsync(IReadOnlyList<string> documentNames) => Task.FromResult(false);
     }
 
     /// <summary>Portapapeles en memoria: para pruebas y usos sin interfaz.</summary>

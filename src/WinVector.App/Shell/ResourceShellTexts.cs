@@ -12,6 +12,12 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string SaveFailedTitle => resources.GetString("SaveFailedTitle");
 
+    public string EngineFailedTitle => resources.GetString("EngineFailedTitle");
+
+    public string EngineReloaded => resources.GetString("EngineReloaded");
+
+    public string EngineRestartNeeded => resources.GetString("EngineRestartNeeded");
+
     public string UntitledDocument(int number) => Format("UntitledDocument", number);
 
     public string MultipleSelection(int count) => Format("SelectionMultiple", count);

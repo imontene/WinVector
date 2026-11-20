@@ -146,9 +146,22 @@ internal sealed class WinUIShellDialogs(Window window, ResourceLoader resources)
         return new DocumentSize(width.Value, height.Value, (LengthUnit)unit.SelectedIndex);
     }
 
+    public async Task<bool> AskToRecoverAsync(IReadOnlyList<string> documentNames)
+    {
+        var dialog = CreateDialog(
+            resources.GetString("RecoveryTitle"),
+            string.Format(CultureInfo.CurrentCulture, resources.GetString("RecoveryBody"), string.Join(Environment.NewLine, documentNames.Select(name => "• " + name))));
+        dialog.PrimaryButtonText = resources.GetString("RecoveryRecover");
+        dialog.CloseButtonText = resources.GetString("RecoveryDiscard");
+        dialog.DefaultButton = ContentDialogButton.Primary;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(dialog, "RecoveryDialog");
+        return await ShowAsync(dialog) == ContentDialogResult.Primary;
+    }
+
     public async Task ShowErrorAsync(string title, string message)
     {
         var dialog = CreateDialog(title, message);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(dialog, "ErrorDialog");
         dialog.CloseButtonText = resources.GetString("DialogOk");
         dialog.DefaultButton = ContentDialogButton.Close;
         await ShowAsync(dialog);

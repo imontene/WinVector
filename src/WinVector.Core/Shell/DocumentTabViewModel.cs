@@ -23,8 +23,33 @@ public sealed partial class DocumentTabViewModel : ObservableObject
     /// <summary>Identificador del documento en el motor.</summary>
     public string DocumentId { get; }
 
-    /// <summary>Texto con el que se abrió el documento.</summary>
-    public string InitialSvg { get; }
+    /// <summary>
+    /// Texto con el que se carga el documento en el motor: el del archivo al abrirlo o, tras un fallo
+    /// del motor, el de la última copia de recuperación.
+    /// </summary>
+    public string InitialSvg { get; private set; }
+
+    /// <summary>Identificador de sus copias de recuperación (issue #24).</summary>
+    public string RecoveryKey { get; } = Guid.NewGuid().ToString("N");
+
+    /// <summary>Revisión de la última copia de recuperación, o null si no hay ninguna.</summary>
+    internal int? RecoveredRevision { get; set; }
+
+    /// <summary>Texto de la última copia de recuperación, o null si no hay ninguna.</summary>
+    internal string? RecoveredSvg { get; set; }
+
+    /// <summary>
+    /// True si al cargarlo en el motor tiene cambios sin guardar: un documento recuperado, cuyo texto
+    /// no es el del archivo.
+    /// </summary>
+    internal bool LoadsModified { get; set; }
+
+    /// <summary>Cambia el texto con el que se volverá a cargar el documento en el motor.</summary>
+    internal void ReplaceInitialSvg(string svg)
+    {
+        ArgumentNullException.ThrowIfNull(svg);
+        InitialSvg = svg;
+    }
 
     /// <summary>Nombre del documento: el del archivo o "Sin título N".</summary>
     [ObservableProperty]

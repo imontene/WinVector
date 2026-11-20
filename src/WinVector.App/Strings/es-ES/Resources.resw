@@ -720,4 +720,27 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="PaletteShortcutToolEyedropper" xml:space="preserve">
     <value>I</value>
   </data>
+  <data name="RecoveryTitle" xml:space="preserve">
+    <value>Recuperar documentos</value>
+  </data>
+  <data name="RecoveryBody" xml:space="preserve">
+    <value>WinVector se cerró de forma inesperada. ¿Quieres recuperar los cambios sin guardar de estos documentos?
+
+{0}</value>
+  </data>
+  <data name="RecoveryRecover" xml:space="preserve">
+    <value>Recuperar</value>
+  </data>
+  <data name="RecoveryDiscard" xml:space="preserve">
+    <value>Descartar</value>
+  </data>
+  <data name="EngineFailedTitle" xml:space="preserve">
+    <value>El lienzo dejó de funcionar</value>
+  </data>
+  <data name="EngineReloaded" xml:space="preserve">
+    <value>El lienzo se ha vuelto a cargar con tus documentos. Los cambios de los últimos segundos pueden haberse perdido.</value>
+  </data>
+  <data name="EngineRestartNeeded" xml:space="preserve">
+    <value>Cierra y vuelve a abrir WinVector. Tus cambios sin guardar se te ofrecerán para recuperarlos.</value>
+  </data>
 </root>
