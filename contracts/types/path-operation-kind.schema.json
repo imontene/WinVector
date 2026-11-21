@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PathOperationKind",
+  "description": "Operación del menú Trazado: cerrar o abrir los trazados, invertir su dirección, combinar varios en uno o separar uno en sus subtrazados.",
+  "type": "string",
+  "enum": [
+    "close",
+    "open",
+    "reverse",
+    "combine",
+    "separate"
+  ]
+}

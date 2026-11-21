@@ -1166,4 +1166,58 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="HistoryActionContinuePath" xml:space="preserve">
     <value>continuar un trazado</value>
   </data>
+  <data name="MenuPathClose.Text" xml:space="preserve">
+    <value>Cerrar trazado</value>
+  </data>
+  <data name="MenuPathOpen.Text" xml:space="preserve">
+    <value>Abrir trazado</value>
+  </data>
+  <data name="MenuPathReverse.Text" xml:space="preserve">
+    <value>Invertir dirección</value>
+  </data>
+  <data name="MenuPathCombine.Text" xml:space="preserve">
+    <value>Combinar</value>
+  </data>
+  <data name="MenuPathSeparate.Text" xml:space="preserve">
+    <value>Separar</value>
+  </data>
+  <data name="PaletteNamePathClose" xml:space="preserve">
+    <value>Cerrar trazado</value>
+  </data>
+  <data name="PaletteNamePathOpen" xml:space="preserve">
+    <value>Abrir trazado</value>
+  </data>
+  <data name="PaletteNamePathReverse" xml:space="preserve">
+    <value>Invertir dirección del trazado</value>
+  </data>
+  <data name="PaletteNamePathCombine" xml:space="preserve">
+    <value>Combinar trazados</value>
+  </data>
+  <data name="PaletteNamePathSeparate" xml:space="preserve">
+    <value>Separar trazado</value>
+  </data>
+  <data name="HistoryActionClosePath" xml:space="preserve">
+    <value>cerrar el trazado</value>
+  </data>
+  <data name="HistoryActionOpenPath" xml:space="preserve">
+    <value>abrir el trazado</value>
+  </data>
+  <data name="HistoryActionReversePath" xml:space="preserve">
+    <value>invertir la dirección</value>
+  </data>
+  <data name="HistoryActionCombinePaths" xml:space="preserve">
+    <value>combinar trazados</value>
+  </data>
+  <data name="HistoryActionSeparatePath" xml:space="preserve">
+    <value>separar el trazado</value>
+  </data>
+  <data name="FillRuleBox.Header" xml:space="preserve">
+    <value>Regla de relleno</value>
+  </data>
+  <data name="FillRuleNonzero.Content" xml:space="preserve">
+    <value>Distinto de cero</value>
+  </data>
+  <data name="FillRuleEvenodd.Content" xml:space="preserve">
+    <value>Par-impar</value>
+  </data>
 </root>

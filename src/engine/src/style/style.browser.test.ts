@@ -64,7 +64,18 @@ describe("leer el estilo", () => {
       stroke: "#0000ff",
       strokeWidth: 3,
       opacity: 0.5,
+      fillRule: "nonzero",
     });
+  });
+
+  it("lee la regla de relleno; si son distintas no la da", () => {
+    const doc = load(
+      svg(
+        `<path id="a" fill-rule="evenodd"/><path id="b" style="fill-rule:evenodd"/><path id="c"/>`,
+      ),
+    );
+    expect(readStyle([pick(doc, "#a"), pick(doc, "#b")]).fillRule).toBe("evenodd");
+    expect(readStyle([pick(doc, "#a"), pick(doc, "#c")])).not.toHaveProperty("fillRule");
   });
 
   it("con valores distintos da null", () => {
@@ -109,6 +120,20 @@ describe("aplicar el estilo", () => {
     expect(pick(doc, "#a").getAttribute("style")).toBe("fill:#0000ff");
     expect(pick(doc, "#a").hasAttribute("fill")).toBe(false);
     expect(readStyle([pick(doc, "#a")]).fill).toBe("#0000ff");
+  });
+
+  it("cambia la regla de relleno en un paso que se deshace", () => {
+    const source = svg(
+      `<path id="a" d="M0 0H10V10Z"/><path id="b" d="M0 0H5V5Z" fill-rule="nonzero"/>`,
+    );
+    const doc = load(source);
+    expect(
+      applyStyle([pick(doc, "#a"), pick(doc, "#b")], change({ fillRule: "evenodd" }), doc.history),
+    ).toBe(true);
+    expect(pick(doc, "#a").getAttribute("fill-rule")).toBe("evenodd");
+    expect(pick(doc, "#b").getAttribute("fill-rule")).toBe("evenodd");
+    doc.history.undo();
+    expect(doc.serialize()).toBe(source);
   });
 
   it("en un grupo, recolorea las formas y pone la opacidad al grupo", () => {

@@ -43,6 +43,10 @@
         "null"
       ],
       "description": "Opacidad, de 0 a 1."
+    },
+    "fillRule": {
+      "$ref": "./fill-rule.schema.json",
+      "description": "Regla de relleno; ausente, no cambia."
     }
   }
 }

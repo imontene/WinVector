@@ -659,6 +659,19 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       return path ? summarizeNodes(path.data, selectedKeys(path.data)) : null;
     },
     nodeAction,
+    /** Primer nodo seleccionado del trazado que se edita (para abrirlo por él), o `null`. */
+    selectedNode(element: Element): { subpath: number; index: number } | null {
+      const path = editedPath();
+      if (!isActive() || path?.element !== element) return null;
+      const [first] = [...selected].sort((a, b) => a - b);
+      const node = first === undefined ? undefined : pathNodes(path.data)[first];
+      return node ? { subpath: node.subpath, index: node.index } : null;
+    },
+    /** Olvida los nodos seleccionados: después de una operación, su numeración ya no vale. */
+    clearNodes() {
+      selected = new Set();
+      host.changed();
+    },
     dispose() {
       for (const [type, listener] of listeners) {
         target.removeEventListener(type, listener, { capture: true });

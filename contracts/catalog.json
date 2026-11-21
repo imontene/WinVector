@@ -88,6 +88,13 @@
       "response": "ObjectChange"
     },
     {
+      "name": "path.operation",
+      "kind": "command",
+      "description": "Operación del menú Trazado sobre la selección: cerrar o abrir trazados (con la herramienta Vértices, abrir por el nodo seleccionado), invertir su dirección, combinar las formas seleccionadas en un trazado o separar un trazado en sus subtrazados. changed es false si no había nada que hacer. Se puede deshacer.",
+      "payload": "PathOperation",
+      "response": "ObjectChange"
+    },
+    {
       "name": "object.group",
       "kind": "command",
       "description": "Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer.",

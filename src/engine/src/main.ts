@@ -5,6 +5,7 @@ import {
   detectTransport,
   type ArrangeAction,
   type NodeSelection,
+  type PathOperationKind,
   type ToolName,
   type ZoomAction,
 } from "./bridge";
@@ -20,7 +21,8 @@ import {
 import type { Rect } from "./geometry";
 import { EMPTY_SCENE, Overlay } from "./overlay";
 import sampleSvg from "./sample.svg?raw";
-import { describeElement, selectionBounds, selectionScreenRect } from "./selection";
+import type { History } from "./history";
+import { describeElement, selectionBounds, selectionScreenRect, type Selection } from "./selection";
 import {
   cursorForTool,
   DEFAULT_SHAPE_STYLE,
@@ -41,7 +43,17 @@ import {
   type ShapeStyle,
 } from "./tools";
 import { copySelection, duplicate, pasteSvg, remove } from "./clipboard";
-import { convertAllToPath } from "./paths";
+import {
+  closePath,
+  combinePaths,
+  convertAllToPath,
+  openPath,
+  parsePath,
+  reversePath,
+  separatePath,
+  serializePath,
+  type PathData,
+} from "./paths";
 import { applyStyle, readStyle } from "./style";
 import { arrange, group, ungroup } from "./structure";
 import { rotationOf, setGeometry } from "./transform";
@@ -284,7 +296,10 @@ bridge.handle("selection.setGeometry", ({ documentId, ...target }) =>
  */
 function objectOperation(
   documentId: string,
-  operation: { kind: "arrange"; action: ArrangeAction } | { kind: "group" | "ungroup" | "to-path" },
+  operation:
+    | { kind: "arrange"; action: ArrangeAction }
+    | { kind: "group" | "ungroup" | "to-path" }
+    | { kind: "path"; operation: PathOperationKind },
 ): boolean {
   const { document: doc, selection } = documents.open(documentId);
   const items = selection.items;
@@ -302,6 +317,8 @@ function objectOperation(
       selection.replace(items, replaced);
       return replaced.size > 0;
     }
+    case "path":
+      return pathOperation(doc.root, doc.history, selection, operation.operation);
     case "ungroup": {
       const released = doc.history.transact("ungroup", () => ungroup(items, doc.root));
       const [first] = released;
@@ -309,6 +326,60 @@ function objectOperation(
       return released.length > 0;
     }
   }
+}
+
+/** Nombre del paso del historial de cada operación del menú Trazado. */
+const PATH_ACTIONS: Readonly<Record<PathOperationKind, string>> = {
+  close: "close-path",
+  open: "open-path",
+  reverse: "reverse-path",
+  combine: "combine-paths",
+  separate: "separate-path",
+};
+
+/**
+ * Operaciones del menú Trazado (issue #79). Cerrar, abrir e invertir cambian el `d` de los trazados
+ * seleccionados; con la herramienta Vértices, abrir lo hace por el nodo seleccionado. Combinar y
+ * separar cambian los elementos y la selección.
+ */
+function pathOperation(
+  root: SVGSVGElement,
+  history: History,
+  selection: Selection,
+  operation: PathOperationKind,
+): boolean {
+  const items = selection.items;
+  const action = PATH_ACTIONS[operation];
+  if (operation === "combine") {
+    const combined = history.transact(action, () => combinePaths(items, root));
+    if (combined) selection.set([combined], selection.scope);
+    return combined !== null;
+  }
+  if (operation === "separate") {
+    const pieces = history.transact(action, () =>
+      items.flatMap((item) => separatePath(item) ?? []),
+    );
+    if (pieces.length > 0) selection.set(pieces, selection.scope);
+    return pieces.length > 0;
+  }
+  const change = (element: Element, data: PathData): PathData => {
+    if (operation === "close") return closePath(data);
+    if (operation === "reverse") return reversePath(data);
+    return openPath(data, vertexTool.selectedNode(element) ?? undefined);
+  };
+  const edits = items.flatMap((element) => {
+    if (element.localName !== "path") return [];
+    const before = element.getAttribute("d") ?? "";
+    const data = parsePath(before).data;
+    const changed = change(element, data);
+    return changed === data ? [] : [{ element, d: serializePath(changed) }];
+  });
+  if (edits.length === 0) return false;
+  history.transact(action, () => {
+    for (const { element, d } of edits) element.setAttribute("d", d);
+  });
+  vertexTool.clearNodes();
+  return true;
 }
 
 bridge.handle("object.arrange", ({ documentId, action }) =>
@@ -331,6 +402,13 @@ bridge.handle("path.nodes", ({ documentId, action }) =>
     const changed = documents.active?.id === documentId && vertexTool.nodeAction(action);
     return { documentId, changed };
   }),
+);
+
+bridge.handle("path.operation", ({ documentId, operation }) =>
+  withDocumentErrors(() => ({
+    documentId,
+    changed: objectOperation(documentId, { kind: "path", operation }),
+  })),
 );
 
 bridge.handle("object.group", ({ documentId }) =>

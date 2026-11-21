@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FillRule",
+  "description": "Regla de relleno: qué zonas de un trazado que se corta a sí mismo, o con subtrazados unos dentro de otros, se rellenan. evenodd deja agujeros donde se superponen.",
+  "type": "string",
+  "enum": [
+    "nonzero",
+    "evenodd"
+  ]
+}

@@ -161,6 +161,9 @@ export interface FilesDropped {
   readonly count: number;
 }
 
+/** Regla de relleno: qué zonas de un trazado que se corta a sí mismo, o con subtrazados unos dentro de otros, se rellenan. evenodd deja agujeros donde se superponen. */
+export type FillRule = "nonzero" | "evenodd";
+
 /** Estado del historial de deshacer de un documento. */
 export interface HistoryState {
   /** Identificador del documento, asignado por la aplicación. */
@@ -233,6 +236,17 @@ export interface PathNodesChange {
   readonly action: NodeAction;
 }
 
+/** Operación del menú Trazado sobre la selección. */
+export interface PathOperation {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Qué hacer con los trazados seleccionados. */
+  readonly operation: PathOperationKind;
+}
+
+/** Operación del menú Trazado: cerrar o abrir los trazados, invertir su dirección, combinar varios en uno o separar uno en sus subtrazados. */
+export type PathOperationKind = "close" | "open" | "reverse" | "combine" | "separate";
+
 /** Rectángulo alineado con los ejes. */
 export interface Rect {
   /** Borde izquierdo. */
@@ -297,6 +311,8 @@ export interface SelectionStyle {
   readonly strokeWidth: number | null;
   /** Opacidad del objeto, de 0 a 1. */
   readonly opacity: number | null;
+  /** Regla de relleno común de la selección; ausente si los objetos tienen reglas distintas o no hay formas. */
+  readonly fillRule?: FillRule;
 }
 
 /** Cambio de propiedades propias de la forma seleccionada. Solo cambian las que se indican; las que no son de su tipo se ignoran. */
@@ -406,6 +422,8 @@ export interface StyleChange {
   readonly strokeWidth: number | null;
   /** Opacidad, de 0 a 1. */
   readonly opacity: number | null;
+  /** Regla de relleno; ausente, no cambia. */
+  readonly fillRule?: FillRule;
 }
 
 /** Herramienta del lienzo que ya implementa el motor. */
@@ -478,6 +496,8 @@ export interface BridgeCommands {
   readonly "object.toPath": { readonly payload: DocumentRef; readonly response: ObjectChange };
   /** Con la herramienta Vértices en un trazado, hace esquina, suaves o simétricos los nodos seleccionados, o rectos o curvos los segmentos entre ellos. changed es false si no había nada que cambiar. Se puede deshacer. */
   readonly "path.nodes": { readonly payload: PathNodesChange; readonly response: ObjectChange };
+  /** Operación del menú Trazado sobre la selección: cerrar o abrir trazados (con la herramienta Vértices, abrir por el nodo seleccionado), invertir su dirección, combinar las formas seleccionadas en un trazado o separar un trazado en sus subtrazados. changed es false si no había nada que hacer. Se puede deshacer. */
+  readonly "path.operation": { readonly payload: PathOperation; readonly response: ObjectChange };
   /** Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer. */
   readonly "object.group": { readonly payload: DocumentRef; readonly response: ObjectChange };
   /** Desagrupa los grupos seleccionados sin cambiar su aspecto; los que cambiarían (opacidad, filtro, recorte, máscara) se dejan. Se puede deshacer. */
@@ -566,6 +586,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "object.arrange",
   "object.toPath",
   "path.nodes",
+  "path.operation",
   "object.group",
   "object.ungroup",
   "selection.duplicate",
