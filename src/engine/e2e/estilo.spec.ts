@@ -38,13 +38,19 @@ test("la selección anuncia su estilo y la aplicación lo cambia", async ({ page
   await page.locator("#sol").dblclick();
   await expect
     .poll(() => lastStyle(page))
-    .toEqual({ fill: "#ffb547", stroke: "none", strokeWidth: 1, opacity: 1 });
+    .toEqual({ fill: "#ffb547", stroke: "none", strokeWidth: 1, opacity: 1, fillRule: "nonzero" });
 
   await setStyle(page, "c-1", { fill: "#ff0000", stroke: "#000000", strokeWidth: 4, opacity: 0.5 });
   await expect.poll(() => lastSent(page)).toMatchObject({ id: "c-1", payload: { changed: true } });
   await expect
     .poll(() => lastStyle(page))
-    .toEqual({ fill: "#ff0000", stroke: "#000000", strokeWidth: 4, opacity: 0.5 });
+    .toEqual({
+      fill: "#ff0000",
+      stroke: "#000000",
+      strokeWidth: 4,
+      opacity: 0.5,
+      fillRule: "nonzero",
+    });
   expect(await page.locator("#sol").getAttribute("fill")).toBe("#ff0000");
 
   await page.keyboard.press("Control+Z");
