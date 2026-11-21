@@ -244,8 +244,13 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - **Conseguido:** rectángulo (`R`, con esquinas redondeadas desde el lienzo), elipse y círculo (`E`), línea (`L`, con sus extremos editables), polígono (`G`) y estrella (`S`), con `Mayús` y `Alt`, último estilo usado y un paso del historial por forma. Panel con las propiedades de cada forma. Convertir en trazado (`Ctrl+Mayús+C`). Herramienta Vértices (`A`) y formas libres de líneas rectas con la pluma (`P`). Pruebas de interfaz de punta a punta, hasta guardar el archivo.
 
 ### Fase 3 · Trazados (L)
-- Analizador y serializador de `d` con pruebas exhaustivas.
-- Herramienta pluma y herramienta de nodos.
+- Analizador y serializador de `d` con pruebas exhaustivas; modelo de trazados y edición de arcos ([ADR 0007](adr/0007-modelo-de-trazados.md)).
+- Geometría de curvas: caja exacta, punto más cercano, partir curvas, arcos a cúbicas.
+- Herramienta de nodos (ampliando la de vértices): mover nodos y manejadores, tipos de nodo, añadir y quitar nodos.
+- Pluma con curvas (ampliando la de formas libres).
+- Operaciones de trazado: abrir y cerrar, combinar y separar, invertir la dirección; regla de relleno.
+- Redondear vértices de cualquier polígono o trazado con radios exactos.
+- Menú contextual en el lienzo (clic derecho, `Mayús+F10`).
 
 ### Fase 4 · Texto (M)
 - Herramienta de texto, edición en el lienzo, varias líneas, fuentes del sistema, propiedades tipográficas.
