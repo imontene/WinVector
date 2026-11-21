@@ -1158,4 +1158,10 @@ Licensed under the Apache License 2.0.</value>
   <data name="SegmentCurveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Curve segment (Shift+U)</value>
   </data>
+  <data name="HistoryActionCreatePath" xml:space="preserve">
+    <value>create path</value>
+  </data>
+  <data name="HistoryActionContinuePath" xml:space="preserve">
+    <value>continue path</value>
+  </data>
 </root>

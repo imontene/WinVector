@@ -24,8 +24,12 @@ export interface OverlayScene {
     /** Manejadores de las curvas de los nodos seleccionados de un trazado. */
     readonly handles?: readonly { readonly from: Point; readonly to: Point }[];
   } | null;
-  /** Primer vértice de la forma libre que se dibuja con la pluma, y si un clic la cerraría. */
-  readonly pen?: { readonly start: Point; readonly closing: boolean } | null;
+  /** Primer nodo de la forma que se dibuja con la pluma, si un clic la cerraría y sus manejadores. */
+  readonly pen?: {
+    readonly start: Point;
+    readonly closing: boolean;
+    readonly handles?: readonly { readonly from: Point; readonly to: Point }[];
+  } | null;
 }
 
 export const EMPTY_SCENE: OverlayScene = { items: [], scope: null, marquee: null, handles: null };
@@ -71,7 +75,10 @@ export class Overlay {
       shapes.push(circle);
     }
     // Los manejadores, antes que los nodos: la línea no debe tapar el cuadrado del nodo.
-    for (const { from, to } of scene.vertices?.handles ?? []) {
+    for (const { from, to } of [
+      ...(scene.vertices?.handles ?? []),
+      ...(scene.pen?.handles ?? []),
+    ]) {
       const doc = this.element.ownerDocument;
       const line = doc.createElementNS(SVG_NS, "line");
       line.classList.add("overlay-path-handle-line");
