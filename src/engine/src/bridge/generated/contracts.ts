@@ -89,6 +89,14 @@ export interface ContextMenuRequest {
   readonly canEditVertices: boolean;
 }
 
+/** Radio de las esquinas seleccionadas con la herramienta Vértices: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo. */
+export interface CornerRadiusChange {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Radio en unidades de la forma, 0 o más. */
+  readonly radius: number;
+}
+
 /** Texto de un documento para guardarlo. */
 export interface DocumentContent {
   /** Identificador del documento, asignado por la aplicación. */
@@ -196,7 +204,7 @@ export type NodeAction = "corner" | "smooth" | "symmetric" | "line" | "curve";
 /** Tipo de los nodos seleccionados: esquina, suave, simétrico o mixed si son de varios tipos. */
 export type NodeKind = "corner" | "smooth" | "symmetric" | "mixed";
 
-/** Nodos seleccionados del trazado que se edita con la herramienta Vértices. Sin trazado o sin nodos seleccionados, count es 0. */
+/** Nodos seleccionados de la forma que se edita con la herramienta Vértices: los nodos de un trazado o los vértices de un polígono. Sin forma o sin nodos seleccionados, count es 0. */
 export interface NodeSelection {
   /** Documento del trazado. */
   readonly documentId: string;
@@ -210,6 +218,10 @@ export interface NodeSelection {
   readonly canMakeLine: boolean;
   /** Algún segmento entre dos nodos seleccionados no es una curva cúbica. */
   readonly canMakeCurve: boolean;
+  /** Alguna esquina seleccionada está entre dos rectas y se puede redondear. */
+  readonly canRound?: boolean;
+  /** Radio común de las esquinas seleccionadas que se pueden redondear; ausente si son distintos o no hay ninguna. */
+  readonly cornerRadius?: number;
 }
 
 /** Cambia el orden de apilado de la selección. */
@@ -498,6 +510,11 @@ export interface BridgeCommands {
   readonly "path.nodes": { readonly payload: PathNodesChange; readonly response: ObjectChange };
   /** Operación del menú Trazado sobre la selección: cerrar o abrir trazados (con la herramienta Vértices, abrir por el nodo seleccionado), invertir su dirección, combinar las formas seleccionadas en un trazado o separar un trazado en sus subtrazados. changed es false si no había nada que hacer. Se puede deshacer. */
   readonly "path.operation": { readonly payload: PathOperation; readonly response: ObjectChange };
+  /** Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0). La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer. */
+  readonly "path.cornerRadius": {
+    readonly payload: CornerRadiusChange;
+    readonly response: ObjectChange;
+  };
   /** Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer. */
   readonly "object.group": { readonly payload: DocumentRef; readonly response: ObjectChange };
   /** Desagrupa los grupos seleccionados sin cambiar su aspecto; los que cambiarían (opacidad, filtro, recorte, máscara) se dejan. Se puede deshacer. */
@@ -552,7 +569,7 @@ export interface BridgeEvents {
   readonly "selection.changed": SelectionChanged;
   /** Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado. */
   readonly "shape.converted": ShapeConverted;
-  /** Han cambiado los nodos seleccionados del trazado que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel. */
+  /** Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel. */
   readonly "nodes.changed": NodeSelection;
   /** El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado. */
   readonly "canvas.contextMenu": ContextMenuRequest;
@@ -587,6 +604,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "object.toPath",
   "path.nodes",
   "path.operation",
+  "path.cornerRadius",
   "object.group",
   "object.ungroup",
   "selection.duplicate",

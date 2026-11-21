@@ -1,5 +1,5 @@
 import type { Point } from "../geometry";
-import { parsePath, pathNodes } from "../paths";
+import { editableData, pathNodes } from "../paths";
 import { forgetPolygon, readPolygon } from "./polygons";
 import { coordinate } from "./shapes";
 
@@ -134,7 +134,8 @@ export function toEditablePolygon(element: Element): Element | null {
  */
 export function displayVertices(element: Element): Vertices | null {
   if (element.localName === "path" && element.namespaceURI === SVG_NS) {
-    const nodes = pathNodes(parsePath(element.getAttribute("d") ?? "").data);
+    // En un trazado redondeado, sus vértices sin redondear (issue #80).
+    const nodes = pathNodes(editableData(element));
     return { points: nodes.map((node) => node.point), closed: false, minimum: 0, resizable: false };
   }
   if (element instanceof SVGRectElement) {

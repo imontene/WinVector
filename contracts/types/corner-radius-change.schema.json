@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CornerRadiusChange",
+  "description": "Radio de las esquinas seleccionadas con la herramienta Vértices: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "radius"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "radius": {
+      "type": "number",
+      "description": "Radio en unidades de la forma, 0 o más."
+    }
+  }
+}

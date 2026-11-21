@@ -97,7 +97,7 @@ describe("polígonos y estrellas", () => {
     expect(rounded.getAttribute("id")).toBe("p");
     expect(rounded.getAttribute("fill")).toBe("red");
     expect(rounded.getAttribute("points")).toBeNull();
-    expect(rounded.getAttribute("d")).toMatch(/^M.*Q.*Z$/);
+    expect(rounded.getAttribute("d")).toMatch(/^M.*a.*Z$/);
     expect(readPolygon(rounded)?.rounding).toBe(0.5);
 
     const back = updatePolygon(rounded, { rounding: 0 });
@@ -105,7 +105,7 @@ describe("polígonos y estrellas", () => {
     expect(back?.getAttribute("d")).toBeNull();
   });
 
-  it("el redondeo corta cada esquina como mucho hasta la mitad del lado", () => {
+  it("el redondeo son arcos exactos que llegan como mucho hasta la mitad del lado", () => {
     const square = [
       { x: 0, y: 0 },
       { x: 10, y: 0 },
@@ -113,10 +113,11 @@ describe("polígonos y estrellas", () => {
       { x: 0, y: 10 },
     ];
     expect(roundedPath(square, 1)).toBe(
-      "M0 5Q0 0 5 0L5 0Q10 0 10 5L10 5Q10 10 5 10L5 10Q0 10 0 5Z",
+      // Un cuadrado redondeado del todo es un círculo de cuatro arcos.
+      "M5 0a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5Z",
     );
     expect(roundedPath(square, 0.2)).toBe(
-      "M0 1Q0 0 1 0L9 0Q10 0 10 1L10 9Q10 10 9 10L1 10Q0 10 0 9Z",
+      "M1 0H9a1 1 0 0 1 1 1V9a1 1 0 0 1-1 1H1A1 1 0 0 1 0 9V1A1 1 0 0 1 1 0Z",
     );
   });
 });

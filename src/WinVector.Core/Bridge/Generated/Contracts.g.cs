@@ -114,6 +114,13 @@ public sealed record ContextMenuRequest(
     [property: JsonPropertyName("keyboard")] bool Keyboard,
     [property: JsonPropertyName("canEditVertices")] bool CanEditVertices);
 
+/// <summary>Radio de las esquinas seleccionadas con la herramienta Vértices: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Radius">Radio en unidades de la forma, 0 o más.</param>
+public sealed record CornerRadiusChange(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("radius")] double Radius);
+
 /// <summary>Texto de un documento para guardarlo.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Svg">Texto completo del SVG.</param>
@@ -242,20 +249,24 @@ public enum NodeKind
     Mixed,
 }
 
-/// <summary>Nodos seleccionados del trazado que se edita con la herramienta Vértices. Sin trazado o sin nodos seleccionados, count es 0.</summary>
+/// <summary>Nodos seleccionados de la forma que se edita con la herramienta Vértices: los nodos de un trazado o los vértices de un polígono. Sin forma o sin nodos seleccionados, count es 0.</summary>
 /// <param name="DocumentId">Documento del trazado.</param>
 /// <param name="Count">Número de nodos seleccionados.</param>
 /// <param name="CanSmooth">Algún nodo seleccionado tiene dos lados y puede ser suave o simétrico.</param>
 /// <param name="CanMakeLine">Algún segmento entre dos nodos seleccionados no es recto.</param>
 /// <param name="CanMakeCurve">Algún segmento entre dos nodos seleccionados no es una curva cúbica.</param>
 /// <param name="Kind">Tipo común de los nodos seleccionados que tienen dos lados; ausente si ninguno los tiene.</param>
+/// <param name="CanRound">Alguna esquina seleccionada está entre dos rectas y se puede redondear.</param>
+/// <param name="CornerRadius">Radio común de las esquinas seleccionadas que se pueden redondear; ausente si son distintos o no hay ninguna.</param>
 public sealed record NodeSelection(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("count")] int Count,
     [property: JsonPropertyName("canSmooth")] bool CanSmooth,
     [property: JsonPropertyName("canMakeLine")] bool CanMakeLine,
     [property: JsonPropertyName("canMakeCurve")] bool CanMakeCurve,
-    [property: JsonPropertyName("kind"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] NodeKind? Kind = null);
+    [property: JsonPropertyName("kind"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] NodeKind? Kind = null,
+    [property: JsonPropertyName("canRound"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? CanRound = null,
+    [property: JsonPropertyName("cornerRadius"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? CornerRadius = null);
 
 /// <summary>Cambia el orden de apilado de la selección.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -620,6 +631,9 @@ public static class BridgeCommands
     /// <summary>Operación del menú Trazado sobre la selección: cerrar o abrir trazados (con la herramienta Vértices, abrir por el nodo seleccionado), invertir su dirección, combinar las formas seleccionadas en un trazado o separar un trazado en sus subtrazados. changed es false si no había nada que hacer. Se puede deshacer.</summary>
     public static readonly BridgeCommand<PathOperation, ObjectChange> PathOperation = new("path.operation");
 
+    /// <summary>Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0). La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<CornerRadiusChange, ObjectChange> PathCornerRadius = new("path.cornerRadius");
+
     /// <summary>Agrupa la selección en un &lt;g&gt; sin cambiar su aspecto. Se puede deshacer.</summary>
     public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectGroup = new("object.group");
 
@@ -681,7 +695,7 @@ public static class BridgeEvents
     /// <summary>Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado.</summary>
     public static readonly BridgeEvent<ShapeConverted> ShapeConverted = new("shape.converted");
 
-    /// <summary>Han cambiado los nodos seleccionados del trazado que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.</summary>
+    /// <summary>Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.</summary>
     public static readonly BridgeEvent<NodeSelection> NodesChanged = new("nodes.changed");
 
     /// <summary>El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado.</summary>
@@ -728,6 +742,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(ClipboardPaste))]
 [JsonSerializable(typeof(ClipboardPasteResult))]
 [JsonSerializable(typeof(ContextMenuRequest))]
+[JsonSerializable(typeof(CornerRadiusChange))]
 [JsonSerializable(typeof(DocumentContent))]
 [JsonSerializable(typeof(DocumentLoad))]
 [JsonSerializable(typeof(DocumentLoadResult))]
