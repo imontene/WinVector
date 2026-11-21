@@ -60,6 +60,8 @@ internal sealed class TestTexts : IShellTexts
     public string ShapeField(string key) => key;
 
     public string ShapeConverted(ShapeType from) => $"{from} → polígono";
+
+    public string SelectedNodes(int count, NodeKind? kind) => kind is null ? $"{count} nodos" : $"{count} nodos · {kind}";
 }
 
 /// <summary>Diálogos con respuestas preparadas que anotan lo que se les pregunta.</summary>

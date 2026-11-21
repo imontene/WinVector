@@ -1026,4 +1026,136 @@ Licensed under the Apache License 2.0.</value>
   <data name="PaletteShortcutEditVertices" xml:space="preserve">
     <value>A</value>
   </data>
+  <data name="SelectedNodesOne" xml:space="preserve">
+    <value>1 node</value>
+  </data>
+  <data name="SelectedNodesMany" xml:space="preserve">
+    <value>{0} nodes</value>
+  </data>
+  <data name="SelectedNodesWithKind" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="NodeKindCorner" xml:space="preserve">
+    <value>Corner</value>
+  </data>
+  <data name="NodeKindSmooth" xml:space="preserve">
+    <value>Smooth</value>
+  </data>
+  <data name="NodeKindSymmetric" xml:space="preserve">
+    <value>Symmetric</value>
+  </data>
+  <data name="NodeKindMixed" xml:space="preserve">
+    <value>Mixed</value>
+  </data>
+  <data name="HistoryActionMoveHandle" xml:space="preserve">
+    <value>move handle</value>
+  </data>
+  <data name="HistoryActionAddNode" xml:space="preserve">
+    <value>add node</value>
+  </data>
+  <data name="HistoryActionDeleteNodes" xml:space="preserve">
+    <value>delete nodes</value>
+  </data>
+  <data name="HistoryActionNodeType" xml:space="preserve">
+    <value>change node type</value>
+  </data>
+  <data name="HistoryActionSegmentType" xml:space="preserve">
+    <value>change segment type</value>
+  </data>
+  <data name="PaletteNameNodesCorner" xml:space="preserve">
+    <value>Make nodes corner</value>
+  </data>
+  <data name="PaletteShortcutNodesCorner" xml:space="preserve">
+    <value>Shift+C</value>
+  </data>
+  <data name="PaletteNameNodesSmooth" xml:space="preserve">
+    <value>Make nodes smooth</value>
+  </data>
+  <data name="PaletteShortcutNodesSmooth" xml:space="preserve">
+    <value>Shift+S</value>
+  </data>
+  <data name="PaletteNameNodesSymmetric" xml:space="preserve">
+    <value>Make nodes symmetric</value>
+  </data>
+  <data name="PaletteShortcutNodesSymmetric" xml:space="preserve">
+    <value>Shift+Y</value>
+  </data>
+  <data name="PaletteNameSegmentsLine" xml:space="preserve">
+    <value>Make segments lines</value>
+  </data>
+  <data name="PaletteShortcutSegmentsLine" xml:space="preserve">
+    <value>Shift+L</value>
+  </data>
+  <data name="PaletteNameSegmentsCurve" xml:space="preserve">
+    <value>Make segments curves</value>
+  </data>
+  <data name="PaletteShortcutSegmentsCurve" xml:space="preserve">
+    <value>Shift+U</value>
+  </data>
+  <data name="MenuPathNodesCorner.Text" xml:space="preserve">
+    <value>Corner node</value>
+  </data>
+  <data name="MenuPathNodesCorner.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Shift+C</value>
+  </data>
+  <data name="MenuPathNodesSmooth.Text" xml:space="preserve">
+    <value>Smooth node</value>
+  </data>
+  <data name="MenuPathNodesSmooth.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Shift+S</value>
+  </data>
+  <data name="MenuPathNodesSymmetric.Text" xml:space="preserve">
+    <value>Symmetric node</value>
+  </data>
+  <data name="MenuPathNodesSymmetric.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Shift+Y</value>
+  </data>
+  <data name="MenuPathSegmentsLine.Text" xml:space="preserve">
+    <value>Line segment</value>
+  </data>
+  <data name="MenuPathSegmentsLine.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Shift+L</value>
+  </data>
+  <data name="MenuPathSegmentsCurve.Text" xml:space="preserve">
+    <value>Curve segment</value>
+  </data>
+  <data name="MenuPathSegmentsCurve.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Shift+U</value>
+  </data>
+  <data name="NodesTitle.Text" xml:space="preserve">
+    <value>Nodes</value>
+  </data>
+  <data name="SegmentsLabel.Text" xml:space="preserve">
+    <value>Segments</value>
+  </data>
+  <data name="NodeCornerButton.Content" xml:space="preserve">
+    <value>Corner</value>
+  </data>
+  <data name="NodeCornerButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Corner node (Shift+C)</value>
+  </data>
+  <data name="NodeSmoothButton.Content" xml:space="preserve">
+    <value>Smooth</value>
+  </data>
+  <data name="NodeSmoothButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Smooth node (Shift+S)</value>
+  </data>
+  <data name="NodeSymmetricButton.Content" xml:space="preserve">
+    <value>Symmetric</value>
+  </data>
+  <data name="NodeSymmetricButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Symmetric node (Shift+Y)</value>
+  </data>
+  <data name="SegmentLineButton.Content" xml:space="preserve">
+    <value>Line</value>
+  </data>
+  <data name="SegmentLineButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Line segment (Shift+L)</value>
+  </data>
+  <data name="SegmentCurveButton.Content" xml:space="preserve">
+    <value>Curve</value>
+  </data>
+  <data name="SegmentCurveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Curve segment (Shift+U)</value>
+  </data>
 </root>

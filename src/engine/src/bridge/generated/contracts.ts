@@ -187,6 +187,28 @@ export interface KeyboardShortcut {
   readonly altKey: boolean;
 }
 
+/** Cambio sobre los nodos seleccionados de un trazado: hacerlos esquina, suaves o simétricos, o hacer rectos o curvos los segmentos que hay entre ellos. */
+export type NodeAction = "corner" | "smooth" | "symmetric" | "line" | "curve";
+
+/** Tipo de los nodos seleccionados: esquina, suave, simétrico o mixed si son de varios tipos. */
+export type NodeKind = "corner" | "smooth" | "symmetric" | "mixed";
+
+/** Nodos seleccionados del trazado que se edita con la herramienta Vértices. Sin trazado o sin nodos seleccionados, count es 0. */
+export interface NodeSelection {
+  /** Documento del trazado. */
+  readonly documentId: string;
+  /** Número de nodos seleccionados. */
+  readonly count: number;
+  /** Tipo común de los nodos seleccionados que tienen dos lados; ausente si ninguno los tiene. */
+  readonly kind?: NodeKind;
+  /** Algún nodo seleccionado tiene dos lados y puede ser suave o simétrico. */
+  readonly canSmooth: boolean;
+  /** Algún segmento entre dos nodos seleccionados no es recto. */
+  readonly canMakeLine: boolean;
+  /** Algún segmento entre dos nodos seleccionados no es una curva cúbica. */
+  readonly canMakeCurve: boolean;
+}
+
 /** Cambia el orden de apilado de la selección. */
 export interface ObjectArrange {
   /** Identificador del documento, asignado por la aplicación. */
@@ -201,6 +223,14 @@ export interface ObjectChange {
   readonly documentId: string;
   /** False si no había nada que cambiar (por ejemplo, un grupo que no se puede desagrupar sin cambiar su aspecto). */
   readonly changed: boolean;
+}
+
+/** Cambia el tipo de los nodos seleccionados con la herramienta Vértices, o el de los segmentos entre ellos. */
+export interface PathNodesChange {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Qué hacer con los nodos o los segmentos. */
+  readonly action: NodeAction;
 }
 
 /** Rectángulo alineado con los ejes. */
@@ -446,6 +476,8 @@ export interface BridgeCommands {
   readonly "object.arrange": { readonly payload: ObjectArrange; readonly response: ObjectChange };
   /** Convierte en trazados (<path>) las formas seleccionadas (rectángulo, elipse, círculo, línea, polígono, polilínea) sin cambiar su aspecto, conservando sus atributos. Se puede deshacer. */
   readonly "object.toPath": { readonly payload: DocumentRef; readonly response: ObjectChange };
+  /** Con la herramienta Vértices en un trazado, hace esquina, suaves o simétricos los nodos seleccionados, o rectos o curvos los segmentos entre ellos. changed es false si no había nada que cambiar. Se puede deshacer. */
+  readonly "path.nodes": { readonly payload: PathNodesChange; readonly response: ObjectChange };
   /** Agrupa la selección en un <g> sin cambiar su aspecto. Se puede deshacer. */
   readonly "object.group": { readonly payload: DocumentRef; readonly response: ObjectChange };
   /** Desagrupa los grupos seleccionados sin cambiar su aspecto; los que cambiarían (opacidad, filtro, recorte, máscara) se dejan. Se puede deshacer. */
@@ -500,6 +532,8 @@ export interface BridgeEvents {
   readonly "selection.changed": SelectionChanged;
   /** Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado. */
   readonly "shape.converted": ShapeConverted;
+  /** Han cambiado los nodos seleccionados del trazado que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel. */
+  readonly "nodes.changed": NodeSelection;
   /** El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado. */
   readonly "canvas.contextMenu": ContextMenuRequest;
   /** El motor ha recibido un mensaje que no puede procesar o ha sufrido un error interno. */
@@ -531,6 +565,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "selection.setShape",
   "object.arrange",
   "object.toPath",
+  "path.nodes",
   "object.group",
   "object.ungroup",
   "selection.duplicate",
@@ -552,6 +587,7 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "engine.ready",
   "selection.changed",
   "shape.converted",
+  "nodes.changed",
   "canvas.contextMenu",
   "error",
   "document.changed",

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NodeKind",
+  "description": "Tipo de los nodos seleccionados: esquina, suave, simétrico o mixed si son de varios tipos.",
+  "type": "string",
+  "enum": [
+    "corner",
+    "smooth",
+    "symmetric",
+    "mixed"
+  ]
+}

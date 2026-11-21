@@ -10,4 +10,5 @@ export * from "./parse";
 export * from "./serialize";
 export * from "./curves";
 export * from "./nodes";
+export * from "./nodeEdit";
 export * from "./convert";

@@ -27,6 +27,12 @@
       "payload": "ShapeConverted"
     },
     {
+      "name": "nodes.changed",
+      "kind": "event",
+      "description": "Han cambiado los nodos seleccionados del trazado que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.",
+      "payload": "NodeSelection"
+    },
+    {
       "name": "canvas.contextMenu",
       "kind": "event",
       "description": "El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado.",
@@ -72,6 +78,13 @@
       "kind": "command",
       "description": "Convierte en trazados (<path>) las formas seleccionadas (rectángulo, elipse, círculo, línea, polígono, polilínea) sin cambiar su aspecto, conservando sus atributos. Se puede deshacer.",
       "payload": "DocumentRef",
+      "response": "ObjectChange"
+    },
+    {
+      "name": "path.nodes",
+      "kind": "command",
+      "description": "Con la herramienta Vértices en un trazado, hace esquina, suaves o simétricos los nodos seleccionados, o rectos o curvos los segmentos entre ellos. changed es false si no había nada que cambiar. Se puede deshacer.",
+      "payload": "PathNodesChange",
       "response": "ObjectChange"
     },
     {

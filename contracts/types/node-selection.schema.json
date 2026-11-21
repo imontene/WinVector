@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NodeSelection",
+  "description": "Nodos seleccionados del trazado que se edita con la herramienta Vértices. Sin trazado o sin nodos seleccionados, count es 0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "count",
+    "canSmooth",
+    "canMakeLine",
+    "canMakeCurve"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Documento del trazado."
+    },
+    "count": {
+      "type": "integer",
+      "description": "Número de nodos seleccionados."
+    },
+    "kind": {
+      "$ref": "./node-kind.schema.json",
+      "description": "Tipo común de los nodos seleccionados que tienen dos lados; ausente si ninguno los tiene."
+    },
+    "canSmooth": {
+      "type": "boolean",
+      "description": "Algún nodo seleccionado tiene dos lados y puede ser suave o simétrico."
+    },
+    "canMakeLine": {
+      "type": "boolean",
+      "description": "Algún segmento entre dos nodos seleccionados no es recto."
+    },
+    "canMakeCurve": {
+      "type": "boolean",
+      "description": "Algún segmento entre dos nodos seleccionados no es una curva cúbica."
+    }
+  }
+}

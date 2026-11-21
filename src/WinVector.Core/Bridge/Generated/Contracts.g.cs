@@ -202,6 +202,51 @@ public sealed record KeyboardShortcut(
     [property: JsonPropertyName("shiftKey")] bool ShiftKey,
     [property: JsonPropertyName("altKey")] bool AltKey);
 
+/// <summary>Cambio sobre los nodos seleccionados de un trazado: hacerlos esquina, suaves o simétricos, o hacer rectos o curvos los segmentos que hay entre ellos.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<NodeAction>))]
+public enum NodeAction
+{
+    [JsonStringEnumMemberName("corner")]
+    Corner,
+    [JsonStringEnumMemberName("smooth")]
+    Smooth,
+    [JsonStringEnumMemberName("symmetric")]
+    Symmetric,
+    [JsonStringEnumMemberName("line")]
+    Line,
+    [JsonStringEnumMemberName("curve")]
+    Curve,
+}
+
+/// <summary>Tipo de los nodos seleccionados: esquina, suave, simétrico o mixed si son de varios tipos.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<NodeKind>))]
+public enum NodeKind
+{
+    [JsonStringEnumMemberName("corner")]
+    Corner,
+    [JsonStringEnumMemberName("smooth")]
+    Smooth,
+    [JsonStringEnumMemberName("symmetric")]
+    Symmetric,
+    [JsonStringEnumMemberName("mixed")]
+    Mixed,
+}
+
+/// <summary>Nodos seleccionados del trazado que se edita con la herramienta Vértices. Sin trazado o sin nodos seleccionados, count es 0.</summary>
+/// <param name="DocumentId">Documento del trazado.</param>
+/// <param name="Count">Número de nodos seleccionados.</param>
+/// <param name="CanSmooth">Algún nodo seleccionado tiene dos lados y puede ser suave o simétrico.</param>
+/// <param name="CanMakeLine">Algún segmento entre dos nodos seleccionados no es recto.</param>
+/// <param name="CanMakeCurve">Algún segmento entre dos nodos seleccionados no es una curva cúbica.</param>
+/// <param name="Kind">Tipo común de los nodos seleccionados que tienen dos lados; ausente si ninguno los tiene.</param>
+public sealed record NodeSelection(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("count")] int Count,
+    [property: JsonPropertyName("canSmooth")] bool CanSmooth,
+    [property: JsonPropertyName("canMakeLine")] bool CanMakeLine,
+    [property: JsonPropertyName("canMakeCurve")] bool CanMakeCurve,
+    [property: JsonPropertyName("kind"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] NodeKind? Kind = null);
+
 /// <summary>Cambia el orden de apilado de la selección.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Action">Al frente, al fondo, un nivel arriba o un nivel abajo.</param>
@@ -215,6 +260,13 @@ public sealed record ObjectArrange(
 public sealed record ObjectChange(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("changed")] bool Changed);
+
+/// <summary>Cambia el tipo de los nodos seleccionados con la herramienta Vértices, o el de los segmentos entre ellos.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Action">Qué hacer con los nodos o los segmentos.</param>
+public sealed record PathNodesChange(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("action")] NodeAction Action);
 
 /// <summary>Rectángulo alineado con los ejes.</summary>
 /// <param name="X">Borde izquierdo.</param>
@@ -525,6 +577,9 @@ public static class BridgeCommands
     /// <summary>Convierte en trazados (&lt;path&gt;) las formas seleccionadas (rectángulo, elipse, círculo, línea, polígono, polilínea) sin cambiar su aspecto, conservando sus atributos. Se puede deshacer.</summary>
     public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectToPath = new("object.toPath");
 
+    /// <summary>Con la herramienta Vértices en un trazado, hace esquina, suaves o simétricos los nodos seleccionados, o rectos o curvos los segmentos entre ellos. changed es false si no había nada que cambiar. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<PathNodesChange, ObjectChange> PathNodes = new("path.nodes");
+
     /// <summary>Agrupa la selección en un &lt;g&gt; sin cambiar su aspecto. Se puede deshacer.</summary>
     public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectGroup = new("object.group");
 
@@ -586,6 +641,9 @@ public static class BridgeEvents
     /// <summary>Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado.</summary>
     public static readonly BridgeEvent<ShapeConverted> ShapeConverted = new("shape.converted");
 
+    /// <summary>Han cambiado los nodos seleccionados del trazado que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.</summary>
+    public static readonly BridgeEvent<NodeSelection> NodesChanged = new("nodes.changed");
+
     /// <summary>El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado.</summary>
     public static readonly BridgeEvent<ContextMenuRequest> CanvasContextMenu = new("canvas.contextMenu");
 
@@ -640,8 +698,10 @@ public static class BridgeEvents
 [JsonSerializable(typeof(FilesDropped))]
 [JsonSerializable(typeof(HistoryState))]
 [JsonSerializable(typeof(KeyboardShortcut))]
+[JsonSerializable(typeof(NodeSelection))]
 [JsonSerializable(typeof(ObjectArrange))]
 [JsonSerializable(typeof(ObjectChange))]
+[JsonSerializable(typeof(PathNodesChange))]
 [JsonSerializable(typeof(Rect))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]

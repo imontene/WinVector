@@ -11,17 +11,25 @@ import {
 import type { History } from "../history";
 import {
   handleAt,
+  insertNode,
   moveHandle,
   moveNodes,
   nodeKey,
+  nearestOnPath,
   nodeKind,
   parsePath,
   pathNodes,
+  removeNodes,
   serializePath,
+  setNodeKind,
+  setSegmentKind,
+  summarizeNodes,
   type HandleRef,
   type NodeKind,
+  type NodeSummary,
   type PathData,
 } from "../paths";
+import type { NodeAction } from "../bridge";
 import { pickAt, type Selection } from "../selection";
 import { elementToRoot } from "../transform";
 import { isPressed } from "./modifiers";
@@ -140,13 +148,25 @@ type Press =
       rect: Rect | null;
     };
 
+/** Atajos con `Mayús` para las acciones sobre nodos (los mismos que en Inkscape). */
+const NODE_SHORTCUTS: Readonly<Record<string, NodeAction>> = {
+  c: "corner",
+  s: "smooth",
+  y: "symmetric",
+  l: "line",
+  u: "curve",
+};
+
 const toMatrix = (m: DOMMatrix): Matrix => ({ a: m.a, b: m.b, c: m.c, d: m.d, e: m.e, f: m.f });
 
 /**
  * Herramienta Vértices (atajo `A`): edita los vértices de polígonos, polilíneas, líneas, estrellas y
  * rectángulos (estos dos pasan a ser polígonos normales al editarlos) y los nodos de los trazados.
  * En un trazado, los nodos seleccionados muestran los manejadores de sus curvas: arrastrar uno lo
- * mueve (`Mayús`: de 15° en 15°) y, si el nodo es suave o simétrico, el opuesto lo sigue.
+ * mueve (`Mayús`: de 15° en 15°) y, si el nodo es suave o simétrico, el opuesto lo sigue. Doble clic
+ * en un segmento añade un nodo sin cambiar la forma; `Supr` quita los seleccionados ajustando las
+ * curvas vecinas; `Mayús` + `C`, `S` o `Y` los hace esquina, suaves o simétricos, y `Mayús` + `L` o
+ * `U` hacen rectos o curvos los segmentos entre ellos (issue #77).
  *
  * - Clic en un vértice lo selecciona (`Mayús`: lo añade o lo quita); arrastrar desde el fondo
  *   selecciona los vértices que quedan dentro del marco. Clic en otra forma la elige.
@@ -155,8 +175,7 @@ const toMatrix = (m: DOMMatrix): Matrix => ({ a: m.a, b: m.b, c: m.c, d: m.d, e:
  * - Doble clic en un segmento añade un vértice; `Supr` quita los seleccionados sin bajar del mínimo.
  * - `Esc` cancela el arrastre o deselecciona los vértices.
  *
- * Cada edición es un paso del historial. Pensada para que la herramienta de nodos de la Fase 3 la
- * amplíe con los manejadores de las curvas.
+ * Cada edición es un paso del historial.
  */
 export function installVertexTool(target: Window, host: VertexToolHost) {
   let selected = new Set<number>();
@@ -203,7 +222,9 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       selected.has(i)
         ? node.handles.flatMap((handle) => {
             const at = handleAt(data, handle);
-            return at
+            // Un manejador recogido sobre su nodo no se dibuja: taparía el nodo.
+            const retracted = at && Math.hypot(at.x - node.point.x, at.y - node.point.y) < 1e-9;
+            return at && !retracted
               ? [{ handle, node, data, from: applyToPoint(m, node.point), to: applyToPoint(m, at) }]
               : [];
           })
@@ -227,6 +248,67 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
 
   const vertexAt = (element: Element, p: Point) =>
     screenVertices(element).findIndex((v) => Math.hypot(v.x - p.x, v.y - p.y) <= HIT_DISTANCE);
+
+  /** Trazado que se edita, si la forma que se edita es un `<path>`. */
+  const editedPath = () => {
+    const editing = current();
+    if (editing?.element.localName !== "path") return null;
+    return { ...editing, data: parsePath(editing.element.getAttribute("d") ?? "").data };
+  };
+
+  /** Claves de los nodos seleccionados de un trazado. */
+  const selectedKeys = (data: PathData) => {
+    const nodes = pathNodes(data);
+    return new Set(
+      [...selected]
+        .map((i) => nodes[i])
+        .filter((n) => n !== undefined)
+        .map(nodeKey),
+    );
+  };
+
+  /** Índices de los nodos con esas claves. */
+  const indicesOf = (data: PathData, keys: readonly string[]) => {
+    const wanted = new Set(keys);
+    return new Set(pathNodes(data).flatMap((node, i) => (wanted.has(nodeKey(node)) ? [i] : [])));
+  };
+
+  /** Escribe un trazado en un paso del historial, si cambia lo que hay escrito. */
+  const writePath = (
+    path: NonNullable<ReturnType<typeof editedPath>>,
+    action: string,
+    data: PathData,
+  ): boolean => {
+    const d = serializePath(data);
+    if (d === serializePath(path.data)) return false;
+    path.history.transact(action, () => {
+      path.element.setAttribute("d", d);
+    });
+    return true;
+  };
+
+  /** Cambia el tipo de los nodos seleccionados o de los segmentos entre ellos. */
+  const nodeAction = (action: NodeAction): boolean => {
+    const path = editedPath();
+    if (!path || selected.size === 0) return false;
+    const keys = selectedKeys(path.data);
+    const result =
+      action === "line" || action === "curve"
+        ? setSegmentKind(path.data, keys, action)
+        : setNodeKind(path.data, keys, action);
+    if (
+      !writePath(
+        path,
+        action === "line" || action === "curve" ? "segment-type" : "node-type",
+        result.data,
+      )
+    ) {
+      return false;
+    }
+    selected = indicesOf(result.data, result.selected);
+    host.changed();
+    return true;
+  };
 
   /**
    * Prepara la forma para editarla (un rectángulo o una estrella pasan a ser polígonos) dentro del
@@ -438,6 +520,21 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     if (vertexAt(editing.element, p) !== -1) return;
     const ctm =
       editing.element instanceof SVGGraphicsElement ? editing.element.getScreenCTM() : null;
+    const path = editedPath();
+    if (path && ctm) {
+      // En un trazado, el punto del trazo más cercano; la tolerancia, en pantalla.
+      const m = toMatrix(ctm);
+      const toLocal = invert(m);
+      const found = toLocal ? nearestOnPath(path.data, applyToPoint(toLocal, p)) : null;
+      if (!found) return;
+      const onScreen = applyToPoint(m, found.point);
+      if (Math.hypot(onScreen.x - p.x, onScreen.y - p.y) > HIT_DISTANCE) return;
+      const result = insertNode(path.data, found);
+      if (!writePath(path, "add-node", result.data)) return;
+      selected = indicesOf(result.data, result.selected);
+      host.changed();
+      return;
+    }
     const vertices = displayVertices(editing.element);
     if (!ctm || !vertices?.resizable) return;
     const m = toMatrix(ctm);
@@ -481,6 +578,26 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     }
     const editing = current();
     if (!editing || selected.size === 0 || press) return;
+    const path = editedPath();
+    if (path && (event.key === "Delete" || event.key === "Backspace")) {
+      // Quitar todos los nodos no borra el trazado: para eso está la herramienta Selección.
+      consume(event);
+      const removed = removeNodes(path.data, selectedKeys(path.data));
+      if (removed && writePath(path, "delete-nodes", removed)) {
+        selected = new Set();
+        host.changed();
+      }
+      return;
+    }
+    const shortcut =
+      event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey
+        ? NODE_SHORTCUTS[event.key.toLowerCase()]
+        : undefined;
+    if (path && shortcut) {
+      consume(event);
+      nodeAction(shortcut);
+      return;
+    }
     if (event.key === "Delete" || event.key === "Backspace") {
       consume(event);
       const vertices = displayVertices(editing.element);
@@ -535,6 +652,13 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       const handles = screenHandles(editing.element).map(({ from, to }) => ({ from, to }));
       return { points, selected: points.map((_, i) => selected.has(i)), handles };
     },
+    /** Nodos seleccionados del trazado que se edita, o `null` si no se edita un trazado. */
+    nodes(): NodeSummary | null {
+      if (!isActive()) return null;
+      const path = editedPath();
+      return path ? summarizeNodes(path.data, selectedKeys(path.data)) : null;
+    },
+    nodeAction,
     dispose() {
       for (const [type, listener] of listeners) {
         target.removeEventListener(type, listener, { capture: true });

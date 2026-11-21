@@ -90,6 +90,11 @@ public sealed partial class MainViewModel : ObservableObject
         Add("ungroup", UngroupCommand);
         Add("object-to-path", ConvertToPathCommand);
         Add("edit-vertices", EditVerticesCommand);
+        Add("nodes-corner", MakeNodesCornerCommand);
+        Add("nodes-smooth", MakeNodesSmoothCommand);
+        Add("nodes-symmetric", MakeNodesSymmetricCommand);
+        Add("segments-line", MakeSegmentsLineCommand);
+        Add("segments-curve", MakeSegmentsCurveCommand);
         Add("bring-to-front", BringToFrontCommand);
         Add("bring-forward", BringForwardCommand);
         Add("send-backward", SendBackwardCommand);
@@ -1192,6 +1197,7 @@ public sealed partial class MainViewModel : ObservableObject
             bridge.Subscribe(BridgeEvents.ArtboardChanged, OnArtboardChanged),
             bridge.Subscribe(BridgeEvents.ShapeConverted, OnShapeConverted),
             bridge.Subscribe(BridgeEvents.CanvasContextMenu, OnContextMenu),
+            bridge.Subscribe(BridgeEvents.NodesChanged, OnNodesChanged),
             bridge.Subscribe(BridgeEvents.KeyboardShortcut, shortcut => _ = HandleShortcutAsync(shortcut)),
         };
         return new CompositeSubscription(subscriptions, () =>
@@ -1211,6 +1217,7 @@ public sealed partial class MainViewModel : ObservableObject
         ShowGeometry(null, null);
         ShowStyle(null);
         ShowShape(null);
+        ShowNodes(null);
         OnPropertyChanged(nameof(ZoomText));
         OnPropertyChanged(nameof(CurrentArtboard));
         NotifyEditCommandsChanged();
