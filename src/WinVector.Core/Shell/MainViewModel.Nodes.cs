@@ -36,6 +36,14 @@ public sealed partial class MainViewModel
     [NotifyCanExecuteChangedFor(nameof(MakeSegmentsCurveCommand))]
     private bool _canMakeSegmentsCurve;
 
+    /// <summary>Alguna esquina seleccionada se puede redondear (issue #80).</summary>
+    [ObservableProperty]
+    private bool _canRoundCorners;
+
+    /// <summary>Radio común de las esquinas seleccionadas, o NaN si son distintos o no hay ninguna.</summary>
+    [ObservableProperty]
+    private double _selectedCornerRadius = double.NaN;
+
     /// <summary>Hay nodos de un trazado seleccionados: el panel muestra sus órdenes.</summary>
     public bool HasSelectedNodes => SelectedNodeCount > 0;
 
@@ -61,6 +69,21 @@ public sealed partial class MainViewModel
     /// <summary>Hace curvos los segmentos entre nodos seleccionados, sin cambiar lo que se ve.</summary>
     [RelayCommand(CanExecute = nameof(CanMakeSegmentsCurve))]
     public Task MakeSegmentsCurveAsync() => PathNodesAsync(NodeAction.Curve);
+
+    /// <summary>Redondea las esquinas seleccionadas con el mismo radio; 0 quita el redondeo.</summary>
+    /// <returns>False si el valor no es válido, es el mismo o no hay esquinas que redondear.</returns>
+    public bool SetCornerRadius(double radius)
+    {
+        if (SelectedDocument is not { IsLoaded: true } document || !CanRoundCorners
+            || !double.IsFinite(radius) || radius < 0 || Math.Abs(radius - SelectedCornerRadius) < 1e-9)
+        {
+            OnPropertyChanged(nameof(SelectedCornerRadius));
+            return false;
+        }
+
+        Enqueue(() => SendAsync(BridgeCommands.PathCornerRadius, new CornerRadiusChange(document.DocumentId, radius)));
+        return true;
+    }
 
     private Task PathNodesAsync(NodeAction action)
     {
@@ -89,5 +112,7 @@ public sealed partial class MainViewModel
         CanSmoothNodes = selection?.CanSmooth ?? false;
         CanMakeSegmentsLine = selection?.CanMakeLine ?? false;
         CanMakeSegmentsCurve = selection?.CanMakeCurve ?? false;
+        CanRoundCorners = selection?.CanRound ?? false;
+        SelectedCornerRadius = selection is { CanRound: true, CornerRadius: { } radius } ? Math.Round(radius, 2) : double.NaN;
     }
 }

@@ -355,6 +355,13 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c27",
+    name: "path.cornerRadius",
+    payload: { documentId: "d1", radius: 4.5 },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e7",
     name: "nodes.changed",
@@ -365,6 +372,8 @@ const examples: readonly BridgeMessage[] = [
       canSmooth: true,
       canMakeLine: false,
       canMakeCurve: true,
+      canRound: true,
+      cornerRadius: 3,
     },
   },
   {
@@ -399,6 +408,7 @@ function summarize(message: BridgeMessage): string {
       case "object.toPath":
       case "path.nodes":
       case "path.operation":
+      case "path.cornerRadius":
       case "selection.duplicate":
       case "selection.delete":
       case "selection.setStyle":
@@ -442,6 +452,8 @@ function summarize(message: BridgeMessage): string {
         return `nodos ${message.payload.action}`;
       case "path.operation":
         return `trazado ${message.payload.operation}`;
+      case "path.cornerRadius":
+        return `radio ${String(message.payload.radius)}`;
       case "object.group":
       case "object.ungroup":
       case "object.toPath":
@@ -548,6 +560,7 @@ describe("contrato del puente", () => {
       "menú en 10,20",
       "nodos smooth",
       "trazado combine",
+      "radio 4.5",
       "2 nodos mixed",
       "error unknown-message",
     ]);

@@ -1218,4 +1218,7 @@ Licensed under the Apache License 2.0.</value>
   <data name="FillRuleEvenodd.Content" xml:space="preserve">
     <value>Even-odd</value>
   </data>
+  <data name="CornerRadiusBox.Header" xml:space="preserve">
+    <value>Corner radius</value>
+  </data>
 </root>

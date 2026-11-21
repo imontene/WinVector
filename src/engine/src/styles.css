@@ -235,6 +235,12 @@ body[data-handle="radius"] {
   stroke-width: 1;
 }
 
+/* Control de radio de una esquina (src/tools/vertexTool.ts, issue #80): un anillo dentro de ella. */
+.overlay-corner-radius {
+  fill: var(--handle-fill, #fff);
+  stroke-width: 1.5;
+}
+
 /* Primer vértice de la forma libre (src/tools/penTool.ts): más grande cuando un clic la cerraría. */
 .overlay-pen-start {
   fill: var(--handle-fill, #fff);

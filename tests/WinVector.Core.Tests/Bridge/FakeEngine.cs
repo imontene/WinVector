@@ -197,6 +197,10 @@ internal sealed class FakeEngine
                 StylesSet.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
+            case "path.cornerRadius":
+                NodeActions.Add($"radius {payload.GetProperty("radius").GetDouble().ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
+                break;
             case "path.operation":
                 NodeActions.Add(payload.GetProperty("operation").GetString()!);
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");

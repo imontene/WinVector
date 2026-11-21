@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "NodeSelection",
-  "description": "Nodos seleccionados del trazado que se edita con la herramienta Vértices. Sin trazado o sin nodos seleccionados, count es 0.",
+  "description": "Nodos seleccionados de la forma que se edita con la herramienta Vértices: los nodos de un trazado o los vértices de un polígono. Sin forma o sin nodos seleccionados, count es 0.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -35,6 +35,14 @@
     "canMakeCurve": {
       "type": "boolean",
       "description": "Algún segmento entre dos nodos seleccionados no es una curva cúbica."
+    },
+    "canRound": {
+      "type": "boolean",
+      "description": "Alguna esquina seleccionada está entre dos rectas y se puede redondear."
+    },
+    "cornerRadius": {
+      "type": "number",
+      "description": "Radio común de las esquinas seleccionadas que se pueden redondear; ausente si son distintos o no hay ninguna."
     }
   }
 }

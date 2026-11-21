@@ -962,6 +962,17 @@
                                         AutomationProperties.AutomationId="SegmentCurveButton"
                                         Command="{x:Bind ViewModel.MakeSegmentsCurveCommand}" />
                                 </Grid>
+                                <!-- Radio de las esquinas seleccionadas entre dos rectas (issue #80). -->
+                                <NumberBox
+                                    x:Uid="CornerRadiusBox"
+                                    AutomationProperties.AutomationId="CornerRadiusBox"
+                                    LargeChange="10"
+                                    Minimum="0"
+                                    SmallChange="1"
+                                    SpinButtonPlacementMode="Compact"
+                                    ValueChanged="OnCornerRadiusChanged"
+                                    Value="{x:Bind ViewModel.SelectedCornerRadius, Mode=OneWay}"
+                                    Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.CanRoundCorners), Mode=OneWay}" />
                             </StackPanel>
                         </StackPanel>
 

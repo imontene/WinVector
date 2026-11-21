@@ -106,6 +106,29 @@ public sealed class MainViewModelNodesTests : IDisposable
     }
 
     [TestMethod]
+    public async Task ElRadioDeLasEsquinasSeMuestraYSeCambia()
+    {
+        await ReadyAsync();
+        Nodes("""{"documentId":"d1","count":2,"canSmooth":false,"canMakeLine":false,"canMakeCurve":false,"canRound":true,"cornerRadius":12.346}""");
+        Assert.IsTrue(_viewModel.CanRoundCorners);
+        Assert.AreEqual(12.35, _viewModel.SelectedCornerRadius);
+        Assert.IsFalse(_viewModel.SetCornerRadius(12.35), "El mismo radio no se envía.");
+        Assert.IsFalse(_viewModel.SetCornerRadius(-1));
+
+        Assert.IsTrue(_viewModel.SetCornerRadius(4));
+        Assert.IsTrue(_viewModel.SetCornerRadius(0));
+        await _viewModel.EngineWork;
+        Assert.AreEqual("radius 4 radius 0", string.Join(" ", _engine.NodeActions));
+
+        // Radios distintos: el panel no muestra ninguno. Sin esquinas, no se puede redondear.
+        Nodes("""{"documentId":"d1","count":2,"canSmooth":false,"canMakeLine":false,"canMakeCurve":false,"canRound":true}""");
+        Assert.IsTrue(double.IsNaN(_viewModel.SelectedCornerRadius));
+        Nodes("""{"documentId":"d1","count":1,"canSmooth":false,"canMakeLine":false,"canMakeCurve":false}""");
+        Assert.IsFalse(_viewModel.CanRoundCorners);
+        Assert.IsFalse(_viewModel.SetCornerRadius(5));
+    }
+
+    [TestMethod]
     public void LasOrdenesEstanEnLaPaletaDeComandos()
     {
         foreach (var id in new[] { "nodes-corner", "nodes-smooth", "nodes-symmetric", "segments-line", "segments-curve" })

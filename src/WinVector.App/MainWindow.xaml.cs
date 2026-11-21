@@ -342,6 +342,18 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// El radio de las esquinas ha cambiado en el panel. Si el cambio viene de la propia selección, el
+    /// valor coincide y no se envía nada.
+    /// </summary>
+    private void OnCornerRadiusChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!double.IsNaN(args.NewValue))
+        {
+            ViewModel.SetCornerRadius(args.NewValue);
+        }
+    }
+
     private void OnOpacityChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
         if (!double.IsNaN(args.NewValue))

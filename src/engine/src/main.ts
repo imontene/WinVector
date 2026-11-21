@@ -47,6 +47,7 @@ import {
   closePath,
   combinePaths,
   convertAllToPath,
+  forgetRounding,
   openPath,
   parsePath,
   reversePath,
@@ -147,6 +148,10 @@ function announceNodes(): void {
     canMakeLine: summary?.canMakeLine ?? false,
     canMakeCurve: summary?.canMakeCurve ?? false,
     ...(summary?.kind ? { kind: summary.kind } : {}),
+    ...(summary?.canRound ? { canRound: true } : {}),
+    ...(summary?.canRound && summary.cornerRadius !== null
+      ? { cornerRadius: summary.cornerRadius }
+      : {}),
   };
   const key = payload.count === 0 ? "" : JSON.stringify(payload);
   if (key === announcedNodes) return;
@@ -376,7 +381,11 @@ function pathOperation(
   });
   if (edits.length === 0) return false;
   history.transact(action, () => {
-    for (const { element, d } of edits) element.setAttribute("d", d);
+    for (const { element, d } of edits) {
+      // Un trazado redondeado queda como se ve, con sus arcos: su forma sin redondear ya no vale.
+      forgetRounding(element);
+      element.setAttribute("d", d);
+    }
   });
   vertexTool.clearNodes();
   return true;
@@ -409,6 +418,14 @@ bridge.handle("path.operation", ({ documentId, operation }) =>
     documentId,
     changed: objectOperation(documentId, { kind: "path", operation }),
   })),
+);
+
+bridge.handle("path.cornerRadius", ({ documentId, radius }) =>
+  withDocumentErrors(() => {
+    documents.open(documentId);
+    const changed = documents.active?.id === documentId && vertexTool.setCornerRadius(radius);
+    return { documentId, changed };
+  }),
 );
 
 bridge.handle("object.group", ({ documentId }) =>

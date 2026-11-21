@@ -29,7 +29,7 @@
     {
       "name": "nodes.changed",
       "kind": "event",
-      "description": "Han cambiado los nodos seleccionados del trazado que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.",
+      "description": "Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.",
       "payload": "NodeSelection"
     },
     {
@@ -92,6 +92,13 @@
       "kind": "command",
       "description": "Operación del menú Trazado sobre la selección: cerrar o abrir trazados (con la herramienta Vértices, abrir por el nodo seleccionado), invertir su dirección, combinar las formas seleccionadas en un trazado o separar un trazado en sus subtrazados. changed es false si no había nada que hacer. Se puede deshacer.",
       "payload": "PathOperation",
+      "response": "ObjectChange"
+    },
+    {
+      "name": "path.cornerRadius",
+      "kind": "command",
+      "description": "Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0). La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer.",
+      "payload": "CornerRadiusChange",
       "response": "ObjectChange"
     },
     {
