@@ -217,12 +217,10 @@ public sealed partial class PathTests
         Mouse.Drag(At(14, 90), At(34, 110));
         WaitForSelection("rect");
 
-        // Con Selección, Mayús+clic en el grande (fuera del pequeño) los selecciona a los dos.
-        UseToolButton("ToolSelect");
-        Keyboard.Press(VirtualKeyShort.SHIFT);
-        Mouse.Click(At(8, 70));
-        Keyboard.Release(VirtualKeyShort.SHIFT);
-        WaitForSelection("2");
+        // Ctrl+A con el lienzo enfocado: los dos rectángulos y los dos grupos del ejemplo. Combinar
+        // solo combina las formas; los grupos se quedan como están.
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
+        WaitForSelection("4");
 
         InvokeMenu("PathMenu", "MenuPathCombine");
         WaitForSelection("path");
