@@ -144,6 +144,9 @@ public sealed partial class PathTests
         Assert.IsTrue(
             Retry.WhileFalse(() => Math.Abs(box.Patterns.RangeValue.Pattern.Value - value) < 0.01, EngineTimeout).Result,
             $"El campo {automationId} no muestra {value}.");
+
+        // El teclado sale del campo: con el foco en él, Ctrl+S no llega a la ventana.
+        Session.GetById("ToolSelect").Focus();
     }
 
     /// <summary>Guarda con Ctrl+S y devuelve el texto del archivo.</summary>
@@ -214,9 +217,8 @@ public sealed partial class PathTests
         Mouse.Drag(At(14, 90), At(34, 110));
         WaitForSelection("rect");
 
-        // Con Selección, Mayús+clic en el grande (fuera del pequeño) los selecciona a los dos. El
-        // atajo deja el teclado en el lienzo, que tiene que ver la tecla Mayús.
-        UseShortcut(VirtualKeyShort.KEY_V, "ToolSelect");
+        // Con Selección, Mayús+clic en el grande (fuera del pequeño) los selecciona a los dos.
+        UseToolButton("ToolSelect");
         Keyboard.Press(VirtualKeyShort.SHIFT);
         Mouse.Click(At(8, 70));
         Keyboard.Release(VirtualKeyShort.SHIFT);
