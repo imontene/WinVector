@@ -23,6 +23,8 @@ export interface OverlayScene {
     readonly selected: readonly boolean[];
     /** Manejadores de las curvas de los nodos seleccionados de un trazado. */
     readonly handles?: readonly { readonly from: Point; readonly to: Point }[];
+    /** Controles de radio de las esquinas seleccionadas (issue #80). */
+    readonly radii?: readonly Point[];
   } | null;
   /** Primer nodo de la forma que se dibuja con la pluma, si un clic la cerraría y sus manejadores. */
   readonly pen?: {
@@ -102,6 +104,14 @@ export class Overlay {
       if (scene.vertices?.selected[index]) square.classList.add("overlay-vertex-selected");
       shapes.push(square);
     });
+    for (const at of scene.vertices?.radii ?? []) {
+      const circle = this.element.ownerDocument.createElementNS(SVG_NS, "circle");
+      circle.classList.add("overlay-corner-radius");
+      circle.setAttribute("cx", String(round(at.x)));
+      circle.setAttribute("cy", String(round(at.y)));
+      circle.setAttribute("r", "4");
+      shapes.push(circle);
+    }
     if (scene.pen) {
       const circle = this.element.ownerDocument.createElementNS(SVG_NS, "circle");
       circle.classList.add("overlay-pen-start");

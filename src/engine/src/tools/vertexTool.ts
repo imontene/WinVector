@@ -10,14 +10,20 @@ import {
 } from "../geometry";
 import type { History } from "../history";
 import {
+  convertToPath,
+  cornerOf,
+  editableData,
+  effectiveRadii,
   handleAt,
   insertNode,
+  readRounding,
+  writeEditableData,
+  writeRounding,
   moveHandle,
   moveNodes,
   nodeKey,
   nearestOnPath,
   nodeKind,
-  parsePath,
   pathNodes,
   removeNodes,
   serializePath,
@@ -27,6 +33,7 @@ import {
   type HandleRef,
   type NodeKind,
   type NodeSummary,
+  type Corner,
   type PathData,
 } from "../paths";
 import type { NodeAction } from "../bridge";
@@ -73,7 +80,20 @@ export interface VertexScene {
   readonly selected: readonly boolean[];
   /** Manejadores de las curvas de los nodos seleccionados: del nodo al punto de control. */
   readonly handles?: readonly { readonly from: Point; readonly to: Point }[];
+  /** Controles de radio de las esquinas seleccionadas (issue #80). */
+  readonly radii?: readonly Point[];
 }
+
+/** Resumen de los nodos seleccionados, con lo que se puede hacer con sus esquinas (issue #80). */
+export interface VertexSummary extends NodeSummary {
+  /** Alguna esquina seleccionada está entre dos rectas y se puede redondear. */
+  readonly canRound: boolean;
+  /** Radio común de las esquinas seleccionadas que se pueden redondear, o `null` si son distintos. */
+  readonly cornerRadius: number | null;
+}
+
+/** Distancia mínima en píxeles del control de radio a su esquina, para que no tape el vértice. */
+const RADIUS_OFFSET = 14;
 
 /**
  * Nodos de una forma con los que se pueden mover los seleccionados. En un polígono se reescriben sus
@@ -88,7 +108,8 @@ interface Editable {
 
 function editableOf(element: Element): Editable | null {
   if (element.localName === "path") {
-    const data = parsePath(element.getAttribute("d") ?? "").data;
+    // En un trazado redondeado se mueven los vértices sin redondear y los arcos se recalculan.
+    const data = editableData(element);
     const nodes = pathNodes(data);
     return {
       points: nodes.map((node) => node.point),
@@ -99,7 +120,7 @@ function editableOf(element: Element): Editable | null {
             .filter((n) => n !== undefined)
             .map(nodeKey),
         );
-        element.setAttribute("d", serializePath(moveNodes(data, keys, delta.x, delta.y)));
+        writeEditableData(element, moveNodes(data, keys, delta.x, delta.y), true);
       },
     };
   }
@@ -142,6 +163,18 @@ type Press =
       started: boolean;
     }
   | {
+      /** Arrastre del control de radio de una esquina: redondea todas las seleccionadas. */
+      readonly kind: "radius";
+      readonly start: Point;
+      element: Element;
+      readonly toLocal: Matrix;
+      /** Esquina del control y distancia de su vértice a la mitad del arco al empezar. */
+      readonly corner: Corner;
+      readonly bisector: Point;
+      readonly mid: number;
+      started: boolean;
+    }
+  | {
       readonly kind: "marquee";
       readonly start: Point;
       readonly additive: boolean;
@@ -174,6 +207,10 @@ const toMatrix = (m: DOMMatrix): Matrix => ({ a: m.a, b: m.b, c: m.c, d: m.d, e:
  *   a la cuadrícula y a los demás vértices. Las flechas los mueven 1 unidad (10 con `Mayús`).
  * - Doble clic en un segmento añade un vértice; `Supr` quita los seleccionados sin bajar del mínimo.
  * - `Esc` cancela el arrastre o deselecciona los vértices.
+ *
+ * Las esquinas seleccionadas entre dos rectas muestran un control de radio: arrastrarlo las redondea
+ * todas con arcos exactos (issue #80). La forma pasa a ser un trazado que guarda sus vértices y sus
+ * radios, y los vértices se siguen moviendo con el redondeo.
  *
  * Cada edición es un paso del historial.
  */
@@ -217,7 +254,7 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     const ctm = element instanceof SVGGraphicsElement ? element.getScreenCTM() : null;
     if (!ctm) return [];
     const m = toMatrix(ctm);
-    const data = parsePath(element.getAttribute("d") ?? "").data;
+    const data = editableData(element);
     return pathNodes(data).flatMap((node, i) =>
       selected.has(i)
         ? node.handles.flatMap((handle) => {
@@ -253,7 +290,7 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
   const editedPath = () => {
     const editing = current();
     if (editing?.element.localName !== "path") return null;
-    return { ...editing, data: parsePath(editing.element.getAttribute("d") ?? "").data };
+    return { ...editing, data: editableData(editing.element) };
   };
 
   /** Claves de los nodos seleccionados de un trazado. */
@@ -282,9 +319,129 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     const d = serializePath(data);
     if (d === serializePath(path.data)) return false;
     path.history.transact(action, () => {
-      path.element.setAttribute("d", d);
+      // Un trazado redondeado conserva el radio de los nodos que siguen en su sitio.
+      writeEditableData(path.element, data, false);
     });
     return true;
+  };
+
+  /**
+   * Geometría de la forma con la numeración de sus nodos: la del trazado (sin redondear) o, en un
+   * polígono, polilínea o rectángulo, la de sus vértices como un solo subtrazado.
+   */
+  const cornerData = (element: Element): PathData => {
+    if (element.localName === "path") return editableData(element);
+    const vertices = displayVertices(element);
+    const [start, ...rest] = vertices?.points ?? [];
+    if (!vertices || !start) return [];
+    return [
+      {
+        start,
+        segments: rest.map((to) => ({ kind: "line" as const, to })),
+        closed: vertices.closed,
+      },
+    ];
+  };
+
+  /** Esquinas seleccionadas que se pueden redondear, con su clave y su radio actual. */
+  const selectedCorners = (element: Element) => {
+    const data = cornerData(element);
+    const rounding = element.localName === "path" ? readRounding(element) : null;
+    const effective = rounding
+      ? effectiveRadii(rounding.source, rounding.radii)
+      : new Map<string, number>();
+    const nodes = pathNodes(data);
+    return [...selected]
+      .sort((a, b) => a - b)
+      .flatMap((i) => {
+        const node = nodes[i];
+        const key = node ? nodeKey(node) : null;
+        const corner = key ? cornerOf(data, key) : null;
+        return key && corner ? [{ index: i, key, corner, radius: effective.get(key) ?? 0 }] : [];
+      });
+  };
+
+  /** Dirección de la bisectriz de una esquina, hacia dentro. */
+  const bisectorOf = (corner: Corner): Point => {
+    const x = corner.toPrevious.x + corner.toNext.x;
+    const y = corner.toPrevious.y + corner.toNext.y;
+    const length = Math.hypot(x, y) || 1;
+    return { x: x / length, y: y / length };
+  };
+
+  /** Controles de radio de las esquinas seleccionadas, en pantalla: en la mitad de cada arco. */
+  const radiusWidgets = (element: Element) => {
+    const ctm = element instanceof SVGGraphicsElement ? element.getScreenCTM() : null;
+    if (!ctm || selected.size === 0) return [];
+    const m = toMatrix(ctm);
+    return selectedCorners(element).map((found) => {
+      const { corner, radius } = found;
+      const bisector = bisectorOf(corner);
+      const mid = radius * (1 / Math.sin(corner.half) - 1);
+      const vertex = applyToPoint(m, corner.vertex);
+      let at = applyToPoint(m, {
+        x: corner.vertex.x + bisector.x * mid,
+        y: corner.vertex.y + bisector.y * mid,
+      });
+      // Sin redondeo (o con uno pequeño), el control se aparta del vértice para no taparlo.
+      if (Math.hypot(at.x - vertex.x, at.y - vertex.y) < RADIUS_OFFSET) {
+        const ahead = applyToPoint(m, {
+          x: corner.vertex.x + bisector.x,
+          y: corner.vertex.y + bisector.y,
+        });
+        const length = Math.hypot(ahead.x - vertex.x, ahead.y - vertex.y) || 1;
+        at = {
+          x: vertex.x + ((ahead.x - vertex.x) / length) * RADIUS_OFFSET,
+          y: vertex.y + ((ahead.y - vertex.y) / length) * RADIUS_OFFSET,
+        };
+      }
+      return { ...found, at, bisector, mid };
+    });
+  };
+
+  /**
+   * Prepara la forma para redondearla dentro del paso del historial ya empezado: un rectángulo o una
+   * estrella pasan a ser polígonos, y un polígono o una polilínea, un trazado.
+   */
+  const roundable = (element: Element, selection: Selection): Element | null => {
+    const editableElement = editable(element, selection);
+    if (!editableElement) return null;
+    if (editableElement.localName === "path") return editableElement;
+    const path = convertToPath(editableElement);
+    if (!path) return null;
+    if (path !== editableElement)
+      selection.replace([editableElement], new Map([[editableElement, path]]));
+    shape = path;
+    return path;
+  };
+
+  /**
+   * Pone el mismo radio a todas las esquinas seleccionadas de un trazado, limitado a lo que cabe en
+   * cada una. Las demás conservan el suyo.
+   */
+  const writeRadius = (element: Element, radius: number) => {
+    const rounding = readRounding(element);
+    const source = rounding?.source ?? editableData(element);
+    const radii = new Map(rounding?.radii ?? []);
+    const keys = selectedCorners(element).map((found) => found.key);
+    for (const key of keys) radii.set(key, Math.max(0, radius));
+    const fits = effectiveRadii(source, radii);
+    for (const key of keys) radii.set(key, Math.round((fits.get(key) ?? 0) * 1000) / 1000);
+    writeRounding(element, source, radii);
+    host.changed();
+  };
+
+  /** Cambia el radio de las esquinas seleccionadas en un paso del historial (desde el panel). */
+  const setCornerRadius = (radius: number): boolean => {
+    const editing = current();
+    if (!editing || !Number.isFinite(radius) || radius < 0) return false;
+    if (selectedCorners(editing.element).length === 0) return false;
+    const done = editing.history.transact("corner-radius", () => {
+      const element = roundable(editing.element, editing.selection);
+      if (element) writeRadius(element, radius);
+      return element !== null;
+    });
+    return done;
   };
 
   /** Cambia el tipo de los nodos seleccionados o de los segmentos entre ellos. */
@@ -330,6 +487,29 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     if (event.button !== 0 || press) return;
     const editing = current();
     const p = point(event);
+    const widget = editing
+      ? radiusWidgets(editing.element).find(
+          ({ at }) => Math.hypot(at.x - p.x, at.y - p.y) <= HIT_DISTANCE,
+        )
+      : undefined;
+    if (editing && widget) {
+      const ctm =
+        editing.element instanceof SVGGraphicsElement ? editing.element.getScreenCTM() : null;
+      const toLocal = ctm ? invert(toMatrix(ctm)) : null;
+      if (!toLocal) return;
+      press = {
+        kind: "radius",
+        start: p,
+        element: editing.element,
+        toLocal,
+        corner: widget.corner,
+        bisector: widget.bisector,
+        mid: widget.mid,
+        started: false,
+      };
+      target.document.documentElement.setPointerCapture(event.pointerId);
+      return;
+    }
     const handle = editing ? handleAtPoint(editing.element, p) : null;
     if (editing && handle) {
       const ctm =
@@ -412,10 +592,34 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       let local = applyToPoint(press.toLocal, p);
       // Con Mayús, el manejador gira de 15° en 15° alrededor de su nodo.
       if (isPressed(event, "Shift")) local = snapAngle(press.nodePoint, local);
-      press.element.setAttribute(
-        "d",
-        serializePath(moveHandle(press.data, press.handle, local, press.node)),
+      writeEditableData(
+        press.element,
+        moveHandle(press.data, press.handle, local, press.node),
+        true,
       );
+      return;
+    }
+    if (press.kind === "radius") {
+      if (!press.started) {
+        if (Math.hypot(p.x - press.start.x, p.y - press.start.y) <= DRAG_THRESHOLD) return;
+        active.history.begin("corner-radius");
+        const element = roundable(press.element, active.selection);
+        if (!element) {
+          active.history.rollback();
+          press = null;
+          return;
+        }
+        press.element = element;
+        press.started = true;
+      }
+      // La mitad del arco sigue al puntero por la bisectriz de la esquina.
+      const startLocal = applyToPoint(press.toLocal, press.start);
+      const local = applyToPoint(press.toLocal, p);
+      const along =
+        (local.x - startLocal.x) * press.bisector.x + (local.y - startLocal.y) * press.bisector.y;
+      const mid = Math.max(0, press.mid + along);
+      const sin = Math.sin(press.corner.half);
+      writeRadius(press.element, (mid * sin) / (1 - sin));
       return;
     }
     if (!press.started) {
@@ -480,7 +684,7 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     const finished = press;
     press = null;
     const active = host.active();
-    if (finished.kind === "drag" || finished.kind === "handle") {
+    if (finished.kind === "drag" || finished.kind === "handle" || finished.kind === "radius") {
       if (finished.started) active?.history.commit();
       return;
     }
@@ -560,7 +764,10 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
   const onKeyDown = (event: KeyboardEvent) => {
     if (!isActive()) return;
     if (event.key === "Escape") {
-      if ((press?.kind === "drag" || press?.kind === "handle") && press.started) {
+      if (
+        (press?.kind === "drag" || press?.kind === "handle" || press?.kind === "radius") &&
+        press.started
+      ) {
         host.active()?.history.rollback();
       }
       if (press?.kind === "marquee") host.showMarquee(null);
@@ -650,14 +857,34 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       if (!editing) return null;
       const points = screenVertices(editing.element);
       const handles = screenHandles(editing.element).map(({ from, to }) => ({ from, to }));
-      return { points, selected: points.map((_, i) => selected.has(i)), handles };
+      const radii = radiusWidgets(editing.element).map(({ at }) => at);
+      return { points, selected: points.map((_, i) => selected.has(i)), handles, radii };
     },
     /** Nodos seleccionados del trazado que se edita, o `null` si no se edita un trazado. */
-    nodes(): NodeSummary | null {
+    nodes(): VertexSummary | null {
       if (!isActive()) return null;
+      const editing = current();
+      if (!editing) return null;
       const path = editedPath();
-      return path ? summarizeNodes(path.data, selectedKeys(path.data)) : null;
+      const base: NodeSummary = path
+        ? summarizeNodes(path.data, selectedKeys(path.data))
+        : {
+            count: selected.size,
+            kind: null,
+            canSmooth: false,
+            canMakeLine: false,
+            canMakeCurve: false,
+          };
+      const corners = selectedCorners(editing.element);
+      const [first] = corners;
+      const common = first && corners.every((c) => Math.abs(c.radius - first.radius) < 1e-6);
+      return {
+        ...base,
+        canRound: corners.length > 0,
+        cornerRadius: first && common ? Math.round(first.radius * 1000) / 1000 : null,
+      };
     },
+    setCornerRadius,
     nodeAction,
     /** Primer nodo seleccionado del trazado que se edita (para abrirlo por él), o `null`. */
     selectedNode(element: Element): { subpath: number; index: number } | null {

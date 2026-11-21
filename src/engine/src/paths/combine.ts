@@ -3,6 +3,7 @@ import { elementToRoot } from "../transform";
 import { canConvertToPath, convertToPath, shapePathData } from "./convert";
 import { transformPath } from "./operations";
 import { parsePath } from "./parse";
+import { forgetRounding } from "./round";
 import { serializePath } from "./serialize";
 import type { PathData } from "./model";
 
@@ -53,6 +54,8 @@ export function combinePaths(items: readonly Element[], root: SVGSVGElement): El
   }
   const target = first.localName === "path" ? first : convertToPath(first);
   if (!target) return null;
+  // Los trazados redondeados quedan como se ven: su forma sin redondear ya no vale (issue #80).
+  forgetRounding(target);
   target.setAttribute("d", serializePath(parts.flat()));
   for (const shape of shapes) if (shape !== first) shape.remove();
   return target;
@@ -69,6 +72,7 @@ export function separatePath(element: Element): Element[] | null {
     (subpath) => subpath.segments.length > 0,
   );
   if (data.length < 2) return null;
+  forgetRounding(element);
   const pieces = data.map((subpath, i) => {
     if (i === 0) {
       element.setAttribute("d", serializePath([subpath]));

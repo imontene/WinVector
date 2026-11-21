@@ -1,4 +1,6 @@
 import type { Point } from "../geometry";
+import { roundPolygon } from "../paths/round";
+import { serializePath } from "../paths/serialize";
 import { coordinate, snapAngle, type ShapeDrag, type ShapeKind } from "./shapes";
 
 /**
@@ -52,38 +54,12 @@ export const polygonTag = (params: PolygonParams) => (params.rounding > 0 ? "pat
 const pointText = (p: Point) => `${coordinate(p.x)},${coordinate(p.y)}`;
 
 /**
- * Trazado de un polígono con las esquinas redondeadas: en cada vértice, una curva cuadrática que
- * empieza y acaba a una distancia del vértice proporcional al redondeo (como mucho, la mitad del
- * lado más corto de los dos que llegan a él).
+ * Trazado de un polígono con las esquinas redondeadas con arcos circulares exactos (issue #80): cada
+ * arco empieza a una distancia del vértice proporcional al redondeo (como mucho, la mitad del lado
+ * más corto de los dos que llegan a él).
  */
 export function roundedPath(vertices: readonly Point[], rounding: number): string {
-  const n = vertices.length;
-  const at = (i: number) => vertices[((i % n) + n) % n] ?? { x: 0, y: 0 };
-  const toward = (from: Point, to: Point, distance: number): Point => {
-    const length = Math.hypot(to.x - from.x, to.y - from.y) || 1;
-    return {
-      x: from.x + ((to.x - from.x) * distance) / length,
-      y: from.y + ((to.y - from.y) * distance) / length,
-    };
-  };
-  const parts: string[] = [];
-  for (let i = 0; i < n; i++) {
-    const previous = at(i - 1);
-    const vertex = at(i);
-    const next = at(i + 1);
-    const cut =
-      (Math.min(
-        Math.hypot(vertex.x - previous.x, vertex.y - previous.y),
-        Math.hypot(next.x - vertex.x, next.y - vertex.y),
-      ) /
-        2) *
-      Math.min(1, Math.max(0, rounding));
-    const enter = toward(vertex, previous, cut);
-    const leave = toward(vertex, next, cut);
-    const p = (point: Point) => `${coordinate(point.x)} ${coordinate(point.y)}`;
-    parts.push(`${i === 0 ? "M" : "L"}${p(enter)}Q${p(vertex)} ${p(leave)}`);
-  }
-  return `${parts.join("")}Z`;
+  return serializePath(roundPolygon(vertices, rounding));
 }
 
 /** Escribe la geometría y los parámetros en el elemento (que debe ser del tipo de `polygonTag`). */
