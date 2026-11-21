@@ -4,7 +4,7 @@ Editor gráfico de SVG para Windows 11, nativo y moderno.
 
 | | |
 |---|---|
-| Estado | Fase 0 terminada. Siguiente: Fase 1 (documento y lienzo) |
+| Estado | Fases 0 a 3 terminadas. Siguiente: Fase 4 (texto) |
 | Versión objetivo | MVP 1 → `v0.1.0` |
 | Licencia | Apache 2.0 |
 | Repositorio | Público en GitHub |
@@ -243,7 +243,7 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - La herramienta de vértices y la de formas libres se diseñan para que la herramienta de nodos y la pluma de la Fase 3 las amplíen con curvas.
 - **Conseguido:** rectángulo (`R`, con esquinas redondeadas desde el lienzo), elipse y círculo (`E`), línea (`L`, con sus extremos editables), polígono (`G`) y estrella (`S`), con `Mayús` y `Alt`, último estilo usado y un paso del historial por forma. Panel con las propiedades de cada forma. Convertir en trazado (`Ctrl+Mayús+C`). Herramienta Vértices (`A`) y formas libres de líneas rectas con la pluma (`P`). Pruebas de interfaz de punta a punta, hasta guardar el archivo.
 
-### Fase 3 · Trazados (L)
+### Fase 3 · Trazados (L) ✅ Terminada
 - Analizador y serializador de `d` con pruebas exhaustivas; modelo de trazados y edición de arcos ([ADR 0007](adr/0007-modelo-de-trazados.md)).
 - Geometría de curvas: caja exacta, punto más cercano, partir curvas, arcos a cúbicas.
 - Herramienta de nodos (ampliando la de vértices): mover nodos y manejadores, tipos de nodo, añadir y quitar nodos.
@@ -251,6 +251,7 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - Operaciones de trazado: abrir y cerrar, combinar y separar, invertir la dirección; regla de relleno.
 - Redondear vértices de cualquier polígono o trazado con radios exactos.
 - Menú contextual en el lienzo (clic derecho, `Mayús+F10`).
+- **Conseguido:** menú contextual en el lienzo. Modelo de trazados con analizador y serializador de `d` y geometría de curvas exacta ([ADR 0007](adr/0007-modelo-de-trazados.md)). La herramienta Vértices (`A`) edita los nodos de los trazados: mover nodos y manejadores, esquina, suave y simétrico (`Mayús+C/S/Y`), añadir y quitar nodos conservando la forma, y segmentos rectos o curvos (`Mayús+L/U`). Pluma con curvas, que cierra arrastrando y continúa trazados abiertos. Menú Trazado con cerrar, abrir, invertir, combinar y separar, y regla de relleno en el panel. Redondeo de vértices con arcos exactos y un radio por vértice que se conserva al guardar ([ADR 0008](adr/0008-redondeo-de-vertices.md)). Pruebas de interfaz de punta a punta, hasta guardar y volver a abrir el archivo.
 
 ### Fase 4 · Texto (M)
 - Herramienta de texto, edición en el lienzo, varias líneas, fuentes del sistema, propiedades tipográficas.

@@ -421,6 +421,9 @@ export function installPenTool(target: Window, host: PenToolHost) {
     consume(event);
     const press = drawing?.press;
     if (!drawing || !press) return;
+    // En WebView2, los pointermove de un arrastre rápido pueden no llegar; el pointerup sí: su
+    // posición también saca los manejadores.
+    drag(drawing, event);
     drawing.press = null;
     if (press.closing) finish(true);
     else redraw(drawing);

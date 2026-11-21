@@ -233,3 +233,33 @@ test("al continuar, Retroceso solo quita los nodos nuevos y Esc lo deja como est
   expect(await created(page)).toMatchObject([{ tag: "polyline", points: "20,20 80,20 80,80" }]);
   await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "continue-path" });
 });
+
+test("un arrastre sin movimientos intermedios también saca los manejadores", async ({ page }) => {
+  // En WebView2, los pointermove de un arrastre rápido pueden no llegar; el pointerup sí.
+  await clickAt(page, 20, 100);
+  const from = await toScreen(page, 100, 100);
+  const to = await toScreen(page, 130, 100);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.evaluate((p) => {
+    document.getElementById("workspace")?.dispatchEvent(
+      new PointerEvent("pointerup", {
+        clientX: p.x,
+        clientY: p.y,
+        button: 0,
+        buttons: 0,
+        pointerId: 1,
+        pointerType: "mouse",
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }, to);
+  await page.mouse.up();
+  await page.keyboard.press("Enter");
+
+  const [first] = await segments(page);
+  expect(first?.kind).toBe("cubic");
+  if (first?.kind !== "cubic") return;
+  near(first.c2, { x: 70, y: 100 });
+});
