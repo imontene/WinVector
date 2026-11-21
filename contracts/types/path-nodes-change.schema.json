@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PathNodesChange",
+  "description": "Cambia el tipo de los nodos seleccionados con la herramienta Vértices, o el de los segmentos entre ellos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "action"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "action": {
+      "$ref": "./node-action.schema.json",
+      "description": "Qué hacer con los nodos o los segmentos."
+    }
+  }
+}

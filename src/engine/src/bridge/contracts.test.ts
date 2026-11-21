@@ -334,6 +334,27 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "command",
+    id: "c25",
+    name: "path.nodes",
+    payload: { documentId: "d1", action: "smooth" },
+  },
+  {
+    ...base,
+    kind: "event",
+    id: "e7",
+    name: "nodes.changed",
+    payload: {
+      documentId: "d1",
+      count: 2,
+      kind: "mixed",
+      canSmooth: true,
+      canMakeLine: false,
+      canMakeCurve: true,
+    },
+  },
+  {
+    ...base,
     kind: "event",
     id: "e4",
     name: "error",
@@ -362,6 +383,7 @@ function summarize(message: BridgeMessage): string {
       case "object.group":
       case "object.ungroup":
       case "object.toPath":
+      case "path.nodes":
       case "selection.duplicate":
       case "selection.delete":
       case "selection.setStyle":
@@ -401,6 +423,8 @@ function summarize(message: BridgeMessage): string {
         return `geometría x=${String(message.payload.x)}`;
       case "object.arrange":
         return `ordenar ${message.payload.action}`;
+      case "path.nodes":
+        return `nodos ${message.payload.action}`;
       case "object.group":
       case "object.ungroup":
       case "object.toPath":
@@ -429,6 +453,8 @@ function summarize(message: BridgeMessage): string {
       return `motor ${message.payload.engineVersion}`;
     case "shape.converted":
       return `${message.payload.from} pasa a polígono`;
+    case "nodes.changed":
+      return `${String(message.payload.count)} nodos ${String(message.payload.kind)}`;
     case "canvas.contextMenu":
       return `menú en ${String(message.payload.x)},${String(message.payload.y)}`;
     case "selection.changed":
@@ -503,6 +529,8 @@ describe("contrato del puente", () => {
       "object.toPath d1",
       "star pasa a polígono",
       "menú en 10,20",
+      "nodos smooth",
+      "2 nodos mixed",
       "error unknown-message",
     ]);
   });

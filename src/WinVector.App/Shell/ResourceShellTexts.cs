@@ -44,6 +44,12 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string ShapeConverted(ShapeType from) => TryGetString($"ShapeConverted{from}");
 
+    public string SelectedNodes(int count, NodeKind? kind)
+    {
+        var nodes = count == 1 ? resources.GetString("SelectedNodesOne") : Format("SelectedNodesMany", count);
+        return kind is { } value ? Format("SelectedNodesWithKind", nodes, resources.GetString($"NodeKind{value}")) : nodes;
+    }
+
     public string ShapeField(string key) => TryGetString($"ShapeField{ToPascalCase(key)}") is { Length: > 0 } name ? name : key;
 
     public string UndoCommand(string? action) => HistoryCommand("UndoCommand", action);

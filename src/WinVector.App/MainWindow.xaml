@@ -263,6 +263,32 @@
                                 <KeyboardAccelerator Key="C" Modifiers="Control,Shift" />
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
+                        <!--
+                            Nodos de un trazado con la herramienta Vértices (issue #77). Sin acelerador: Mayús+letra
+                            escribiría mayúsculas en los cuadros de texto. Con el lienzo enfocado los atiende el motor.
+                        -->
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathNodesCorner"
+                            AutomationProperties.AutomationId="MenuPathNodesCorner"
+                            Command="{x:Bind ViewModel.MakeNodesCornerCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathNodesSmooth"
+                            AutomationProperties.AutomationId="MenuPathNodesSmooth"
+                            Command="{x:Bind ViewModel.MakeNodesSmoothCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathNodesSymmetric"
+                            AutomationProperties.AutomationId="MenuPathNodesSymmetric"
+                            Command="{x:Bind ViewModel.MakeNodesSymmetricCommand}" />
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathSegmentsLine"
+                            AutomationProperties.AutomationId="MenuPathSegmentsLine"
+                            Command="{x:Bind ViewModel.MakeSegmentsLineCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathSegmentsCurve"
+                            AutomationProperties.AutomationId="MenuPathSegmentsCurve"
+                            Command="{x:Bind ViewModel.MakeSegmentsCurveCommand}" />
                     </MenuBarItem>
 
                     <MenuBarItem x:Uid="MenuText">
@@ -843,6 +869,63 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                            </StackPanel>
+
+                            <!-- Nodos seleccionados de un trazado con la herramienta Vértices (issue #77). -->
+                            <StackPanel Spacing="8" Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelectedNodes), Mode=OneWay}">
+                                <TextBlock
+                                    x:Uid="NodesTitle"
+                                    Margin="0,8,0,0"
+                                    Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    AutomationProperties.AutomationId="SelectedNodesText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.SelectedNodesText, Mode=OneWay}" />
+                                <Grid ColumnSpacing="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button
+                                        x:Uid="NodeCornerButton"
+                                        Grid.Column="0"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="NodeCornerButton"
+                                        Command="{x:Bind ViewModel.MakeNodesCornerCommand}" />
+                                    <Button
+                                        x:Uid="NodeSmoothButton"
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="NodeSmoothButton"
+                                        Command="{x:Bind ViewModel.MakeNodesSmoothCommand}" />
+                                    <Button
+                                        x:Uid="NodeSymmetricButton"
+                                        Grid.Column="2"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="NodeSymmetricButton"
+                                        Command="{x:Bind ViewModel.MakeNodesSymmetricCommand}" />
+                                </Grid>
+                                <TextBlock x:Uid="SegmentsLabel" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <Grid ColumnSpacing="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button
+                                        x:Uid="SegmentLineButton"
+                                        Grid.Column="0"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="SegmentLineButton"
+                                        Command="{x:Bind ViewModel.MakeSegmentsLineCommand}" />
+                                    <Button
+                                        x:Uid="SegmentCurveButton"
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="SegmentCurveButton"
+                                        Command="{x:Bind ViewModel.MakeSegmentsCurveCommand}" />
+                                </Grid>
                             </StackPanel>
                         </StackPanel>
 

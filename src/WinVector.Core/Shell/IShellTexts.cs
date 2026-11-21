@@ -74,4 +74,10 @@ public interface IShellTexts
 
     /// <summary>Etiqueta de un campo de la forma ("Radio de las esquinas"), por su identificador ("cornerRadius").</summary>
     string ShapeField(string key);
+
+    /// <summary>
+    /// Resumen de los nodos seleccionados de un trazado para el panel ("2 nodos · Suave"). Sin
+    /// <paramref name="kind"/>, solo el número.
+    /// </summary>
+    string SelectedNodes(int count, NodeKind? kind);
 }

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NodeAction",
+  "description": "Cambio sobre los nodos seleccionados de un trazado: hacerlos esquina, suaves o simétricos, o hacer rectos o curvos los segmentos que hay entre ellos.",
+  "type": "string",
+  "enum": [
+    "corner",
+    "smooth",
+    "symmetric",
+    "line",
+    "curve"
+  ]
+}

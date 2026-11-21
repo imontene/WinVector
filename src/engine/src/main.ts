@@ -4,6 +4,7 @@ import {
   EngineBridge,
   detectTransport,
   type ArrangeAction,
+  type NodeSelection,
   type ToolName,
   type ZoomAction,
 } from "./bridge";
@@ -119,6 +120,28 @@ function announceArtboard(documentId: string): void {
 
 let overlayFrame = 0;
 
+/** Últimos nodos anunciados a la aplicación (vacío hasta que se seleccionan nodos de un trazado). */
+let announcedNodes = "";
+
+/** Anuncia los nodos seleccionados del trazado que se edita, si han cambiado. */
+function announceNodes(): void {
+  const id = documents.active?.id;
+  if (!id) return;
+  const summary = activeTool === "vertex" ? vertexTool.nodes() : null;
+  const payload: NodeSelection = {
+    documentId: id,
+    count: summary?.count ?? 0,
+    canSmooth: summary?.canSmooth ?? false,
+    canMakeLine: summary?.canMakeLine ?? false,
+    canMakeCurve: summary?.canMakeCurve ?? false,
+    ...(summary?.kind ? { kind: summary.kind } : {}),
+  };
+  const key = payload.count === 0 ? "" : JSON.stringify(payload);
+  if (key === announcedNodes) return;
+  announcedNodes = key;
+  bridge.emit("nodes.changed", payload);
+}
+
 /** Vuelve a dibujar la capa de superposición, las reglas y la cuadrícula en el siguiente fotograma. */
 function refreshOverlay(): void {
   if (overlayFrame !== 0) return;
@@ -148,6 +171,7 @@ function refreshOverlay(): void {
       active?.viewport.documentToScreen() ?? null,
       active?.viewport.artboardRect() ?? null,
     );
+    announceNodes();
   });
 }
 
@@ -299,6 +323,14 @@ bridge.handle("object.toPath", ({ documentId }) =>
     documentId,
     changed: objectOperation(documentId, { kind: "to-path" }),
   })),
+);
+
+bridge.handle("path.nodes", ({ documentId, action }) =>
+  withDocumentErrors(() => {
+    documents.open(documentId);
+    const changed = documents.active?.id === documentId && vertexTool.nodeAction(action);
+    return { documentId, changed };
+  }),
 );
 
 bridge.handle("object.group", ({ documentId }) =>

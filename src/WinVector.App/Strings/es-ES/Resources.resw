@@ -1028,4 +1028,136 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="PaletteShortcutEditVertices" xml:space="preserve">
     <value>A</value>
   </data>
+  <data name="SelectedNodesOne" xml:space="preserve">
+    <value>1 nodo</value>
+  </data>
+  <data name="SelectedNodesMany" xml:space="preserve">
+    <value>{0} nodos</value>
+  </data>
+  <data name="SelectedNodesWithKind" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="NodeKindCorner" xml:space="preserve">
+    <value>Esquina</value>
+  </data>
+  <data name="NodeKindSmooth" xml:space="preserve">
+    <value>Suave</value>
+  </data>
+  <data name="NodeKindSymmetric" xml:space="preserve">
+    <value>Simétrico</value>
+  </data>
+  <data name="NodeKindMixed" xml:space="preserve">
+    <value>Varios tipos</value>
+  </data>
+  <data name="HistoryActionMoveHandle" xml:space="preserve">
+    <value>mover un manejador</value>
+  </data>
+  <data name="HistoryActionAddNode" xml:space="preserve">
+    <value>añadir un nodo</value>
+  </data>
+  <data name="HistoryActionDeleteNodes" xml:space="preserve">
+    <value>quitar nodos</value>
+  </data>
+  <data name="HistoryActionNodeType" xml:space="preserve">
+    <value>cambiar el tipo de nodo</value>
+  </data>
+  <data name="HistoryActionSegmentType" xml:space="preserve">
+    <value>cambiar el tipo de segmento</value>
+  </data>
+  <data name="PaletteNameNodesCorner" xml:space="preserve">
+    <value>Convertir nodos en esquina</value>
+  </data>
+  <data name="PaletteShortcutNodesCorner" xml:space="preserve">
+    <value>Mayús+C</value>
+  </data>
+  <data name="PaletteNameNodesSmooth" xml:space="preserve">
+    <value>Convertir nodos en suaves</value>
+  </data>
+  <data name="PaletteShortcutNodesSmooth" xml:space="preserve">
+    <value>Mayús+S</value>
+  </data>
+  <data name="PaletteNameNodesSymmetric" xml:space="preserve">
+    <value>Convertir nodos en simétricos</value>
+  </data>
+  <data name="PaletteShortcutNodesSymmetric" xml:space="preserve">
+    <value>Mayús+Y</value>
+  </data>
+  <data name="PaletteNameSegmentsLine" xml:space="preserve">
+    <value>Convertir segmentos en rectas</value>
+  </data>
+  <data name="PaletteShortcutSegmentsLine" xml:space="preserve">
+    <value>Mayús+L</value>
+  </data>
+  <data name="PaletteNameSegmentsCurve" xml:space="preserve">
+    <value>Convertir segmentos en curvas</value>
+  </data>
+  <data name="PaletteShortcutSegmentsCurve" xml:space="preserve">
+    <value>Mayús+U</value>
+  </data>
+  <data name="MenuPathNodesCorner.Text" xml:space="preserve">
+    <value>Nodo de esquina</value>
+  </data>
+  <data name="MenuPathNodesCorner.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Mayús+C</value>
+  </data>
+  <data name="MenuPathNodesSmooth.Text" xml:space="preserve">
+    <value>Nodo suave</value>
+  </data>
+  <data name="MenuPathNodesSmooth.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Mayús+S</value>
+  </data>
+  <data name="MenuPathNodesSymmetric.Text" xml:space="preserve">
+    <value>Nodo simétrico</value>
+  </data>
+  <data name="MenuPathNodesSymmetric.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Mayús+Y</value>
+  </data>
+  <data name="MenuPathSegmentsLine.Text" xml:space="preserve">
+    <value>Segmento recto</value>
+  </data>
+  <data name="MenuPathSegmentsLine.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Mayús+L</value>
+  </data>
+  <data name="MenuPathSegmentsCurve.Text" xml:space="preserve">
+    <value>Segmento curvo</value>
+  </data>
+  <data name="MenuPathSegmentsCurve.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Mayús+U</value>
+  </data>
+  <data name="NodesTitle.Text" xml:space="preserve">
+    <value>Nodos</value>
+  </data>
+  <data name="SegmentsLabel.Text" xml:space="preserve">
+    <value>Segmentos</value>
+  </data>
+  <data name="NodeCornerButton.Content" xml:space="preserve">
+    <value>Esquina</value>
+  </data>
+  <data name="NodeCornerButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Nodo de esquina (Mayús+C)</value>
+  </data>
+  <data name="NodeSmoothButton.Content" xml:space="preserve">
+    <value>Suave</value>
+  </data>
+  <data name="NodeSmoothButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Nodo suave (Mayús+S)</value>
+  </data>
+  <data name="NodeSymmetricButton.Content" xml:space="preserve">
+    <value>Simétrico</value>
+  </data>
+  <data name="NodeSymmetricButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Nodo simétrico (Mayús+Y)</value>
+  </data>
+  <data name="SegmentLineButton.Content" xml:space="preserve">
+    <value>Recto</value>
+  </data>
+  <data name="SegmentLineButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Segmento recto (Mayús+L)</value>
+  </data>
+  <data name="SegmentCurveButton.Content" xml:space="preserve">
+    <value>Curvo</value>
+  </data>
+  <data name="SegmentCurveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Segmento curvo (Mayús+U)</value>
+  </data>
 </root>
