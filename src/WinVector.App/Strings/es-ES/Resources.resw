@@ -1160,4 +1160,10 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="SegmentCurveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Segmento curvo (Mayús+U)</value>
   </data>
+  <data name="HistoryActionCreatePath" xml:space="preserve">
+    <value>crear un trazado</value>
+  </data>
+  <data name="HistoryActionContinuePath" xml:space="preserve">
+    <value>continuar un trazado</value>
+  </data>
 </root>
