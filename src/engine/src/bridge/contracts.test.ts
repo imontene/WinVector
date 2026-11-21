@@ -302,7 +302,14 @@ const examples: readonly BridgeMessage[] = [
     kind: "command",
     id: "c22",
     name: "selection.setStyle",
-    payload: { documentId: "d1", fill: "#ff0000", stroke: null, strokeWidth: null, opacity: 0.5 },
+    payload: {
+      documentId: "d1",
+      fill: "#ff0000",
+      stroke: null,
+      strokeWidth: null,
+      opacity: 0.5,
+      fillRule: "evenodd",
+    },
   },
   {
     ...base,
@@ -338,6 +345,13 @@ const examples: readonly BridgeMessage[] = [
     id: "c25",
     name: "path.nodes",
     payload: { documentId: "d1", action: "smooth" },
+  },
+  {
+    ...base,
+    kind: "command",
+    id: "c26",
+    name: "path.operation",
+    payload: { documentId: "d1", operation: "combine" },
   },
   {
     ...base,
@@ -384,6 +398,7 @@ function summarize(message: BridgeMessage): string {
       case "object.ungroup":
       case "object.toPath":
       case "path.nodes":
+      case "path.operation":
       case "selection.duplicate":
       case "selection.delete":
       case "selection.setStyle":
@@ -425,6 +440,8 @@ function summarize(message: BridgeMessage): string {
         return `ordenar ${message.payload.action}`;
       case "path.nodes":
         return `nodos ${message.payload.action}`;
+      case "path.operation":
+        return `trazado ${message.payload.operation}`;
       case "object.group":
       case "object.ungroup":
       case "object.toPath":
@@ -530,6 +547,7 @@ describe("contrato del puente", () => {
       "star pasa a polígono",
       "menú en 10,20",
       "nodos smooth",
+      "trazado combine",
       "2 nodos mixed",
       "error unknown-message",
     ]);

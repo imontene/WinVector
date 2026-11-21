@@ -95,6 +95,11 @@ public sealed partial class MainViewModel : ObservableObject
         Add("nodes-symmetric", MakeNodesSymmetricCommand);
         Add("segments-line", MakeSegmentsLineCommand);
         Add("segments-curve", MakeSegmentsCurveCommand);
+        Add("path-close", ClosePathCommand);
+        Add("path-open", OpenPathCommand);
+        Add("path-reverse", ReversePathCommand);
+        Add("path-combine", CombinePathsCommand);
+        Add("path-separate", SeparatePathCommand);
         Add("bring-to-front", BringToFrontCommand);
         Add("bring-forward", BringForwardCommand);
         Add("send-backward", SendBackwardCommand);
@@ -1000,15 +1005,16 @@ public sealed partial class MainViewModel : ObservableObject
         return value is { Length: 7 } && value[0] == '#' && value[1..].All(Uri.IsHexDigit) ? value : null;
     }
 
-    private bool SendStyle(string? fill = null, string? stroke = null, double? strokeWidth = null, double? opacity = null)
+    private bool SendStyle(
+        string? fill = null, string? stroke = null, double? strokeWidth = null, double? opacity = null, FillRule? fillRule = null)
     {
         if (SelectedDocument is not { IsLoaded: true } document || !HasSelection
-            || (fill is null && stroke is null && strokeWidth is null && opacity is null))
+            || (fill is null && stroke is null && strokeWidth is null && opacity is null && fillRule is null))
         {
             return false;
         }
 
-        var change = new StyleChange(document.DocumentId, fill, stroke, strokeWidth, opacity);
+        var change = new StyleChange(document.DocumentId, fill, stroke, strokeWidth, opacity, fillRule);
         Enqueue(() => SendAsync(BridgeCommands.SelectionSetStyle, change));
         return true;
     }
@@ -1019,6 +1025,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectionStroke = style?.Stroke;
         SelectionStrokeWidth = style?.StrokeWidth is { } width ? Math.Round(width, 2) : double.NaN;
         SelectionOpacityPercent = style?.Opacity is { } opacity ? Math.Round(opacity * 100, 1) : double.NaN;
+        SelectionFillRule = style?.FillRule;
     }
 
     /// <summary>Vuelve a anunciar los valores del panel, para que descarte lo escrito.</summary>
@@ -1155,6 +1162,7 @@ public sealed partial class MainViewModel : ObservableObject
         GroupCommand.NotifyCanExecuteChanged();
         UngroupCommand.NotifyCanExecuteChanged();
         ConvertToPathCommand.NotifyCanExecuteChanged();
+        NotifyPathOperationsChanged();
         CopyCommand.NotifyCanExecuteChanged();
         CutCommand.NotifyCanExecuteChanged();
         DuplicateCommand.NotifyCanExecuteChanged();

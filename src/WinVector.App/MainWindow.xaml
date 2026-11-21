@@ -263,6 +263,29 @@
                                 <KeyboardAccelerator Key="C" Modifiers="Control,Shift" />
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
+                        <!-- Operaciones de trazado (issue #79). -->
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathClose"
+                            AutomationProperties.AutomationId="MenuPathClose"
+                            Command="{x:Bind ViewModel.ClosePathCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathOpen"
+                            AutomationProperties.AutomationId="MenuPathOpen"
+                            Command="{x:Bind ViewModel.OpenPathCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathReverse"
+                            AutomationProperties.AutomationId="MenuPathReverse"
+                            Command="{x:Bind ViewModel.ReversePathCommand}" />
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathCombine"
+                            AutomationProperties.AutomationId="MenuPathCombine"
+                            Command="{x:Bind ViewModel.CombinePathsCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathSeparate"
+                            AutomationProperties.AutomationId="MenuPathSeparate"
+                            Command="{x:Bind ViewModel.SeparatePathCommand}" />
                         <!--
                             Nodos de un trazado con la herramienta Vértices (issue #77). Sin acelerador: Mayús+letra
                             escribiría mayúsculas en los cuadros de texto. Con el lienzo enfocado los atiende el motor.
@@ -722,6 +745,7 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <TextBlock
                                     x:Uid="FillLabel"
@@ -836,6 +860,18 @@
                                     SpinButtonPlacementMode="Compact"
                                     ValueChanged="OnOpacityChanged"
                                     Value="{x:Bind ViewModel.SelectionOpacityPercent, Mode=OneWay}" />
+                                <!-- Regla de relleno (issue #79): evenodd deja agujeros donde se superponen los subtrazados. -->
+                                <ComboBox
+                                    x:Uid="FillRuleBox"
+                                    Grid.Row="4"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.AutomationId="FillRuleBox"
+                                    SelectedIndex="{x:Bind ViewModel.SelectionFillRuleIndex, Mode=OneWay}"
+                                    SelectionChanged="OnFillRuleChanged">
+                                    <ComboBoxItem x:Uid="FillRuleNonzero" AutomationProperties.AutomationId="FillRuleNonzero" />
+                                    <ComboBoxItem x:Uid="FillRuleEvenodd" AutomationProperties.AutomationId="FillRuleEvenodd" />
+                                </ComboBox>
                             </Grid>
 
                             <!-- Propiedades propias de la forma (radio, lados…), en las unidades de sus atributos. -->

@@ -38,6 +38,10 @@
         "null"
       ],
       "description": "Opacidad del objeto, de 0 a 1."
+    },
+    "fillRule": {
+      "$ref": "./fill-rule.schema.json",
+      "description": "Regla de relleno común de la selección; ausente si los objetos tienen reglas distintas o no hay formas."
     }
   }
 }

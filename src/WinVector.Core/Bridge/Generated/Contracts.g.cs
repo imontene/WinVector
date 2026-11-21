@@ -178,6 +178,16 @@ public sealed record EngineReady(
 public sealed record FilesDropped(
     [property: JsonPropertyName("count")] int Count);
 
+/// <summary>Regla de relleno: qué zonas de un trazado que se corta a sí mismo, o con subtrazados unos dentro de otros, se rellenan. evenodd deja agujeros donde se superponen.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<FillRule>))]
+public enum FillRule
+{
+    [JsonStringEnumMemberName("nonzero")]
+    Nonzero,
+    [JsonStringEnumMemberName("evenodd")]
+    Evenodd,
+}
+
 /// <summary>Estado del historial de deshacer de un documento.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="CanUndo">Hay algún paso que deshacer.</param>
@@ -268,6 +278,29 @@ public sealed record PathNodesChange(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("action")] NodeAction Action);
 
+/// <summary>Operación del menú Trazado sobre la selección.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Operation">Qué hacer con los trazados seleccionados.</param>
+public sealed record PathOperation(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("operation")] PathOperationKind Operation);
+
+/// <summary>Operación del menú Trazado: cerrar o abrir los trazados, invertir su dirección, combinar varios en uno o separar uno en sus subtrazados.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<PathOperationKind>))]
+public enum PathOperationKind
+{
+    [JsonStringEnumMemberName("close")]
+    Close,
+    [JsonStringEnumMemberName("open")]
+    Open,
+    [JsonStringEnumMemberName("reverse")]
+    Reverse,
+    [JsonStringEnumMemberName("combine")]
+    Combine,
+    [JsonStringEnumMemberName("separate")]
+    Separate,
+}
+
 /// <summary>Rectángulo alineado con los ejes.</summary>
 /// <param name="X">Borde izquierdo.</param>
 /// <param name="Y">Borde superior.</param>
@@ -323,11 +356,13 @@ public sealed record SelectionGeometry(
 /// <param name="Stroke">Trazo: "none", "#rrggbb" o "url".</param>
 /// <param name="StrokeWidth">Grosor del trazo en unidades del elemento.</param>
 /// <param name="Opacity">Opacidad del objeto, de 0 a 1.</param>
+/// <param name="FillRule">Regla de relleno común de la selección; ausente si los objetos tienen reglas distintas o no hay formas.</param>
 public sealed record SelectionStyle(
     [property: JsonPropertyName("fill")] string? Fill,
     [property: JsonPropertyName("stroke")] string? Stroke,
     [property: JsonPropertyName("strokeWidth")] double? StrokeWidth,
-    [property: JsonPropertyName("opacity")] double? Opacity);
+    [property: JsonPropertyName("opacity")] double? Opacity,
+    [property: JsonPropertyName("fillRule"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] FillRule? FillRule = null);
 
 /// <summary>Cambio de propiedades propias de la forma seleccionada. Solo cambian las que se indican; las que no son de su tipo se ignoran.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -442,12 +477,14 @@ public enum ShapeType
 /// <param name="Stroke">Trazo: "none" o "#rrggbb".</param>
 /// <param name="StrokeWidth">Grosor del trazo, 0 o más.</param>
 /// <param name="Opacity">Opacidad, de 0 a 1.</param>
+/// <param name="FillRule">Regla de relleno; ausente, no cambia.</param>
 public sealed record StyleChange(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("fill")] string? Fill,
     [property: JsonPropertyName("stroke")] string? Stroke,
     [property: JsonPropertyName("strokeWidth")] double? StrokeWidth,
-    [property: JsonPropertyName("opacity")] double? Opacity);
+    [property: JsonPropertyName("opacity")] double? Opacity,
+    [property: JsonPropertyName("fillRule"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] FillRule? FillRule = null);
 
 /// <summary>Herramienta del lienzo que ya implementa el motor.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ToolName>))]
@@ -580,6 +617,9 @@ public static class BridgeCommands
     /// <summary>Con la herramienta Vértices en un trazado, hace esquina, suaves o simétricos los nodos seleccionados, o rectos o curvos los segmentos entre ellos. changed es false si no había nada que cambiar. Se puede deshacer.</summary>
     public static readonly BridgeCommand<PathNodesChange, ObjectChange> PathNodes = new("path.nodes");
 
+    /// <summary>Operación del menú Trazado sobre la selección: cerrar o abrir trazados (con la herramienta Vértices, abrir por el nodo seleccionado), invertir su dirección, combinar las formas seleccionadas en un trazado o separar un trazado en sus subtrazados. changed es false si no había nada que hacer. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<PathOperation, ObjectChange> PathOperation = new("path.operation");
+
     /// <summary>Agrupa la selección en un &lt;g&gt; sin cambiar su aspecto. Se puede deshacer.</summary>
     public static readonly BridgeCommand<DocumentRef, ObjectChange> ObjectGroup = new("object.group");
 
@@ -702,6 +742,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(ObjectArrange))]
 [JsonSerializable(typeof(ObjectChange))]
 [JsonSerializable(typeof(PathNodesChange))]
+[JsonSerializable(typeof(PathOperation))]
 [JsonSerializable(typeof(Rect))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]

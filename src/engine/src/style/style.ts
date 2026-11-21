@@ -15,7 +15,13 @@ export interface StyleSummary {
   readonly stroke: Paint | null;
   readonly strokeWidth: number | null;
   readonly opacity: number | null;
+  /** Regla de relleno común; ausente si son distintas o no hay formas (issue #79). */
+  readonly fillRule?: FillRule;
 }
+
+export type FillRule = "nonzero" | "evenodd";
+
+const isFillRule = (value: string): value is FillRule => value === "nonzero" || value === "evenodd";
 
 /** Cambio de estilo: los campos `null` no cambian. */
 export type StyleChange = StyleSummary;
@@ -68,6 +74,7 @@ export function readStyle(items: readonly Element[]): StyleSummary {
   const outer = outermost(items);
   const targets = outer.flatMap(paintTargets);
   const computed = targets.map((target) => getComputedStyle(target));
+  const fillRule = common(computed.map((style) => style.fillRule));
   return {
     fill: common(computed.map((style) => paintOf(style.fill))),
     stroke: common(computed.map((style) => paintOf(style.stroke))),
@@ -79,6 +86,7 @@ export function readStyle(items: readonly Element[]): StyleSummary {
         (item) => Math.round(Number.parseFloat(getComputedStyle(item).opacity) * 1e4) / 1e4,
       ),
     ),
+    ...(fillRule !== null && isFillRule(fillRule) ? { fillRule } : {}),
   };
 }
 
@@ -87,6 +95,7 @@ function applied(element: Element, property: string, value: string): boolean {
   const computed = getComputedStyle(element).getPropertyValue(property);
   if (property === "fill" || property === "stroke")
     return paintOf(computed) === value.toLowerCase();
+  if (property === "fill-rule") return computed.trim() === value;
   return Math.abs(Number.parseFloat(computed) - Number.parseFloat(value)) < 1e-6;
 }
 
@@ -143,7 +152,9 @@ export function applyStyle(
   const strokeWidth =
     change.strokeWidth !== null && change.strokeWidth >= 0 ? number(change.strokeWidth) : null;
   const opacity = change.opacity !== null ? number(Math.min(1, Math.max(0, change.opacity))) : null;
+  const fillRule = change.fillRule && isFillRule(change.fillRule) ? change.fillRule : null;
   const properties = [
+    fillRule && "fill-rule",
     fill && "fill",
     stroke && "stroke",
     strokeWidth && "stroke-width",
@@ -158,6 +169,7 @@ export function applyStyle(
         if (fill) setStyleProperty(target, "fill", fill);
         if (stroke) setStyleProperty(target, "stroke", stroke);
         if (strokeWidth) setStyleProperty(target, "stroke-width", strokeWidth);
+        if (fillRule) setStyleProperty(target, "fill-rule", fillRule);
       }
       if (opacity) for (const item of outer) setStyleProperty(item, "opacity", opacity);
     },

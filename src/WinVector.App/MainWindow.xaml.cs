@@ -330,6 +330,18 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Se ha elegido una regla de relleno en el panel. Si el cambio viene de la propia selección, la
+    /// regla coincide y no se envía nada.
+    /// </summary>
+    private void OnFillRuleChanged(object sender, SelectionChangedEventArgs args)
+    {
+        if (sender is ComboBox { SelectedIndex: >= 0 } box)
+        {
+            ViewModel.SetSelectionFillRule(box.SelectedIndex == 1 ? FillRule.Evenodd : FillRule.Nonzero);
+        }
+    }
+
     private void OnOpacityChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
         if (!double.IsNaN(args.NewValue))

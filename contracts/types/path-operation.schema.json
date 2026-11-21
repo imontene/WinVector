@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PathOperation",
+  "description": "Operación del menú Trazado sobre la selección.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "operation"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "operation": {
+      "$ref": "./path-operation-kind.schema.json",
+      "description": "Qué hacer con los trazados seleccionados."
+    }
+  }
+}

@@ -12,3 +12,5 @@ export * from "./curves";
 export * from "./nodes";
 export * from "./nodeEdit";
 export * from "./convert";
+export * from "./operations";
+export * from "./combine";
