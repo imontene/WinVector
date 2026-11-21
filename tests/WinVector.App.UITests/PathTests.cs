@@ -137,7 +137,9 @@ public sealed partial class PathTests
     {
         var box = Retry.WhileNull(() => Session.FindById(automationId), EngineTimeout).Result
             ?? throw new AssertFailedException($"No aparece el campo {automationId}.");
-        Assert.IsTrue(Retry.WhileFalse(() => box.IsEnabled && !box.IsOffscreen, EngineTimeout).Result, $"El campo {automationId} no está disponible.");
+        // El panel tiene desplazamiento: la sección de nodos puede quedar por debajo de lo que se ve.
+        box.Patterns.ScrollItem.PatternOrDefault?.ScrollIntoView();
+        Assert.IsTrue(Retry.WhileFalse(() => box.IsEnabled, EngineTimeout).Result, $"El campo {automationId} no está disponible.");
         box.Patterns.RangeValue.Pattern.SetValue(value);
         Assert.IsTrue(
             Retry.WhileFalse(() => Math.Abs(box.Patterns.RangeValue.Pattern.Value - value) < 0.01, EngineTimeout).Result,
