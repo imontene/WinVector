@@ -9,6 +9,19 @@ import {
   type Rect,
 } from "../geometry";
 import type { History } from "../history";
+import {
+  handleAt,
+  moveHandle,
+  moveNodes,
+  nodeKey,
+  nodeKind,
+  parsePath,
+  pathNodes,
+  serializePath,
+  type HandleRef,
+  type NodeKind,
+  type PathData,
+} from "../paths";
 import { pickAt, type Selection } from "../selection";
 import { elementToRoot } from "../transform";
 import { isPressed } from "./modifiers";
@@ -50,6 +63,51 @@ export interface VertexToolHost {
 export interface VertexScene {
   readonly points: readonly Point[];
   readonly selected: readonly boolean[];
+  /** Manejadores de las curvas de los nodos seleccionados: del nodo al punto de control. */
+  readonly handles?: readonly { readonly from: Point; readonly to: Point }[];
+}
+
+/**
+ * Nodos de una forma con los que se pueden mover los seleccionados. En un polígono se reescriben sus
+ * puntos; en un trazado, su `d` con los manejadores de cada nodo.
+ */
+interface Editable {
+  /** Nodos en las coordenadas de la forma, en el orden en que se dibujan. */
+  readonly points: readonly Point[];
+  /** Escribe la forma con los nodos `selected` desplazados `delta` respecto a como estaban al leerla. */
+  write(selected: ReadonlySet<number>, delta: Point): void;
+}
+
+function editableOf(element: Element): Editable | null {
+  if (element.localName === "path") {
+    const data = parsePath(element.getAttribute("d") ?? "").data;
+    const nodes = pathNodes(data);
+    return {
+      points: nodes.map((node) => node.point),
+      write(selected, delta) {
+        const keys = new Set(
+          [...selected]
+            .map((i) => nodes[i])
+            .filter((n) => n !== undefined)
+            .map(nodeKey),
+        );
+        element.setAttribute("d", serializePath(moveNodes(data, keys, delta.x, delta.y)));
+      },
+    };
+  }
+  const vertices = readVertices(element);
+  if (!vertices) return null;
+  return {
+    points: vertices.points,
+    write(selected, delta) {
+      writeVertices(
+        element,
+        vertices.points.map((v, i) =>
+          selected.has(i) ? { x: v.x + delta.x, y: v.y + delta.y } : v,
+        ),
+      );
+    },
+  };
 }
 
 type Press =
@@ -60,7 +118,20 @@ type Press =
       started: boolean;
       element: Element;
       toLocal: Matrix;
-      original: Point[];
+      original: Editable | null;
+    }
+  | {
+      /** Arrastre de un manejador de una curva de un trazado. */
+      readonly kind: "handle";
+      readonly handle: HandleRef;
+      readonly start: Point;
+      readonly element: Element;
+      readonly toLocal: Matrix;
+      readonly data: PathData;
+      /** Tipo del nodo al empezar: suave o simétrico arrastra también el manejador opuesto. */
+      readonly node: NodeKind;
+      readonly nodePoint: Point;
+      started: boolean;
     }
   | {
       readonly kind: "marquee";
@@ -73,7 +144,9 @@ const toMatrix = (m: DOMMatrix): Matrix => ({ a: m.a, b: m.b, c: m.c, d: m.d, e:
 
 /**
  * Herramienta Vértices (atajo `A`): edita los vértices de polígonos, polilíneas, líneas, estrellas y
- * rectángulos (estos dos pasan a ser polígonos normales al editarlos).
+ * rectángulos (estos dos pasan a ser polígonos normales al editarlos) y los nodos de los trazados.
+ * En un trazado, los nodos seleccionados muestran los manejadores de sus curvas: arrastrar uno lo
+ * mueve (`Mayús`: de 15° en 15°) y, si el nodo es suave o simétrico, el opuesto lo sigue.
  *
  * - Clic en un vértice lo selecciona (`Mayús`: lo añade o lo quita); arrastrar desde el fondo
  *   selecciona los vértices que quedan dentro del marco. Clic en otra forma la elige.
@@ -119,6 +192,39 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     return vertices.points.map((p) => applyToPoint(m, p));
   };
 
+  /** Manejadores de los nodos seleccionados de un trazado, en pantalla. */
+  const screenHandles = (element: Element) => {
+    if (element.localName !== "path" || selected.size === 0) return [];
+    const ctm = element instanceof SVGGraphicsElement ? element.getScreenCTM() : null;
+    if (!ctm) return [];
+    const m = toMatrix(ctm);
+    const data = parsePath(element.getAttribute("d") ?? "").data;
+    return pathNodes(data).flatMap((node, i) =>
+      selected.has(i)
+        ? node.handles.flatMap((handle) => {
+            const at = handleAt(data, handle);
+            return at
+              ? [{ handle, node, data, from: applyToPoint(m, node.point), to: applyToPoint(m, at) }]
+              : [];
+          })
+        : [],
+    );
+  };
+
+  /** Manejador bajo un punto de la pantalla, con lo necesario para arrastrarlo. */
+  const handleAtPoint = (element: Element, p: Point) => {
+    const found = screenHandles(element).find(
+      ({ to }) => Math.hypot(to.x - p.x, to.y - p.y) <= HIT_DISTANCE,
+    );
+    if (!found) return null;
+    return {
+      handle: found.handle,
+      data: found.data,
+      node: nodeKind(found.data, found.node),
+      nodePoint: found.node.point,
+    };
+  };
+
   const vertexAt = (element: Element, p: Point) =>
     screenVertices(element).findIndex((v) => Math.hypot(v.x - p.x, v.y - p.y) <= HIT_DISTANCE);
 
@@ -142,6 +248,23 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     if (event.button !== 0 || press) return;
     const editing = current();
     const p = point(event);
+    const handle = editing ? handleAtPoint(editing.element, p) : null;
+    if (editing && handle) {
+      const ctm =
+        editing.element instanceof SVGGraphicsElement ? editing.element.getScreenCTM() : null;
+      const toLocal = ctm ? invert(toMatrix(ctm)) : null;
+      if (!toLocal) return;
+      press = {
+        kind: "handle",
+        ...handle,
+        start: p,
+        element: editing.element,
+        toLocal,
+        started: false,
+      };
+      target.document.documentElement.setPointerCapture(event.pointerId);
+      return;
+    }
     const index = editing ? vertexAt(editing.element, p) : -1;
     if (editing && index !== -1) {
       if (isPressed(event, "Shift")) {
@@ -164,7 +287,7 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
         started: false,
         element: editing.element,
         toLocal,
-        original: [],
+        original: null,
       };
       target.document.documentElement.setPointerCapture(event.pointerId);
       return;
@@ -198,20 +321,36 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     }
     const active = host.active();
     if (!active) return;
+    if (press.kind === "handle") {
+      if (!press.started) {
+        if (Math.hypot(p.x - press.start.x, p.y - press.start.y) <= DRAG_THRESHOLD) return;
+        active.history.begin("move-handle");
+        press.started = true;
+      }
+      let local = applyToPoint(press.toLocal, p);
+      // Con Mayús, el manejador gira de 15° en 15° alrededor de su nodo.
+      if (isPressed(event, "Shift")) local = snapAngle(press.nodePoint, local);
+      press.element.setAttribute(
+        "d",
+        serializePath(moveHandle(press.data, press.handle, local, press.node)),
+      );
+      return;
+    }
     if (!press.started) {
       if (Math.hypot(p.x - press.start.x, p.y - press.start.y) <= DRAG_THRESHOLD) return;
       active.history.begin("move-vertices");
       const element = editable(press.element, active.selection);
-      const vertices = element ? readVertices(element) : null;
-      if (!element || !vertices) {
+      const original = element ? editableOf(element) : null;
+      if (!element || !original) {
         active.history.rollback();
         press = null;
         return;
       }
       press.started = true;
       press.element = element;
-      press.original = vertices.points;
+      press.original = original;
     }
+    if (!press.original) return;
     const startLocal = applyToPoint(press.toLocal, press.start);
     let delta = (() => {
       const local = applyToPoint(press.toLocal, p);
@@ -221,22 +360,18 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       const snapped = snapAngle({ x: 0, y: 0 }, delta, 45);
       delta = snapped;
     }
-    const anchor = press.original[press.index];
+    const anchor = press.original.points[press.index];
     if (!anchor) return;
     let moved = { x: anchor.x + delta.x, y: anchor.y + delta.y };
-    moved = snapVertex(press.element, moved, press.original, active.root);
-    delta = { x: moved.x - anchor.x, y: moved.y - anchor.y };
-    const points = press.original.map((v, i) =>
-      selected.has(i) ? { x: v.x + delta.x, y: v.y + delta.y } : v,
-    );
-    writeVertices(press.element, points);
+    moved = snapVertex(press.element, moved, press.original.points, active.root);
+    press.original.write(selected, { x: moved.x - anchor.x, y: moved.y - anchor.y });
   };
 
   /** Ajusta un vértice a otro vértice cercano (que no se esté moviendo) o, si no, a la cuadrícula. */
   const snapVertex = (
     element: Element,
     p: Point,
-    original: Point[],
+    original: readonly Point[],
     root: SVGSVGElement,
   ): Point => {
     const ctm = element instanceof SVGGraphicsElement ? element.getScreenCTM() : null;
@@ -263,7 +398,7 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
     const finished = press;
     press = null;
     const active = host.active();
-    if (finished.kind === "drag") {
+    if (finished.kind === "drag" || finished.kind === "handle") {
       if (finished.started) active?.history.commit();
       return;
     }
@@ -328,7 +463,9 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
   const onKeyDown = (event: KeyboardEvent) => {
     if (!isActive()) return;
     if (event.key === "Escape") {
-      if (press?.kind === "drag" && press.started) host.active()?.history.rollback();
+      if ((press?.kind === "drag" || press?.kind === "handle") && press.started) {
+        host.active()?.history.rollback();
+      }
       if (press?.kind === "marquee") host.showMarquee(null);
       if (press) {
         press = null;
@@ -366,14 +503,8 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       "move-vertices",
       () => {
         const element = editable(editing.element, editing.selection);
-        const current = element ? readVertices(element) : null;
-        if (!element || !current) return;
-        writeVertices(
-          element,
-          current.points.map((v, i) =>
-            selected.has(i) ? { x: v.x + arrow.x * step, y: v.y + arrow.y * step } : v,
-          ),
-        );
+        const nodes = element ? editableOf(element) : null;
+        nodes?.write(selected, { x: arrow.x * step, y: arrow.y * step });
       },
       "nudge-vertices",
     );
@@ -401,7 +532,8 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       const editing = current();
       if (!editing) return null;
       const points = screenVertices(editing.element);
-      return { points, selected: points.map((_, i) => selected.has(i)) };
+      const handles = screenHandles(editing.element).map(({ from, to }) => ({ from, to }));
+      return { points, selected: points.map((_, i) => selected.has(i)), handles };
     },
     dispose() {
       for (const [type, listener] of listeners) {

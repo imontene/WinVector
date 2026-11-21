@@ -1374,8 +1374,8 @@ public sealed partial class MainViewModel : ObservableObject
         ShowGeometry(selection.Bounds, selection.Items.Count == 1 ? selection.Rotation : null);
         ShowStyle(selection.Items.Count > 0 ? selection.Style : null);
         ShowShape(selection.Items.Count == 1 ? selection.Shape : null);
-        // Lo mismo que vertexEditKind en el motor: polígonos, polilíneas, líneas y rectángulos.
-        CanEditVertices = selection.Items is [{ TagName: "polygon" or "polyline" or "line" or "rect" }];
+        // Lo mismo que vertexEditKind en el motor: polígonos, polilíneas, líneas, rectángulos y trazados.
+        CanEditVertices = selection.Items is [{ TagName: "polygon" or "polyline" or "line" or "rect" or "path" }];
         var items = selection.Items.Count switch
         {
             0 => string.Empty,

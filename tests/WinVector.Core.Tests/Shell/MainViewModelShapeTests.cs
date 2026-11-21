@@ -177,6 +177,9 @@ public sealed class MainViewModelShapeTests : IDisposable
         await _viewModel.EngineWork;
         Assert.AreEqual(ToolName.Vertex, _viewModel.ActiveTool);
 
+        Select("path", "null");
+        Assert.IsTrue(_viewModel.EditVerticesCommand.CanExecute(null), "Un trazado se edita por nodos.");
+
         Select("circle", """{"type":"circle","cx":5,"cy":6,"r":7}""");
         Assert.IsFalse(_viewModel.EditVerticesCommand.CanExecute(null), "Un círculo no se edita por vértices.");
     }
