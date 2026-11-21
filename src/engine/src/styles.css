@@ -225,6 +225,16 @@ body[data-handle="radius"] {
   fill: var(--selection);
 }
 
+/* Manejadores de las curvas de un trazado: una línea desde el nodo y un círculo al final. */
+.overlay-path-handle-line {
+  stroke-width: 1;
+}
+
+.overlay-path-handle {
+  fill: var(--handle-fill, #fff);
+  stroke-width: 1;
+}
+
 /* Primer vértice de la forma libre (src/tools/penTool.ts): más grande cuando un clic la cerraría. */
 .overlay-pen-start {
   fill: var(--handle-fill, #fff);

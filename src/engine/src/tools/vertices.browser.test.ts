@@ -35,7 +35,23 @@ describe("vértices", () => {
       ),
     ).toBe("star");
     expect(vertexEditKind(shape('<circle r="1"/>'))).toBeNull();
-    expect(vertexEditKind(shape('<path d="M0 0L1 1"/>'))).toBeNull();
+    // Los trazados se editan por nodos (issue #76).
+    expect(vertexEditKind(shape('<path d="M0 0L1 1"/>'))).toBe("direct");
+  });
+
+  it("los vértices de un trazado son sus nodos y no se añaden ni se quitan aquí", () => {
+    const path = shape('<path d="M0 0C0 10 10 10 10 0L20 0Z"/>');
+    expect(displayVertices(path)).toEqual({
+      points: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 20, y: 0 },
+      ],
+      closed: false,
+      minimum: 0,
+      resizable: false,
+    });
+    expect(toEditablePolygon(path)).toBe(path);
   });
 
   it("lee y escribe los de polígonos, polilíneas y líneas", () => {

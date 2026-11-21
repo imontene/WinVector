@@ -21,6 +21,8 @@ export interface OverlayScene {
   readonly vertices?: {
     readonly points: readonly Point[];
     readonly selected: readonly boolean[];
+    /** Manejadores de las curvas de los nodos seleccionados de un trazado. */
+    readonly handles?: readonly { readonly from: Point; readonly to: Point }[];
   } | null;
   /** Primer vértice de la forma libre que se dibuja con la pluma, y si un clic la cerraría. */
   readonly pen?: { readonly start: Point; readonly closing: boolean } | null;
@@ -67,6 +69,22 @@ export class Overlay {
       circle.setAttribute("cy", String(round(handle.y)));
       circle.setAttribute("r", String(scene.shapeHandleSize ?? 4));
       shapes.push(circle);
+    }
+    // Los manejadores, antes que los nodos: la línea no debe tapar el cuadrado del nodo.
+    for (const { from, to } of scene.vertices?.handles ?? []) {
+      const doc = this.element.ownerDocument;
+      const line = doc.createElementNS(SVG_NS, "line");
+      line.classList.add("overlay-path-handle-line");
+      line.setAttribute("x1", String(round(from.x)));
+      line.setAttribute("y1", String(round(from.y)));
+      line.setAttribute("x2", String(round(to.x)));
+      line.setAttribute("y2", String(round(to.y)));
+      const circle = doc.createElementNS(SVG_NS, "circle");
+      circle.classList.add("overlay-path-handle");
+      circle.setAttribute("cx", String(round(to.x)));
+      circle.setAttribute("cy", String(round(to.y)));
+      circle.setAttribute("r", "3.5");
+      shapes.push(line, circle);
     }
     scene.vertices?.points.forEach((point, index) => {
       const size = 7;

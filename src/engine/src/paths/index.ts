@@ -9,4 +9,5 @@ export * from "./model";
 export * from "./parse";
 export * from "./serialize";
 export * from "./curves";
+export * from "./nodes";
 export * from "./convert";

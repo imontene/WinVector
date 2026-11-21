@@ -1,11 +1,13 @@
 import type { Point } from "../geometry";
+import { parsePath, pathNodes } from "../paths";
 import { forgetPolygon, readPolygon } from "./polygons";
 import { coordinate } from "./shapes";
 
 /**
  * Vértices de las formas de segmentos rectos (issue #61): polígonos, polilíneas y líneas. Los
  * rectángulos y los polígonos y estrellas de WinVector también se editan, pero antes pasan a ser
- * polígonos normales (`toEditablePolygon`).
+ * polígonos normales (`toEditablePolygon`). Los nodos de los trazados se editan con el módulo
+ * `paths` (issue #76).
  */
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -28,9 +30,11 @@ export type VertexEditKind = "direct" | "rect" | "polygon" | "star";
 export function vertexEditKind(element: Element): VertexEditKind | null {
   if (element.namespaceURI !== SVG_NS) return null;
   const params = readPolygon(element);
-  if (params) return element.localName === "polygon" ? params.kind : null;
+  if (params)
+    return element.localName === "polygon" || element.localName === "path" ? params.kind : null;
   if (element.localName === "rect") return "rect";
-  if (["polygon", "polyline", "line"].includes(element.localName)) return "direct";
+  // Los trazados se editan por nodos (issue #76).
+  if (["polygon", "polyline", "line", "path"].includes(element.localName)) return "direct";
   return null;
 }
 
@@ -124,8 +128,15 @@ export function toEditablePolygon(element: Element): Element | null {
   return polygon;
 }
 
-/** Vértices de una forma editable para dibujarlos, también de un rectángulo (sus esquinas). */
+/**
+ * Vértices de una forma editable para dibujarlos, también de un rectángulo (sus esquinas) y de un
+ * trazado (sus nodos; de momento no se pueden añadir ni quitar desde aquí).
+ */
 export function displayVertices(element: Element): Vertices | null {
+  if (element.localName === "path" && element.namespaceURI === SVG_NS) {
+    const nodes = pathNodes(parsePath(element.getAttribute("d") ?? "").data);
+    return { points: nodes.map((node) => node.point), closed: false, minimum: 0, resizable: false };
+  }
   if (element instanceof SVGRectElement) {
     const x = element.x.baseVal.value;
     const y = element.y.baseVal.value;
