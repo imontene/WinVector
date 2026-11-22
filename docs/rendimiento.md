@@ -13,7 +13,7 @@ Mediciones de los objetivos de rendimiento del MVP 1 (PLAN.md, sección 4.6) y c
 
 - **Documentos generados** (`src/engine/perf/generate.ts`) de 500, 2.000 y 10.000 objetos: rectángulos, círculos, trazados con curvas y textos, algunos con degradado, en grupos de 50. El mismo tamaño da siempre el mismo documento.
 - **Carga:** desde que la aplicación envía `document.load` hasta que el documento está activo y pintado.
-- **Arrastrar, zoom y desplazar:** 60 movimientos separados por un fotograma (Ctrl+clic y arrastre de un objeto, Ctrl+rueda, rueda). Durante el gesto se anota cada fotograma con `requestAnimationFrame`; el resultado son los fotogramas por segundo y el percentil 95 del tiempo entre fotogramas.
+- **Arrastrar, escribir, zoom y desplazar:** 60 movimientos o pulsaciones separados por un fotograma (Ctrl+clic y arrastre de un objeto; con la herramienta Texto, una letra por fotograma en un texto del documento, que se reescribe con cada pulsación; Ctrl+rueda; rueda). Durante el gesto se anota cada fotograma con `requestAnimationFrame`; el resultado son los fotogramas por segundo y el percentil 95 del tiempo entre fotogramas.
 - Se ejecuta con la configuración `playwright.perf.config.ts`: un solo proceso, sin reintentos, ventana de 1280×720. Los resultados quedan en `src/engine/perf/resultados/motor.json`.
 
 ### Aplicación (`StartupTests`, categoría `Rendimiento`)
@@ -63,4 +63,4 @@ Medidos en la CI de GitHub Actions el 2026-11-20: el motor en `ubuntu-latest` co
 ## Pendiente
 
 - Medir el arranque en frío en un equipo de gama media real y ajustar el objetivo de 2 s si hace falta.
-- Volver a medir cuando lleguen las herramientas de trazados y texto, que añaden trabajo por fotograma.
+- Añadir a la referencia la medida de escribir (issue #99) con los valores de la CI, cuando se fusione.

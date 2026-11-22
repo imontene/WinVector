@@ -4,7 +4,7 @@ Editor gráfico de SVG para Windows 11, nativo y moderno.
 
 | | |
 |---|---|
-| Estado | Fases 0 a 3 terminadas. Siguiente: Fase 4 (texto) |
+| Estado | Fases 0 a 4 terminadas. Siguiente: Fase 5 (degradados) |
 | Versión objetivo | MVP 1 → `v0.1.0` |
 | Licencia | Apache 2.0 |
 | Repositorio | Público en GitHub |
@@ -253,9 +253,10 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - Menú contextual en el lienzo (clic derecho, `Mayús+F10`).
 - **Conseguido:** menú contextual en el lienzo. Modelo de trazados con analizador y serializador de `d` y geometría de curvas exacta ([ADR 0007](adr/0007-modelo-de-trazados.md)). La herramienta Vértices (`A`) edita los nodos de los trazados: mover nodos y manejadores, esquina, suave y simétrico (`Mayús+C/S/Y`), añadir y quitar nodos conservando la forma, y segmentos rectos o curvos (`Mayús+L/U`). Pluma con curvas, que cierra arrastrando y continúa trazados abiertos. Menú Trazado con cerrar, abrir, invertir, combinar y separar, y regla de relleno en el panel. Redondeo de vértices con arcos exactos y un radio por vértice que se conserva al guardar ([ADR 0008](adr/0008-redondeo-de-vertices.md)). Pruebas de interfaz de punta a punta, hasta guardar y volver a abrir el archivo.
 
-### Fase 4 · Texto (M)
+### Fase 4 · Texto (M) ✅ Terminada
 - Herramienta de texto, edición en el lienzo, varias líneas, fuentes del sistema, propiedades tipográficas.
 - Edición con cursor y selección propios sobre el SVG y un `textarea` invisible para la entrada ([ADR 0006](adr/0006-edicion-de-texto.md)).
+- **Conseguido:** herramienta Texto (`T`) con edición en el lienzo: tildes, IME, portapapeles y deshacer del sistema, varias líneas, selección con el teclado y el ratón (palabra y línea), y cursor entre grafemas (también en textos girados y de derecha a izquierda). Toda la edición es un paso del historial. Los textos de otros programas que no se pueden editar (sobre un trazado, con letras colocadas sueltas…) se explican. Panel *Texto* y menú Texto: fuente con su familia de reserva, tamaño, peso, cursiva, alineación e interlineado. Aviso de las fuentes que faltan. Escalar un texto en proporción cambia su tamaño de fuente. Pruebas de interfaz de punta a punta y medida de escribir en [rendimiento.md](rendimiento.md). Los tramos con estilos distintos pasan a la MVP 4 (#96).
 
 ### Fase 5 · Degradados (M)
 - Degradados lineales y radiales, editor de paradas, manejadores en el lienzo, biblioteca y limpieza de `defs`.

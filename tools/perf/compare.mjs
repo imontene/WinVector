@@ -41,9 +41,12 @@ function engineMetrics(results) {
     });
     for (const [key, name] of [
       ["drag", "Arrastrar"],
+      ["type", "Escribir"],
       ["zoom", "Zoom"],
       ["pan", "Desplazar"],
     ]) {
+      // Las mediciones anteriores a una medida nueva no la tienen.
+      if (!result[key]) continue;
       metrics.push({
         group,
         name: `${name} (fps)`,

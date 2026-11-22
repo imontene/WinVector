@@ -5,7 +5,8 @@ import { generateDocument } from "./generate";
 
 /**
  * Medición de rendimiento del motor (issue #34) con documentos de 500, 2.000 y 10.000 objetos:
- * tiempo de carga y fotogramas por segundo al arrastrar, hacer zoom y desplazar.
+ * tiempo de carga y fotogramas por segundo al arrastrar, escribir en un texto, hacer zoom y
+ * desplazar.
  *
  * No es una prueba de aciertos y fallos: escribe los resultados en perf/resultados/motor.json y
  * `npm run perf:compare` los compara con la referencia (perf/referencia.json).
@@ -29,6 +30,8 @@ interface Result {
   readonly drag: FrameStats;
   readonly zoom: FrameStats;
   readonly pan: FrameStats;
+  /** Escribir en un texto con la herramienta Texto (issue #99): cada letra reescribe el texto. */
+  readonly type: FrameStats;
 }
 
 const results: Result[] = [];
@@ -143,6 +146,21 @@ for (const objects of SIZES) {
     const after = await page.locator("#o0").boundingBox();
     expect(after?.x, "el arrastre debe mover el objeto").not.toBe(before?.x);
 
+    // Escribir en un texto: con la herramienta Texto, clic en el primero y una letra por fotograma.
+    // Los textos del documento generado (el de ejemplo, en otra pestaña, también tiene uno).
+    const text = page.locator(`text[id^="o"]`).first();
+    const textBox = await text.boundingBox();
+    if (!textBox) throw new Error("El primer texto no se ve");
+    await page.keyboard.press("t");
+    await page.mouse.click(textBox.x + textBox.width - 1, textBox.y + textBox.height / 2);
+    const typed = (await text.textContent()) ?? "";
+    const type = await measure(page, () => page.keyboard.type("a"));
+    await page.keyboard.press("Escape");
+    expect((await text.textContent())?.length, "escribir debe cambiar el texto").toBeGreaterThan(
+      typed.length,
+    );
+    await page.keyboard.press("v");
+
     // Zoom con Ctrl+rueda, acercando y alejando.
     const viewport = page.viewportSize() ?? { width: 1280, height: 720 };
     await page.mouse.move(viewport.width / 2, viewport.height / 2);
@@ -153,7 +171,7 @@ for (const objects of SIZES) {
     // Desplazar con la rueda.
     const pan = await measure(page, (step) => page.mouse.wheel(step % 2 === 0 ? 30 : 0, 30));
 
-    const result = { objects, loadMs, drag, zoom, pan };
+    const result = { objects, loadMs, drag, type, zoom, pan };
     results.push(result);
     test.info().annotations.push({ type: "rendimiento", description: JSON.stringify(result) });
     console.log(JSON.stringify(result));
