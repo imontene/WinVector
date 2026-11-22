@@ -16,7 +16,11 @@ public sealed partial class MainViewModel
     [ObservableProperty]
     private string _canvasNotice = string.Empty;
 
-    partial void OnActiveToolChanged(ToolName value) => CanvasNotice = string.Empty;
+    partial void OnActiveToolChanged(ToolName value)
+    {
+        CanvasNotice = string.Empty;
+        NotifyCornerToolChanged();
+    }
 
     /// <summary>Se ha intentado editar un texto que no se puede editar en el lienzo: se explica por qué.</summary>
     private void OnTextLocked(TextLocked locked)

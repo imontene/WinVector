@@ -114,12 +114,14 @@ public sealed record ContextMenuRequest(
     [property: JsonPropertyName("keyboard")] bool Keyboard,
     [property: JsonPropertyName("canEditVertices")] bool CanEditVertices);
 
-/// <summary>Radio de las esquinas seleccionadas con la herramienta Vértices: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo.</summary>
+/// <summary>Radio de las esquinas seleccionadas con la herramienta Vértices, o de todas las esquinas de los objetos seleccionados con all: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Radius">Radio en unidades de la forma, 0 o más.</param>
+/// <param name="All">True: todas las esquinas de los polígonos, polilíneas y trazados seleccionados (issue #114), con cualquier herramienta. Ausente o false: las esquinas seleccionadas con la herramienta Vértices.</param>
 public sealed record CornerRadiusChange(
     [property: JsonPropertyName("documentId")] string DocumentId,
-    [property: JsonPropertyName("radius")] double Radius);
+    [property: JsonPropertyName("radius")] double Radius,
+    [property: JsonPropertyName("all"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? All = null);
 
 /// <summary>Texto de un documento para guardarlo.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -351,6 +353,7 @@ public sealed record SelectedElement(
 /// <param name="Style">Estilo de la selección; solo cuando hay algo seleccionado.</param>
 /// <param name="Shape">Propiedades propias de la forma; solo con un único objeto seleccionado que sea una forma (rectángulo, elipse, círculo, línea, polígono o estrella de WinVector).</param>
 /// <param name="Text">Propiedades tipográficas de los textos seleccionados; ausente si no hay ningún texto.</param>
+/// <param name="Corners">Esquinas de los objetos seleccionados que se pueden redondear todas a la vez (issue #114); ausente si ninguno las tiene.</param>
 public sealed record SelectionChanged(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items,
@@ -359,7 +362,13 @@ public sealed record SelectionChanged(
     [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null,
     [property: JsonPropertyName("style"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SelectionStyle? Style = null,
     [property: JsonPropertyName("shape"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShapeProperties? Shape = null,
-    [property: JsonPropertyName("text"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] TextProperties? Text = null);
+    [property: JsonPropertyName("text"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] TextProperties? Text = null,
+    [property: JsonPropertyName("corners"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SelectionCorners? Corners = null);
+
+/// <summary>Esquinas entre dos rectas de los polígonos, polilíneas y trazados seleccionados, que se pueden redondear todas a la vez. No incluye los rectángulos ni los polígonos regulares y estrellas de WinVector, que tienen su propio redondeo.</summary>
+/// <param name="Radius">Radio común de todas las esquinas, en unidades de la forma (0 si ninguna está redondeada). Ausente si las esquinas tienen radios distintos.</param>
+public sealed record SelectionCorners(
+    [property: JsonPropertyName("radius"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Radius = null);
 
 /// <summary>Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -717,7 +726,7 @@ public static class BridgeCommands
     /// <summary>Operación del menú Trazado sobre la selección: cerrar o abrir trazados (con la herramienta Vértices, abrir por el nodo seleccionado), invertir su dirección, combinar las formas seleccionadas en un trazado o separar un trazado en sus subtrazados. changed es false si no había nada que hacer. Se puede deshacer.</summary>
     public static readonly BridgeCommand<PathOperation, ObjectChange> PathOperation = new("path.operation");
 
-    /// <summary>Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0). La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer.</summary>
+    /// <summary>Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0); con all, todas las esquinas de los objetos seleccionados. La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer.</summary>
     public static readonly BridgeCommand<CornerRadiusChange, ObjectChange> PathCornerRadius = new("path.cornerRadius");
 
     /// <summary>Agrupa la selección en un &lt;g&gt; sin cambiar su aspecto. Se puede deshacer.</summary>
@@ -855,6 +864,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(Rect))]
 [JsonSerializable(typeof(SelectedElement))]
 [JsonSerializable(typeof(SelectionChanged))]
+[JsonSerializable(typeof(SelectionCorners))]
 [JsonSerializable(typeof(SelectionGeometry))]
 [JsonSerializable(typeof(SelectionStyle))]
 [JsonSerializable(typeof(ShapeChange))]

@@ -205,7 +205,8 @@ internal sealed class FakeEngine
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
             case "path.cornerRadius":
-                NodeActions.Add($"radius {payload.GetProperty("radius").GetDouble().ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+                var all = payload.TryGetProperty("all", out var allValue) && allValue.GetBoolean() ? " all" : string.Empty;
+                NodeActions.Add($"radius {payload.GetProperty("radius").GetDouble().ToString(System.Globalization.CultureInfo.InvariantCulture)}{all}");
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
             case "path.operation":

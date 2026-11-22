@@ -25,3 +25,4 @@ export * from "./vertexTool";
 export * from "./penTool";
 export * from "./textTool";
 export * from "./contextMenu";
+export * from "./objectCorners";

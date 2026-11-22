@@ -42,6 +42,8 @@ import {
   readShape,
   SHAPE_HANDLE_SIZE,
   shapeHandles,
+  readObjectCorners,
+  setObjectCornerRadius,
   trackModifiers,
   type ShapeStyle,
 } from "./tools";
@@ -112,6 +114,7 @@ function emitSelection(documentId: string): void {
   const [single] = items;
   const shape = single && items.length === 1 ? readShape(single) : null;
   const text = readTextProperties(items);
+  const corners = readObjectCorners(items);
   bridge.emit("selection.changed", {
     documentId,
     items: items.map(describeElement),
@@ -121,6 +124,7 @@ function emitSelection(documentId: string): void {
     ...(items.length > 0 ? { style: readStyle(items) } : {}),
     ...(shape ? { shape } : {}),
     ...(text ? { text } : {}),
+    ...(corners ? { corners: corners.radius === null ? {} : { radius: corners.radius } } : {}),
   });
 }
 
@@ -318,7 +322,11 @@ bridge.handle("document.close", ({ documentId }) =>
 
 bridge.handle("selection.selectAll", ({ documentId }) =>
   withDocumentErrors(() => {
-    documents.open(documentId).selection.selectAll();
+    const opened = documents.open(documentId);
+    // Con la herramienta Vértices, Ctrl+A selecciona los nodos de la forma que se edita (#114).
+    const nodes =
+      documents.active?.id === documentId && activeTool === "vertex" && vertexTool.selectAllNodes();
+    if (!nodes) opened.selection.selectAll();
     return { documentId };
   }),
 );
@@ -459,9 +467,13 @@ bridge.handle("path.operation", ({ documentId, operation }) =>
   })),
 );
 
-bridge.handle("path.cornerRadius", ({ documentId, radius }) =>
+bridge.handle("path.cornerRadius", ({ documentId, radius, all }) =>
   withDocumentErrors(() => {
-    documents.open(documentId);
+    const opened = documents.open(documentId);
+    if (all) {
+      const changed = setObjectCornerRadius(opened.selection, opened.document.history, radius);
+      return { documentId, changed };
+    }
     const changed = documents.active?.id === documentId && vertexTool.setCornerRadius(radius);
     return { documentId, changed };
   }),

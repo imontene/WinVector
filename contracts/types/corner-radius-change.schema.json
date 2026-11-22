@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "CornerRadiusChange",
-  "description": "Radio de las esquinas seleccionadas con la herramienta Vértices: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo.",
+  "description": "Radio de las esquinas seleccionadas con la herramienta Vértices, o de todas las esquinas de los objetos seleccionados con all: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,6 +16,10 @@
     "radius": {
       "type": "number",
       "description": "Radio en unidades de la forma, 0 o más."
+    },
+    "all": {
+      "type": "boolean",
+      "description": "True: todas las esquinas de los polígonos, polilíneas y trazados seleccionados (issue #114), con cualquier herramienta. Ausente o false: las esquinas seleccionadas con la herramienta Vértices."
     }
   }
 }

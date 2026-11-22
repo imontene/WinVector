@@ -260,6 +260,7 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 
 ### Fase 5 · Degradados (M)
 - Degradados lineales y radiales, editor de paradas, manejadores en el lienzo, biblioteca y limpieza de `defs`.
+- Redondear a la vez todas las esquinas de una o varias figuras (#114), que amplía el redondeo de vértices de la Fase 3.
 
 ### Fase 6 · Estabilización y publicación de `v0.1.0` (M)
 - Pruebas de rendimiento y accesibilidad, corrección de errores.

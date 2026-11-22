@@ -117,6 +117,7 @@ public sealed partial class MainWindow : Window
         };
         RootGrid.KeyboardAccelerators.Add(palette);
         ViewModel.CommandPaletteRequested += (_, _) => OpenCommandPalette();
+        ViewModel.CornerRadiusRequested += (_, _) => FocusCornerRadius();
         ViewModel.ContextMenuRequested += OnContextMenuRequested;
 
         // Ctrl++ y Ctrl+- (en el teclado principal y en el numérico) no tienen nombre en VirtualKey.
@@ -423,6 +424,22 @@ public sealed partial class MainWindow : Window
         {
             ViewModel.SetCornerRadius(args.NewValue);
         }
+    }
+
+    private void OnObjectCornerRadiusChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!double.IsNaN(args.NewValue))
+        {
+            ViewModel.SetObjectCornerRadius(args.NewValue);
+        }
+    }
+
+    /// <summary>Menú Trazado > Redondear esquinas: lleva el foco al radio que se ve en el panel.</summary>
+    private void FocusCornerRadius()
+    {
+        var box = ViewModel.HasObjectCorners ? ObjectCornerRadiusBox : CornerRadiusBox;
+        box.StartBringIntoView();
+        box.Focus(FocusState.Programmatic);
     }
 
     private void OnOpacityChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)

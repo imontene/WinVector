@@ -26,6 +26,7 @@ El radio que se guarda es el que de verdad tiene la esquina, ya limitado a lo qu
 
 **Edición.**
 - La herramienta Vértices trabaja con la forma sin redondear: muestra y mueve los vértices originales, y los arcos se vuelven a calcular.
+- Con la herramienta Selección, el panel cambia a la vez el radio de todas las esquinas entre dos rectas de los polígonos, polilíneas y trazados seleccionados (issue #114). Se guardan igual, un radio por vértice. Los rectángulos y los polígonos regulares y estrellas conservan su propio redondeo.
 - Añadir o quitar nodos y cambiar su tipo conservan el radio de los nodos que siguen en el mismo punto.
 - Las operaciones del menú Trazado (cerrar, abrir, invertir, combinar, separar) trabajan con lo que se ve y olvidan el redondeo: el trazado queda con sus arcos como un trazado normal.
 

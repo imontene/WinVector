@@ -116,7 +116,7 @@
     {
       "name": "path.cornerRadius",
       "kind": "command",
-      "description": "Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0). La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer.",
+      "description": "Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0); con all, todas las esquinas de los objetos seleccionados. La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer.",
       "payload": "CornerRadiusChange",
       "response": "ObjectChange"
     },

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SelectionCorners",
+  "description": "Esquinas entre dos rectas de los polígonos, polilíneas y trazados seleccionados, que se pueden redondear todas a la vez. No incluye los rectángulos ni los polígonos regulares y estrellas de WinVector, que tienen su propio redondeo.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "radius": {
+      "type": "number",
+      "description": "Radio común de todas las esquinas, en unidades de la forma (0 si ninguna está redondeada). Ausente si las esquinas tienen radios distintos."
+    }
+  }
+}

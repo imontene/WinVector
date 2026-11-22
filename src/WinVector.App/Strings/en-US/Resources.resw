@@ -1218,6 +1218,15 @@ Licensed under the Apache License 2.0.</value>
   <data name="CornerRadiusBox.Header" xml:space="preserve">
     <value>Corner radius</value>
   </data>
+  <data name="ObjectCornerRadiusBox.Header" xml:space="preserve">
+    <value>Corner radius</value>
+  </data>
+  <data name="MenuPathRoundCorners.Text" xml:space="preserve">
+    <value>Round corners…</value>
+  </data>
+  <data name="PaletteNamePathRoundCorners" xml:space="preserve">
+    <value>Round corners</value>
+  </data>
   <data name="PaletteNameToolText" xml:space="preserve">
     <value>Text tool</value>
   </data>

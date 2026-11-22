@@ -89,12 +89,14 @@ export interface ContextMenuRequest {
   readonly canEditVertices: boolean;
 }
 
-/** Radio de las esquinas seleccionadas con la herramienta Vértices: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo. */
+/** Radio de las esquinas seleccionadas con la herramienta Vértices, o de todas las esquinas de los objetos seleccionados con all: se redondean con arcos exactos, limitados a lo que cabe en cada una. 0 quita el redondeo. */
 export interface CornerRadiusChange {
   /** Identificador del documento, asignado por la aplicación. */
   readonly documentId: string;
   /** Radio en unidades de la forma, 0 o más. */
   readonly radius: number;
+  /** True: todas las esquinas de los polígonos, polilíneas y trazados seleccionados (issue #114), con cualquier herramienta. Ausente o false: las esquinas seleccionadas con la herramienta Vértices. */
+  readonly all?: boolean;
 }
 
 /** Texto de un documento para guardarlo. */
@@ -311,6 +313,14 @@ export interface SelectionChanged {
   readonly shape?: ShapeProperties;
   /** Propiedades tipográficas de los textos seleccionados; ausente si no hay ningún texto. */
   readonly text?: TextProperties;
+  /** Esquinas de los objetos seleccionados que se pueden redondear todas a la vez (issue #114); ausente si ninguno las tiene. */
+  readonly corners?: SelectionCorners;
+}
+
+/** Esquinas entre dos rectas de los polígonos, polilíneas y trazados seleccionados, que se pueden redondear todas a la vez. No incluye los rectángulos ni los polígonos regulares y estrellas de WinVector, que tienen su propio redondeo. */
+export interface SelectionCorners {
+  /** Radio común de todas las esquinas, en unidades de la forma (0 si ninguna está redondeada). Ausente si las esquinas tienen radios distintos. */
+  readonly radius?: number;
 }
 
 /** Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia. */
@@ -578,7 +588,7 @@ export interface BridgeCommands {
   readonly "path.nodes": { readonly payload: PathNodesChange; readonly response: ObjectChange };
   /** Operación del menú Trazado sobre la selección: cerrar o abrir trazados (con la herramienta Vértices, abrir por el nodo seleccionado), invertir su dirección, combinar las formas seleccionadas en un trazado o separar un trazado en sus subtrazados. changed es false si no había nada que hacer. Se puede deshacer. */
   readonly "path.operation": { readonly payload: PathOperation; readonly response: ObjectChange };
-  /** Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0). La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer. */
+  /** Con la herramienta Vértices, redondea las esquinas seleccionadas con el mismo radio (o lo quita con 0); con all, todas las esquinas de los objetos seleccionados. La forma pasa a ser un trazado que guarda sus vértices y radios en atributos data-winvector-*. changed es false si no había esquinas que redondear. Se puede deshacer. */
   readonly "path.cornerRadius": {
     readonly payload: CornerRadiusChange;
     readonly response: ObjectChange;

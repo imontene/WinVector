@@ -1220,6 +1220,15 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="CornerRadiusBox.Header" xml:space="preserve">
     <value>Radio de la esquina</value>
   </data>
+  <data name="ObjectCornerRadiusBox.Header" xml:space="preserve">
+    <value>Radio de las esquinas</value>
+  </data>
+  <data name="MenuPathRoundCorners.Text" xml:space="preserve">
+    <value>Redondear esquinas…</value>
+  </data>
+  <data name="PaletteNamePathRoundCorners" xml:space="preserve">
+    <value>Redondear las esquinas</value>
+  </data>
   <data name="PaletteNameToolText" xml:space="preserve">
     <value>Herramienta Texto</value>
   </data>
