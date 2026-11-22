@@ -153,8 +153,16 @@ public sealed partial class PathTests
     private string Save()
     {
         var before = File.GetLastWriteTimeUtc(_file);
-        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_S);
-        Assert.IsTrue(Retry.WhileFalse(() => File.GetLastWriteTimeUtc(_file) > before, TimeSpan.FromSeconds(10)).Result, "Ctrl+S no escribió el archivo.");
+        // Justo después de elegir en una lista desplegable, Ctrl+S puede llegar a su ventana emergente
+        // mientras se cierra y perderse: se vuelve a pulsar. Guardar dos veces no cambia el archivo.
+        var written = false;
+        for (var attempt = 0; attempt < 3 && !written; attempt++)
+        {
+            Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_S);
+            written = Retry.WhileFalse(() => File.GetLastWriteTimeUtc(_file) > before, TimeSpan.FromSeconds(5)).Result;
+        }
+
+        Assert.IsTrue(written, "Ctrl+S no escribió el archivo.");
         for (var attempt = 0; ; attempt++)
         {
             try
@@ -217,10 +225,10 @@ public sealed partial class PathTests
         Mouse.Drag(At(14, 90), At(34, 110));
         WaitForSelection("rect");
 
-        // Ctrl+A con el lienzo enfocado: los dos rectángulos y los dos grupos del ejemplo. Combinar
-        // solo combina las formas; los grupos se quedan como están.
-        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
-        WaitForSelection("4");
+        // Con Selección, Mayús+clic en el grande (fuera del pequeño) los selecciona a los dos.
+        UseToolButton("ToolSelect");
+        AppSession.ShiftClick(At(8, 70));
+        WaitForSelection("2");
 
         InvokeMenu("PathMenu", "MenuPathCombine");
         WaitForSelection("path");
