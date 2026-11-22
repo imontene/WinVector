@@ -54,6 +54,9 @@ export function firstChar(lines: readonly string[], line: number): number {
   return index;
 }
 
+/** Teclas modificadoras: pulsarlas solas no mueve el cursor. */
+const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "AltGraph", "CapsLock"]);
+
 /** Teclas con Ctrl que atiende el propio `textarea` (no deben llegar a los atajos del lienzo). */
 const NATIVE_CTRL_KEYS = new Set([
   "a",
@@ -181,7 +184,8 @@ export class TextEditor {
       return;
     }
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
-      this.#goalX = undefined;
+      // Pulsar solo una tecla modificadora (Mayús para seleccionar) no olvida la columna.
+      if (!MODIFIER_KEYS.has(event.key)) this.#goalX = undefined;
       return;
     }
     event.preventDefault();
@@ -238,6 +242,28 @@ export class TextEditor {
     return toIndex(this.#lines, this.#columnAt(line, point.x));
   }
 
+  /** Doble clic: selecciona la palabra del punto (con los separadores de palabras del idioma). */
+  selectWordAt(clientX: number, clientY: number): void {
+    const { line, column } = toPosition(this.#lines, this.indexAt(clientX, clientY));
+    const text = this.#lines[line] ?? "";
+    const start = toIndex(this.#lines, { line, column: 0 });
+    for (const segment of new Intl.Segmenter(undefined, { granularity: "word" }).segment(text)) {
+      const end = segment.index + segment.segment.length;
+      if (column < end || end === text.length) {
+        this.#select(start + segment.index, start + end);
+        return;
+      }
+    }
+    this.#select(start, start);
+  }
+
+  /** Triple clic: selecciona la línea entera del punto. */
+  selectLineAt(clientX: number, clientY: number): void {
+    const { line } = toPosition(this.#lines, this.indexAt(clientX, clientY));
+    const start = toIndex(this.#lines, { line, column: 0 });
+    this.#select(start, start + (this.#lines[line] ?? "").length);
+  }
+
   /** Selecciona entre dos índices del texto (con saltos de línea). */
   selectRange(anchor: number, focus: number): void {
     this.#select(anchor, focus);
@@ -281,15 +307,25 @@ export class TextEditor {
     };
   }
 
-  /** Columna de una línea más cercana a una x en unidades del texto. */
+  /**
+   * Columna de una línea más cercana a una x en unidades del texto. Solo entre grafemas: el cursor
+   * nunca queda en medio de un emoji, de un par sustituto o de una letra con su acento combinado.
+   */
   #columnAt(line: number, x: number): Position {
-    const length = (this.#lines[line] ?? "").length;
+    const text = this.#lines[line] ?? "";
     const first = firstChar(this.#lines, line);
-    for (let column = 0; column < length; column++) {
-      const extent = this.text.getExtentOfChar(first + column);
-      if (x < extent.x + extent.width / 2) return { line, column };
+    const parts = graphemes(text);
+    for (const [i, { index }] of parts.entries()) {
+      // Un grafema de varias unidades se dibuja con la primera (las demás no tienen anchura): va de
+      // donde empieza la primera a donde empieza el siguiente grafema (o acaba la línea).
+      const left = this.text.getStartPositionOfChar(first + index).x;
+      const next = parts[i + 1];
+      const right = next
+        ? this.text.getStartPositionOfChar(first + next.index).x
+        : this.text.getEndPositionOfChar(first + text.length - 1).x;
+      if (x < (left + right) / 2) return { line, column: index };
     }
-    return { line, column: length };
+    return { line, column: text.length };
   }
 
   /** Punto de la línea base donde va el cursor, según la disposición que hace el propio SVG. */
@@ -348,4 +384,9 @@ function lineStartX(text: SVGTextElement, line: number): number {
   const span = [...text.children].filter((child) => child.localName === "tspan")[line];
   const x = Number.parseFloat(span?.getAttribute("x") ?? "");
   return Number.isFinite(x) ? x : origin(text).x;
+}
+
+/** Grafemas de un texto, con su posición en unidades UTF-16 (las del SVG y del `textarea`). */
+function graphemes(text: string): Intl.SegmentData[] {
+  return [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)];
 }
