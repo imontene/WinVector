@@ -255,14 +255,24 @@ export function paintGradient(
   return isGradient(found) ? found : null;
 }
 
+/** Atributos en los que un objeto nombra la pintura con la que se pinta. */
+const PAINT_ATTRIBUTES = ["fill", "stroke", "style"];
+
 /** Cuántos objetos (que no son degradados) pintan con el degradado directamente. */
 export function gradientUsers(gradient: SVGGradientElement, root: Element): number {
   if (!gradient.id) return 0;
   const id = gradient.id;
   let users = 0;
-  for (const element of root.querySelectorAll("*")) {
-    if (isGradient(element) || element.localName === "style") continue;
-    for (const attribute of element.attributes) users += urlCount(attribute.value, id);
+  // Solo los elementos con algún atributo que nombre el id: el navegador los busca sin recorrer
+  // todo el documento en JavaScript (se llama cada vez que cambia la selección).
+  const name = CSS.escape(`#${id}`);
+  const candidates = root.querySelectorAll(
+    PAINT_ATTRIBUTES.map((attribute) => `[${attribute}*="${name}"]`).join(","),
+  );
+  for (const element of candidates) {
+    if (isGradient(element)) continue;
+    for (const attribute of PAINT_ATTRIBUTES)
+      users += urlCount(element.getAttribute(attribute) ?? "", id);
   }
   return users;
 }

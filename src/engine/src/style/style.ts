@@ -79,9 +79,11 @@ export function readStyle(items: readonly Element[]): StyleSummary {
   const targets = outer.flatMap(paintTargets);
   const computed = targets.map((target) => getComputedStyle(target));
   const fillRule = common(computed.map((style) => style.fillRule));
+  const fill = common(computed.map((style) => paintOf(style.fill)));
+  const stroke = common(computed.map((style) => paintOf(style.stroke)));
   return {
-    fill: common(computed.map((style) => paintOf(style.fill))),
-    stroke: common(computed.map((style) => paintOf(style.stroke))),
+    fill,
+    stroke,
     strokeWidth: common(
       computed.map((style) => Math.round(Number.parseFloat(style.strokeWidth) * 1e4) / 1e4),
     ),
@@ -91,15 +93,18 @@ export function readStyle(items: readonly Element[]): StyleSummary {
       ),
     ),
     ...(fillRule !== null && isFillRule(fillRule) ? { fillRule } : {}),
-    ...gradients(targets),
+    ...gradients(targets, fill, stroke),
   };
 }
 
-/** Degradados comunes del relleno y del trazo, si los hay. */
-function gradients(targets: readonly Element[]) {
-  const fill = commonGradient(targets, "fill");
-  const stroke = commonGradient(targets, "stroke");
-  return { ...(fill ? { fillGradient: fill } : {}), ...(stroke ? { strokeGradient: stroke } : {}) };
+/** Degradados comunes del relleno y del trazo, si los hay (solo se buscan si pintan con `url`). */
+function gradients(targets: readonly Element[], fill: Paint | null, stroke: Paint | null) {
+  const fillGradient = fill === "url" ? commonGradient(targets, "fill") : null;
+  const strokeGradient = stroke === "url" ? commonGradient(targets, "stroke") : null;
+  return {
+    ...(fillGradient ? { fillGradient } : {}),
+    ...(strokeGradient ? { strokeGradient } : {}),
+  };
 }
 
 /** Propiedades cuyo valor son palabras, no números. */
