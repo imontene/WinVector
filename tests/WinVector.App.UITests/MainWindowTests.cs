@@ -58,6 +58,8 @@ public sealed class MainWindowTests
     [TestMethod]
     public void CtrlNAbreOtraPestañaYCtrlWLaCierra()
     {
+        // Con el lienzo enfocado, el atajo lo reenvía el motor: hasta que carga, la pulsación se pierde.
+        WaitForEngine();
         Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_N);
         Assert.IsTrue(Retry.WhileFalse(() => Tabs().Length == 2, TimeSpan.FromSeconds(5)).Result, "Ctrl+N no abrió otra pestaña.");
 
