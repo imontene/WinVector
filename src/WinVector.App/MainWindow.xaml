@@ -806,20 +806,22 @@
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Left"
                                     AutomationProperties.AutomationId="FillButton"
-                                    AutomationProperties.Name="{x:Bind PaintText(ViewModel.SelectionFill), Mode=OneWay}">
+                                    AutomationProperties.Name="{x:Bind PaintText(ViewModel.SelectionFill, ViewModel.FillGradient.Mode), Mode=OneWay}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Border
                                             Width="16"
                                             Height="16"
-                                            Background="{x:Bind app:BindingFunctions.PaintBrush(ViewModel.SelectionFill), Mode=OneWay}"
+                                            Background="{x:Bind app:BindingFunctions.PaintSwatch(ViewModel.SelectionFill, ViewModel.FillGradient.Stops), Mode=OneWay}"
                                             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                             BorderThickness="1"
                                             CornerRadius="2" />
-                                        <TextBlock Text="{x:Bind PaintText(ViewModel.SelectionFill), Mode=OneWay}" />
+                                        <TextBlock Text="{x:Bind PaintText(ViewModel.SelectionFill, ViewModel.FillGradient.Mode), Mode=OneWay}" />
                                     </StackPanel>
                                     <DropDownButton.Flyout>
                                         <Flyout x:Name="FillFlyout" Closed="OnPaintFlyoutClosed" Opening="OnPaintFlyoutOpening">
                                             <StackPanel Width="300" Spacing="8">
+                                                <!-- Color o degradado, y sus paradas (issue #109). -->
+                                                <controls:GradientEditor x:Name="FillGradientEditor" AutomationPrefix="Fill" />
                                                 <ColorPicker
                                                     x:Name="FillPicker"
                                                     AutomationProperties.AutomationId="FillPicker"
@@ -851,20 +853,21 @@
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Left"
                                     AutomationProperties.AutomationId="StrokeButton"
-                                    AutomationProperties.Name="{x:Bind PaintText(ViewModel.SelectionStroke), Mode=OneWay}">
+                                    AutomationProperties.Name="{x:Bind PaintText(ViewModel.SelectionStroke, ViewModel.StrokeGradient.Mode), Mode=OneWay}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Border
                                             Width="16"
                                             Height="16"
-                                            Background="{x:Bind app:BindingFunctions.PaintBrush(ViewModel.SelectionStroke), Mode=OneWay}"
+                                            Background="{x:Bind app:BindingFunctions.PaintSwatch(ViewModel.SelectionStroke, ViewModel.StrokeGradient.Stops), Mode=OneWay}"
                                             BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                             BorderThickness="1"
                                             CornerRadius="2" />
-                                        <TextBlock Text="{x:Bind PaintText(ViewModel.SelectionStroke), Mode=OneWay}" />
+                                        <TextBlock Text="{x:Bind PaintText(ViewModel.SelectionStroke, ViewModel.StrokeGradient.Mode), Mode=OneWay}" />
                                     </StackPanel>
                                     <DropDownButton.Flyout>
                                         <Flyout x:Name="StrokeFlyout" Closed="OnPaintFlyoutClosed" Opening="OnPaintFlyoutOpening">
                                             <StackPanel Width="300" Spacing="8">
+                                                <controls:GradientEditor x:Name="StrokeGradientEditor" AutomationPrefix="Stroke" />
                                                 <ColorPicker
                                                     x:Name="StrokePicker"
                                                     AutomationProperties.AutomationId="StrokePicker"

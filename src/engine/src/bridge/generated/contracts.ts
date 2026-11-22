@@ -203,6 +203,18 @@ export interface GradientPaint {
   readonly users: number;
 }
 
+/** Degradado que se quiere en el relleno o el trazo de la selección (issue #109). Lo que no se indica no cambia. Un objeto que no pinta con un degradado recibe uno nuevo (ADR 0009); uno compartido con otros objetos se copia antes de cambiarlo. */
+export interface GradientRequest {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  readonly property: PaintProperty;
+  /** Tipo de degradado. Si el objeto ya tiene uno de otro tipo, se convierte conservando las paradas; si no tiene, se crea de este tipo. */
+  readonly kind?: GradientKind;
+  /** Paradas, en orden. Si el objeto no tiene degradado y no se indican, van de su color a ese color transparente. */
+  readonly stops?: readonly GradientStop[];
+  readonly spread?: SpreadMethod;
+}
+
 /** Parada de un degradado, como se dibuja. */
 export interface GradientStop {
   /** Posición de 0 a 1, nunca menor que la de la parada anterior. */
@@ -280,6 +292,9 @@ export interface ObjectChange {
   /** False si no había nada que cambiar (por ejemplo, un grupo que no se puede desagrupar sin cambiar su aspecto). */
   readonly changed: boolean;
 }
+
+/** Pintura de un objeto: su relleno o su trazo. */
+export type PaintProperty = "fill" | "stroke";
 
 /** Cambia el tipo de los nodos seleccionados con la herramienta Vértices, o el de los segmentos entre ellos. */
 export interface PathNodesChange {
@@ -608,6 +623,11 @@ export interface BridgeCommands {
   };
   /** Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial. */
   readonly "selection.setStyle": { readonly payload: StyleChange; readonly response: ObjectChange };
+  /** Aplica o cambia un degradado en el relleno o el trazo de la selección: tipo, paradas y repetición. Crea el degradado si hace falta y copia el que compartan otros objetos. Los cambios seguidos de las posiciones o colores de las mismas paradas son un solo paso del historial. */
+  readonly "selection.setGradient": {
+    readonly payload: GradientRequest;
+    readonly response: ObjectChange;
+  };
   /** Cambia la fuente, el tamaño, el peso, la cursiva, la alineación o el interlineado de los textos seleccionados. Los cambios seguidos de las mismas propiedades se funden en un paso del historial. */
   readonly "selection.setText": { readonly payload: TextChange; readonly response: ObjectChange };
   /** Cambia propiedades propias de la forma seleccionada (radio de las esquinas, lados de un polígono…) en un paso que se puede deshacer. Los cambios seguidos de la misma propiedad son un solo paso del historial. */
@@ -713,6 +733,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "selection.selectAll",
   "selection.setGeometry",
   "selection.setStyle",
+  "selection.setGradient",
   "selection.setText",
   "selection.setShape",
   "object.arrange",

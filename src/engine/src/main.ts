@@ -19,6 +19,7 @@ import {
   type ArtboardSettings,
 } from "./document";
 import type { Rect } from "./geometry";
+import { applyGradient } from "./paint";
 import { EMPTY_SCENE, Overlay } from "./overlay";
 import sampleSvg from "./sample.svg?raw";
 import type { History } from "./history";
@@ -465,6 +466,14 @@ bridge.handle("path.operation", ({ documentId, operation }) =>
     documentId,
     changed: objectOperation(documentId, { kind: "path", operation }),
   })),
+);
+
+bridge.handle("selection.setGradient", ({ documentId, ...request }) =>
+  withDocumentErrors(() => {
+    const { document: target, selection } = documents.open(documentId);
+    const changed = applyGradient(target, selection.items, request, target.history);
+    return { documentId, changed };
+  }),
 );
 
 bridge.handle("path.cornerRadius", ({ documentId, radius, all }) =>

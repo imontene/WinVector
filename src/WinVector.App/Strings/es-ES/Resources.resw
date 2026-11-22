@@ -546,6 +546,66 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="PaintServer" xml:space="preserve">
     <value>Degradado o patrón</value>
   </data>
+  <data name="PaintLinearGradient" xml:space="preserve">
+    <value>Degradado lineal</value>
+  </data>
+  <data name="PaintRadialGradient" xml:space="preserve">
+    <value>Degradado radial</value>
+  </data>
+  <data name="GradientMode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Tipo de pintura</value>
+  </data>
+  <data name="GradientModeColor.Content" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="GradientModeLinear.Content" xml:space="preserve">
+    <value>Lineal</value>
+  </data>
+  <data name="GradientModeRadial.Content" xml:space="preserve">
+    <value>Radial</value>
+  </data>
+  <data name="GradientStopBar.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Paradas del degradado</value>
+  </data>
+  <data name="GradientStopBox.Header" xml:space="preserve">
+    <value>Parada</value>
+  </data>
+  <data name="GradientStopCount" xml:space="preserve">
+    <value>{0} paradas</value>
+  </data>
+  <data name="GradientOffsetBox.Header" xml:space="preserve">
+    <value>Posición (%)</value>
+  </data>
+  <data name="GradientAddStop.Content" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="GradientAddStop.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Añadir una parada</value>
+  </data>
+  <data name="GradientRemoveStop.Content" xml:space="preserve">
+    <value>Quitar</value>
+  </data>
+  <data name="GradientRemoveStop.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Quitar la parada</value>
+  </data>
+  <data name="GradientInvert.Content" xml:space="preserve">
+    <value>Invertir</value>
+  </data>
+  <data name="GradientInvert.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Invertir el degradado</value>
+  </data>
+  <data name="GradientSpreadBox.Header" xml:space="preserve">
+    <value>Fuera del degradado</value>
+  </data>
+  <data name="GradientSpreadPad.Content" xml:space="preserve">
+    <value>Prolongar los extremos</value>
+  </data>
+  <data name="GradientSpreadReflect.Content" xml:space="preserve">
+    <value>Reflejar</value>
+  </data>
+  <data name="GradientSpreadRepeat.Content" xml:space="preserve">
+    <value>Repetir</value>
+  </data>
   <data name="ToolEyedropper.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Cuentagotas (I): clic para dar el color a la selección; con Mayús, al trazo</value>
   </data>

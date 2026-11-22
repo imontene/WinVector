@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GradientRequest",
+  "description": "Degradado que se quiere en el relleno o el trazo de la selección (issue #109). Lo que no se indica no cambia. Un objeto que no pinta con un degradado recibe uno nuevo (ADR 0009); uno compartido con otros objetos se copia antes de cambiarlo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "property"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "property": {
+      "$ref": "./paint-property.schema.json"
+    },
+    "kind": {
+      "$ref": "./gradient-kind.schema.json",
+      "description": "Tipo de degradado. Si el objeto ya tiene uno de otro tipo, se convierte conservando las paradas; si no tiene, se crea de este tipo."
+    },
+    "stops": {
+      "type": "array",
+      "description": "Paradas, en orden. Si el objeto no tiene degradado y no se indican, van de su color a ese color transparente.",
+      "items": {
+        "$ref": "./gradient-stop.schema.json"
+      }
+    },
+    "spread": {
+      "$ref": "./spread-method.schema.json"
+    }
+  }
+}

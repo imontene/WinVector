@@ -1039,6 +1039,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectionStrokeWidth = style?.StrokeWidth is { } width ? Math.Round(width, 2) : double.NaN;
         SelectionOpacityPercent = style?.Opacity is { } opacity ? Math.Round(opacity * 100, 1) : double.NaN;
         SelectionFillRule = style?.FillRule;
+        ShowGradients(style);
     }
 
     /// <summary>Vuelve a anunciar los valores del panel, para que descarte lo escrito.</summary>
