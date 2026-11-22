@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TextLocked",
+  "description": "Se ha intentado editar en el lienzo un texto que no se puede editar.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "reason"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Documento del texto."
+    },
+    "reason": {
+      "$ref": "./text-lock.schema.json",
+      "description": "Por qué no se puede editar."
+    }
+  }
+}

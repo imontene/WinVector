@@ -37,3 +37,7 @@ export function trackModifiers(target: Window): () => void {
 export function isPressed(event: MouseEvent, modifier: Modifier): boolean {
   return event.getModifierState(modifier) || pressed.has(modifier);
 }
+
+/** True si la tecla va a un campo de texto (la edición de un texto en el lienzo, #93). */
+export const isTextEntry = (event: Event) =>
+  event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLInputElement;

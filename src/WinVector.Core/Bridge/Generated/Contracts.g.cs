@@ -497,6 +497,29 @@ public sealed record StyleChange(
     [property: JsonPropertyName("opacity")] double? Opacity,
     [property: JsonPropertyName("fillRule"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] FillRule? FillRule = null);
 
+/// <summary>Por qué un texto no se puede editar en el lienzo: sigue un trazado, coloca o gira caracteres sueltos, los desplaza de forma relativa o fuerza su longitud, tiene tramos con estilos distintos o contiene otros elementos.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<TextLock>))]
+public enum TextLock
+{
+    [JsonStringEnumMemberName("text-path")]
+    TextPath,
+    [JsonStringEnumMemberName("per-character")]
+    PerCharacter,
+    [JsonStringEnumMemberName("relative-position")]
+    RelativePosition,
+    [JsonStringEnumMemberName("styled-runs")]
+    StyledRuns,
+    [JsonStringEnumMemberName("other-content")]
+    OtherContent,
+}
+
+/// <summary>Se ha intentado editar en el lienzo un texto que no se puede editar.</summary>
+/// <param name="DocumentId">Documento del texto.</param>
+/// <param name="Reason">Por qué no se puede editar.</param>
+public sealed record TextLocked(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("reason")] TextLock Reason);
+
 /// <summary>Herramienta del lienzo que ya implementa el motor.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ToolName>))]
 public enum ToolName
@@ -523,6 +546,8 @@ public enum ToolName
     Vertex,
     [JsonStringEnumMemberName("pen")]
     Pen,
+    [JsonStringEnumMemberName("text")]
+    Text,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>
@@ -695,6 +720,9 @@ public static class BridgeEvents
     /// <summary>Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado.</summary>
     public static readonly BridgeEvent<ShapeConverted> ShapeConverted = new("shape.converted");
 
+    /// <summary>Con la herramienta Texto (o con doble clic), se ha intentado editar un texto que no se puede editar en el lienzo. La aplicación explica por qué en la barra de estado.</summary>
+    public static readonly BridgeEvent<TextLocked> TextLocked = new("text.locked");
+
     /// <summary>Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.</summary>
     public static readonly BridgeEvent<NodeSelection> NodesChanged = new("nodes.changed");
 
@@ -767,6 +795,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(ShapeConverted))]
 [JsonSerializable(typeof(ShapeProperties))]
 [JsonSerializable(typeof(StyleChange))]
+[JsonSerializable(typeof(TextLocked))]
 [JsonSerializable(typeof(ToolState))]
 [JsonSerializable(typeof(ViewOptions))]
 [JsonSerializable(typeof(ViewportChanged))]

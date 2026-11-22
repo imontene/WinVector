@@ -438,6 +438,18 @@ export interface StyleChange {
   readonly fillRule?: FillRule;
 }
 
+/** Por qué un texto no se puede editar en el lienzo: sigue un trazado, coloca o gira caracteres sueltos, los desplaza de forma relativa o fuerza su longitud, tiene tramos con estilos distintos o contiene otros elementos. */
+export type TextLock =
+  "text-path" | "per-character" | "relative-position" | "styled-runs" | "other-content";
+
+/** Se ha intentado editar en el lienzo un texto que no se puede editar. */
+export interface TextLocked {
+  /** Documento del texto. */
+  readonly documentId: string;
+  /** Por qué no se puede editar. */
+  readonly reason: TextLock;
+}
+
 /** Herramienta del lienzo que ya implementa el motor. */
 export type ToolName =
   | "select"
@@ -450,7 +462,8 @@ export type ToolName =
   | "polygon"
   | "star"
   | "vertex"
-  | "pen";
+  | "pen"
+  | "text";
 
 /** Herramienta activa del lienzo. */
 export interface ToolState {
@@ -569,6 +582,8 @@ export interface BridgeEvents {
   readonly "selection.changed": SelectionChanged;
   /** Al editar sus vértices, un rectángulo o un polígono o estrella de WinVector ha pasado a ser un polígono normal. La aplicación lo avisa en la barra de estado. */
   readonly "shape.converted": ShapeConverted;
+  /** Con la herramienta Texto (o con doble clic), se ha intentado editar un texto que no se puede editar en el lienzo. La aplicación explica por qué en la barra de estado. */
+  readonly "text.locked": TextLocked;
   /** Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel. */
   readonly "nodes.changed": NodeSelection;
   /** El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado. */
@@ -626,6 +641,7 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "engine.ready",
   "selection.changed",
   "shape.converted",
+  "text.locked",
   "nodes.changed",
   "canvas.contextMenu",
   "error",

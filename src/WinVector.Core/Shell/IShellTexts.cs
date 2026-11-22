@@ -80,4 +80,7 @@ public interface IShellTexts
     /// <paramref name="kind"/>, solo el número.
     /// </summary>
     string SelectedNodes(int count, NodeKind? kind);
+
+    /// <summary>Aviso cuando se intenta editar en el lienzo un texto que no se puede editar, con el motivo.</summary>
+    string TextLocked(TextLock reason);
 }

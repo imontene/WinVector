@@ -44,6 +44,8 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string ShapeConverted(ShapeType from) => TryGetString($"ShapeConverted{from}");
 
+    public string TextLocked(TextLock reason) => TryGetString($"TextLocked{reason}");
+
     public string SelectedNodes(int count, NodeKind? kind)
     {
         var nodes = count == 1 ? resources.GetString("SelectedNodesOne") : Format("SelectedNodesMany", count);

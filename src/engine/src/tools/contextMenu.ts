@@ -1,4 +1,5 @@
 import { pickAt, selectionScreenRect, type Selection } from "../selection";
+import { isTextEntry } from "./modifiers";
 import { vertexEditKind } from "./vertices";
 
 /** Lo que el menú contextual necesita del motor. */
@@ -42,6 +43,8 @@ export function installContextMenu(target: Window, host: ContextMenuHost): () =>
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
+    // Mientras se escribe en un texto, Mayús+F10 y la tecla de menú son del campo de texto.
+    if (isTextEntry(event)) return;
     const menuKey = event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey);
     if (!menuKey || event.ctrlKey || event.altKey || event.metaKey) return;
     // Sin esto, el navegador enviaría también un contextmenu.

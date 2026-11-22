@@ -33,6 +33,7 @@ import {
   installShortcuts,
   installVertexTool,
   installPenTool,
+  installTextTool,
   installContextMenu,
   applyShape,
   changedFields,
@@ -181,6 +182,7 @@ function refreshOverlay(): void {
             shapeHandleSize: SHAPE_HANDLE_SIZE,
             vertices: activeTool === "vertex" ? vertexTool.scene() : null,
             pen: penTool.scene(),
+            text: textTool.scene(),
           }
         : { ...EMPTY_SCENE, marquee: null },
     );
@@ -201,6 +203,7 @@ window.addEventListener("resize", () => {
 function setTool(tool: ToolName, fromCanvas: boolean): void {
   // Una forma libre a medias se termina al cambiar de herramienta.
   if (tool !== "pen") penTool.finish();
+  if (tool !== "text") textTool.finish();
   activeTool = tool;
   const cursor = cursorForTool(tool);
   if (cursor) document.body.dataset.cursor = cursor;
@@ -257,6 +260,8 @@ bridge.handle("document.serialize", ({ documentId }) =>
 
 bridge.handle("document.activate", ({ documentId }) =>
   withDocumentErrors(() => {
+    // Un texto a medias se termina en su documento antes de cambiar de pestaña.
+    textTool.finish();
     const { revision } = documents.activate(documentId);
     // La aplicación vacía la selección al cambiar de pestaña; cada documento conserva la suya, y
     // también su zoom.
@@ -269,6 +274,7 @@ bridge.handle("document.activate", ({ documentId }) =>
 
 bridge.handle("document.close", ({ documentId }) =>
   withDocumentErrors(() => {
+    if (documents.active?.id === documentId) textTool.finish();
     documents.close(documentId);
     announcedZoom.delete(documentId);
     announcedArtboard.delete(documentId);
@@ -562,6 +568,8 @@ bridge.handle("selection.setShape", ({ documentId, ...change }) =>
 
 bridge.handle("history.undo", ({ documentId }) =>
   withDocumentErrors(() => {
+    // Deshacer desde la aplicación con un texto a medias: primero se termina (es un paso).
+    textTool.finish();
     const { history } = documents.get(documentId);
     history.undo();
     return { documentId, ...history.state };
@@ -570,6 +578,7 @@ bridge.handle("history.undo", ({ documentId }) =>
 
 bridge.handle("history.redo", ({ documentId }) =>
   withDocumentErrors(() => {
+    textTool.finish();
     const { history } = documents.get(documentId);
     history.redo();
     return { documentId, ...history.state };
@@ -627,8 +636,14 @@ installEyedropper(window, {
   active: activeDocument,
 });
 installShortcuts(window, {
-  undo: () => documents.active?.document.history.undo(),
-  redo: () => documents.active?.document.history.redo(),
+  undo: () => {
+    textTool.finish();
+    documents.active?.document.history.undo();
+  },
+  redo: () => {
+    textTool.finish();
+    documents.active?.document.history.redo();
+  },
   zoom: (action) => {
     const viewport = documents.active?.viewport;
     if (viewport) zoom(viewport, action);
@@ -687,6 +702,20 @@ const penTool = installPenTool(window, {
   style: () => shapeStyle,
   changed: refreshOverlay,
 });
+const textTool = installTextTool(
+  window,
+  {
+    tool: () => activeTool,
+    active: activeDocument,
+    style: () => shapeStyle,
+    changed: refreshOverlay,
+    locked: (reason) => {
+      const id = documents.active?.id;
+      if (id) bridge.emit("text.locked", { documentId: id, reason });
+    },
+  },
+  () => "Texto",
+);
 const vertexTool = installVertexTool(window, {
   tool: () => activeTool,
   active: activeDocument,
@@ -713,6 +742,10 @@ installSelectTool(document, {
     if (!active) return;
     active.selection.set([element], element.parentElement ?? active.document.root);
     setTool("vertex", true);
+  },
+  editText: (text, at) => {
+    setTool("text", true);
+    textTool.edit(text, at);
   },
 });
 

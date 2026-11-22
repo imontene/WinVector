@@ -122,6 +122,7 @@ public sealed partial class MainViewModel : ObservableObject
         Add("tool-star", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Star)));
         Add("tool-vertex", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Vertex)));
         Add("tool-pen", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Pen)));
+        Add("tool-text", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Text)));
     }
 
     /// <summary>Archivos abiertos o guardados recientemente.</summary>
@@ -1204,6 +1205,7 @@ public sealed partial class MainViewModel : ObservableObject
             bridge.Subscribe(BridgeEvents.ToolChanged, OnToolChanged),
             bridge.Subscribe(BridgeEvents.ArtboardChanged, OnArtboardChanged),
             bridge.Subscribe(BridgeEvents.ShapeConverted, OnShapeConverted),
+            bridge.Subscribe(BridgeEvents.TextLocked, OnTextLocked),
             bridge.Subscribe(BridgeEvents.CanvasContextMenu, OnContextMenu),
             bridge.Subscribe(BridgeEvents.NodesChanged, OnNodesChanged),
             bridge.Subscribe(BridgeEvents.KeyboardShortcut, shortcut => _ = HandleShortcutAsync(shortcut)),

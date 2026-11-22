@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TextLock",
+  "description": "Por qué un texto no se puede editar en el lienzo: sigue un trazado, coloca o gira caracteres sueltos, los desplaza de forma relativa o fuerza su longitud, tiene tramos con estilos distintos o contiene otros elementos.",
+  "type": "string",
+  "enum": [
+    "text-path",
+    "per-character",
+    "relative-position",
+    "styled-runs",
+    "other-content"
+  ]
+}

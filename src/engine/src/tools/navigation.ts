@@ -1,7 +1,7 @@
 import { rectFromCorners, type Point, type Rect } from "../geometry";
 import type { Viewport } from "../viewport";
 import type { ToolName } from "../bridge";
-import { isPressed } from "./modifiers";
+import { isPressed, isTextEntry } from "./modifiers";
 
 /** Distancia en píxeles a partir de la cual pulsar y mover es un arrastre y no un clic. */
 const DRAG_THRESHOLD = 3;
@@ -19,6 +19,7 @@ const TOOL_KEYS: Readonly<Record<string, ToolName>> = {
   s: "star",
   a: "vertex",
   p: "pen",
+  t: "text",
 };
 
 export interface NavigationHost {
@@ -217,6 +218,8 @@ export function installNavigation(target: Window, host: NavigationHost): () => v
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
+    // Mientras se escribe en un texto, las teclas son del texto (también el espacio).
+    if (isTextEntry(event)) return;
     if (event.key === " ") {
       if (!event.repeat) {
         spaceDown = true;
@@ -236,6 +239,7 @@ export function installNavigation(target: Window, host: NavigationHost): () => v
   };
 
   const onKeyUp = (event: KeyboardEvent) => {
+    if (isTextEntry(event)) return;
     if (event.key === " ") {
       spaceDown = false;
       updateCursor();
@@ -284,6 +288,8 @@ export function cursorForTool(tool: ToolName): string {
     case "star":
     case "pen":
       return "crosshair";
+    case "text":
+      return "text";
     default:
       return "";
   }
