@@ -18,6 +18,15 @@ public sealed partial class MainViewModel
 
     partial void OnActiveToolChanged(ToolName value) => CanvasNotice = string.Empty;
 
+    /// <summary>Se ha intentado editar un texto que no se puede editar en el lienzo: se explica por qué.</summary>
+    private void OnTextLocked(TextLocked locked)
+    {
+        if (locked.DocumentId == SelectedDocument?.DocumentId)
+        {
+            CanvasNotice = _texts.TextLocked(locked.Reason);
+        }
+    }
+
     private void OnShapeConverted(ShapeConverted converted)
     {
         if (converted.DocumentId == SelectedDocument?.DocumentId)

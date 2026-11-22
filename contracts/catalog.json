@@ -27,6 +27,12 @@
       "payload": "ShapeConverted"
     },
     {
+      "name": "text.locked",
+      "kind": "event",
+      "description": "Con la herramienta Texto (o con doble clic), se ha intentado editar un texto que no se puede editar en el lienzo. La aplicación explica por qué en la barra de estado.",
+      "payload": "TextLocked"
+    },
+    {
       "name": "nodes.changed",
       "kind": "event",
       "description": "Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.",

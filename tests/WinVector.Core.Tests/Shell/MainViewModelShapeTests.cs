@@ -158,6 +158,18 @@ public sealed class MainViewModelShapeTests : IDisposable
     }
 
     [TestMethod]
+    public async Task UnTextoQueNoSePuedeEditarSeExplicaEnLaBarraDeEstado()
+    {
+        await ReadyAsync();
+        _transport.SendEvent("text.locked", """{"documentId":"otro","reason":"text-path"}""");
+        Assert.AreEqual(string.Empty, _viewModel.CanvasNotice, "Un aviso de otro documento no se muestra.");
+
+        _transport.SendEvent("text.locked", """{"documentId":"d1","reason":"text-path"}""");
+        Assert.AreEqual("Texto bloqueado: TextPath", _viewModel.CanvasNotice);
+        Assert.IsTrue(_viewModel.Commands.All.Any(c => c.Id == "tool-text"));
+    }
+
+    [TestMethod]
     public async Task ElLienzoPideElMenuContextualYEditarVerticesEligeLaHerramienta()
     {
         await ReadyAsync();

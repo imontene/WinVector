@@ -114,6 +114,11 @@ body[data-cursor="zoom-out"] * {
   cursor: zoom-out !important;
 }
 
+body[data-cursor="text"],
+body[data-cursor="text"] * {
+  cursor: text;
+}
+
 body[data-cursor="crosshair"],
 body[data-cursor="crosshair"] * {
   cursor: crosshair !important;
@@ -249,4 +254,45 @@ body[data-handle="radius"] {
 
 .overlay-pen-closing {
   fill: var(--selection);
+}
+
+/* Edición de texto en el lienzo (src/text/editor.ts, issue #93): el cursor parpadea y la selección
+   se ve detrás del texto con transparencia. */
+.overlay-text-caret {
+  stroke-width: 1.5;
+  animation: text-caret-blink 1s steps(1) infinite;
+}
+
+.overlay-text-selection {
+  fill: var(--selection);
+  fill-opacity: 0.25;
+  stroke: none;
+}
+
+@keyframes text-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-text-caret {
+    animation: none;
+  }
+}
+
+/* El campo de texto invisible que recibe el teclado: sigue al cursor para que la ventana del IME
+   salga junto a él, pero no se ve ni recibe el ratón. */
+.text-input {
+  position: fixed;
+  width: 1px;
+  height: 1em;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  opacity: 0;
+  resize: none;
+  overflow: hidden;
+  pointer-events: none;
+  white-space: pre;
 }

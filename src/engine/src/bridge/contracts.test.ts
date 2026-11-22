@@ -363,6 +363,13 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "event",
+    id: "e8",
+    name: "text.locked",
+    payload: { documentId: "d1", reason: "text-path" },
+  },
+  {
+    ...base,
+    kind: "event",
     id: "e7",
     name: "nodes.changed",
     payload: {
@@ -482,6 +489,8 @@ function summarize(message: BridgeMessage): string {
       return `motor ${message.payload.engineVersion}`;
     case "shape.converted":
       return `${message.payload.from} pasa a polígono`;
+    case "text.locked":
+      return `texto bloqueado: ${message.payload.reason}`;
     case "nodes.changed":
       return `${String(message.payload.count)} nodos ${String(message.payload.kind)}`;
     case "canvas.contextMenu":
@@ -561,6 +570,7 @@ describe("contrato del puente", () => {
       "nodos smooth",
       "trazado combine",
       "radio 4.5",
+      "texto bloqueado: text-path",
       "2 nodos mixed",
       "error unknown-message",
     ]);

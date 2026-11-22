@@ -61,6 +61,8 @@ internal sealed class TestTexts : IShellTexts
 
     public string ShapeConverted(ShapeType from) => $"{from} → polígono";
 
+    public string TextLocked(TextLock reason) => $"Texto bloqueado: {reason}";
+
     public string SelectedNodes(int count, NodeKind? kind) => kind is null ? $"{count} nodos" : $"{count} nodos · {kind}";
 }
 

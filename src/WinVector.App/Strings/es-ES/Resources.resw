@@ -158,7 +158,7 @@
     <value>Vértices</value>
   </data>
   <data name="ToolPen.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Pluma (P): cada clic añade un vértice; clic en el primero para cerrar la forma, doble clic o Intro para dejarla abierta, Retroceso quita el último y Esc cancela</value>
+    <value>Pluma (P): clic añade un nodo de esquina y arrastrar uno curvo; clic en el primero para cerrar, doble clic o Intro para dejarla abierta, Retroceso quita el último y Esc cancela</value>
   </data>
   <data name="ToolPen.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Pluma</value>
@@ -194,7 +194,7 @@
     <value>Estrella</value>
   </data>
   <data name="ToolText.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Texto (T)</value>
+    <value>Texto (T): clic para escribir un texto nuevo o editar uno; Intro empieza otra línea y Esc termina</value>
   </data>
   <data name="ToolText.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Texto</value>
@@ -1222,5 +1222,29 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="CornerRadiusBox.Header" xml:space="preserve">
     <value>Radio de la esquina</value>
+  </data>
+  <data name="PaletteNameToolText" xml:space="preserve">
+    <value>Herramienta Texto</value>
+  </data>
+  <data name="PaletteShortcutToolText" xml:space="preserve">
+    <value>T</value>
+  </data>
+  <data name="HistoryActionEditText" xml:space="preserve">
+    <value>editar el texto</value>
+  </data>
+  <data name="TextLockedTextPath" xml:space="preserve">
+    <value>Este texto sigue un trazado: se puede mover y cambiar de estilo, pero no editar en el lienzo.</value>
+  </data>
+  <data name="TextLockedPerCharacter" xml:space="preserve">
+    <value>Este texto coloca o gira letras sueltas: se puede mover y cambiar de estilo, pero no editar en el lienzo.</value>
+  </data>
+  <data name="TextLockedRelativePosition" xml:space="preserve">
+    <value>Este texto desplaza sus letras o fuerza su longitud: se puede mover y cambiar de estilo, pero no editar en el lienzo.</value>
+  </data>
+  <data name="TextLockedStyledRuns" xml:space="preserve">
+    <value>Este texto tiene partes con estilos distintos: se puede mover y cambiar de estilo, pero todavía no editar en el lienzo.</value>
+  </data>
+  <data name="TextLockedOtherContent" xml:space="preserve">
+    <value>Este texto contiene enlaces u otros elementos: se puede mover y cambiar de estilo, pero no editar en el lienzo.</value>
   </data>
 </root>

@@ -39,6 +39,8 @@ export interface SelectToolHost {
   snapSpacing(): number | null;
   /** Doble clic en una forma de segmentos rectos: pasa a editar sus vértices. */
   editVertices?(element: Element): void;
+  /** Doble clic en un texto: pasa a editarlo con la herramienta Texto, con el cursor en `at`. */
+  editText?(text: SVGTextElement, at: Point): void;
 }
 
 type Press =
@@ -331,9 +333,19 @@ export function installSelectTool(target: Document, host: SelectToolHost): () =>
     const active = host.active();
     if (event.button !== 0 || !active) return;
     const { root, selection } = active;
-    const hit = event.composedPath()[0] ?? null;
+    let hit = event.composedPath()[0] ?? null;
+    // Con el puntero capturado por el primer clic, el doble clic llega a la página entera: lo que se
+    // pulsó es lo que hay bajo el puntero.
+    if (!(hit instanceof Node && root.contains(hit))) {
+      const owner = root.getRootNode() as Document | ShadowRoot;
+      hit = owner.elementFromPoint(event.clientX, event.clientY);
+    }
     const path = thinElementAt(point(event), root, hit) ?? hit;
     const pick = pickAt(path, root, { scope: selection.scope });
+    if (pick?.element instanceof SVGTextElement && host.editText) {
+      host.editText(pick.element, point(event));
+      return;
+    }
     if (pick && !isContainer(pick.element) && vertexEditKind(pick.element) && host.editVertices) {
       host.editVertices(pick.element);
       return;

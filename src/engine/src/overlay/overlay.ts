@@ -26,6 +26,11 @@ export interface OverlayScene {
     /** Controles de radio de las esquinas seleccionadas (issue #80). */
     readonly radii?: readonly Point[];
   } | null;
+  /** Cursor y selección del texto que se edita (issue #93), en pantalla. */
+  readonly text?: {
+    readonly caret: readonly [Point, Point] | null;
+    readonly selection: readonly (readonly Point[])[];
+  } | null;
   /** Primer nodo de la forma que se dibuja con la pluma, si un clic la cerraría y sus manejadores. */
   readonly pen?: {
     readonly start: Point;
@@ -120,6 +125,25 @@ export class Overlay {
       circle.setAttribute("cy", String(round(scene.pen.start.y)));
       circle.setAttribute("r", scene.pen.closing ? "6" : "4");
       shapes.push(circle);
+    }
+    for (const quad of scene.text?.selection ?? []) {
+      const polygon = this.element.ownerDocument.createElementNS(SVG_NS, "polygon");
+      polygon.classList.add("overlay-text-selection");
+      polygon.setAttribute(
+        "points",
+        quad.map((p) => `${String(round(p.x))},${String(round(p.y))}`).join(" "),
+      );
+      shapes.push(polygon);
+    }
+    const caret = scene.text?.caret;
+    if (caret) {
+      const line = this.element.ownerDocument.createElementNS(SVG_NS, "line");
+      line.classList.add("overlay-text-caret");
+      line.setAttribute("x1", String(round(caret[0].x)));
+      line.setAttribute("y1", String(round(caret[0].y)));
+      line.setAttribute("x2", String(round(caret[1].x)));
+      line.setAttribute("y2", String(round(caret[1].y)));
+      shapes.push(line);
     }
     if (scene.marquee) shapes.push(this.#rect(scene.marquee, "overlay-marquee"));
     this.element.replaceChildren(...shapes);
