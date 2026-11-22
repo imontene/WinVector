@@ -4,7 +4,9 @@ using System.Drawing;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Capturing;
+using FlaUI.Core.Input;
 using FlaUI.Core.Tools;
+using FlaUI.Core.WindowsAPI;
 using FlaUI.UIA3;
 
 namespace WinVector.App.UITests;
@@ -294,6 +296,31 @@ internal sealed class AppSession : IDisposable
         catch (ArgumentException)
         {
             // Ya terminó.
+        }
+    }
+
+    /// <summary>Pausa entre una tecla modificadora y el ratón (ver <see cref="ShiftClick"/>).</summary>
+    public static readonly TimeSpan ModifierPause = TimeSpan.FromMilliseconds(300);
+
+    /// <summary>Hace clic con Mayús pulsada (por ejemplo, para añadir a la selección).</summary>
+    /// <remarks>
+    /// El teclado llega a la página de WebView2 por un camino y el ratón por otro (el control de WinUI
+    /// se lo reenvía). Con la entrada sintética, si Mayús se suelta justo después del clic, la página
+    /// puede recibir la tecla soltada antes que el clic y el clic llega sin Mayús (issue #91). Con una
+    /// pausa antes y después del clic, como haría una persona, llega siempre con Mayús.
+    /// </remarks>
+    public static void ShiftClick(Point point)
+    {
+        Keyboard.Press(VirtualKeyShort.SHIFT);
+        try
+        {
+            Thread.Sleep(ModifierPause);
+            Mouse.Click(point);
+            Thread.Sleep(ModifierPause);
+        }
+        finally
+        {
+            Keyboard.Release(VirtualKeyShort.SHIFT);
         }
     }
 
