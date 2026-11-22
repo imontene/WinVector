@@ -1018,6 +1018,7 @@
                                     AutomationProperties.AutomationId="TextFontBox"
                                     IsEditable="True"
                                     ItemsSource="{x:Bind ViewModel.SystemFonts}"
+                                    SelectedItem="{x:Bind ViewModel.TextFontFamily, Mode=OneWay}"
                                     SelectionChanged="OnTextFontChanged"
                                     Text="{x:Bind ViewModel.TextFontFamily, Mode=OneWay}"
                                     TextSubmitted="OnTextFontSubmitted" />
