@@ -23,6 +23,8 @@ export interface TextToolHost {
     readonly history: History;
   } | null;
   style(): ShapeStyle;
+  /** Fuente (valor de `font-family`) y tamaño de los textos nuevos. */
+  defaults(): { readonly fontFamily: string; readonly fontSize: number };
   /** Ha cambiado lo que se dibuja en la capa de superposición. */
   changed(): void;
   /** Se ha intentado editar un texto que no se puede editar en el lienzo. */
@@ -141,8 +143,9 @@ export function installTextTool(target: Window, host: TextToolHost, label: () =>
     text.setAttribute("y", formatNumber(Math.round(at.y * 100) / 100));
     const fill = host.style().fill;
     text.setAttribute("fill", fill === "none" ? "#000000" : fill);
-    text.setAttribute("font-family", NEW_TEXT_FONT);
-    text.setAttribute("font-size", String(NEW_TEXT_SIZE));
+    const { fontFamily, fontSize } = host.defaults();
+    text.setAttribute("font-family", fontFamily);
+    text.setAttribute("font-size", formatNumber(fontSize));
     parent.append(text);
     start(text, true, active.history, active.selection);
   };
@@ -242,6 +245,11 @@ export function installTextTool(target: Window, host: TextToolHost, label: () =>
     edit(text: SVGTextElement, at?: Point) {
       const editor = edit(text);
       if (editor && at) editor.pointerDown(at.x, at.y, false);
+    },
+    /** Vuelve a colocar el cursor y el campo de texto (el texto ha cambiado de tamaño o de sitio). */
+    refresh() {
+      editing?.editor.refresh();
+      host.changed();
     },
     /** True mientras se edita un texto. */
     isEditing: () => editing !== null,

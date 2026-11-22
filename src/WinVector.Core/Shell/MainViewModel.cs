@@ -123,6 +123,11 @@ public sealed partial class MainViewModel : ObservableObject
         Add("tool-vertex", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Vertex)));
         Add("tool-pen", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Pen)));
         Add("tool-text", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Text)));
+        Add("text-bold", ToggleBoldCommand);
+        Add("text-italic", ToggleItalicCommand);
+        Add("text-align-start", AlignTextStartCommand);
+        Add("text-align-center", AlignTextCenterCommand);
+        Add("text-align-end", AlignTextEndCommand);
     }
 
     /// <summary>Archivos abiertos o guardados recientemente.</summary>
@@ -865,6 +870,12 @@ public sealed partial class MainViewModel : ObservableObject
             case ("k", false):
                 CommandPaletteRequested?.Invoke(this, EventArgs.Empty);
                 break;
+            case ("b", false) when HasTextProperties:
+                ToggleBold();
+                break;
+            case ("i", false) when HasTextProperties:
+                ToggleItalic();
+                break;
             case ("c", false):
                 await CopyAsync();
                 break;
@@ -1228,6 +1239,7 @@ public sealed partial class MainViewModel : ObservableObject
         ShowStyle(null);
         ShowShape(null);
         ShowNodes(null);
+        ShowText(null);
         OnPropertyChanged(nameof(ZoomText));
         OnPropertyChanged(nameof(CurrentArtboard));
         NotifyEditCommandsChanged();
@@ -1391,6 +1403,7 @@ public sealed partial class MainViewModel : ObservableObject
         ShowGeometry(selection.Bounds, selection.Items.Count == 1 ? selection.Rotation : null);
         ShowStyle(selection.Items.Count > 0 ? selection.Style : null);
         ShowShape(selection.Items.Count == 1 ? selection.Shape : null);
+        ShowText(selection.Text);
         // Lo mismo que vertexEditKind en el motor: polígonos, polilíneas, líneas, rectángulos y trazados.
         CanEditVertices = selection.Items is [{ TagName: "polygon" or "polyline" or "line" or "rect" or "path" }];
         var items = selection.Items.Count switch

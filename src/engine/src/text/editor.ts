@@ -159,7 +159,12 @@ export class TextEditor {
     this.input.remove();
   }
 
-  /** Vuelve a leer el texto del SVG (después de deshacer o de un cambio de estilo). */
+  /** Vuelve a colocar el campo de texto en el cursor (el texto ha cambiado de tamaño o de sitio). */
+  refresh(): void {
+    this.#place();
+  }
+
+  /** Devuelve el teclado al campo de texto. */
   focus(): void {
     this.input.focus({ preventScroll: true });
   }

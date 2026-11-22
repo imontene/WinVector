@@ -90,12 +90,25 @@ export function readStyle(items: readonly Element[]): StyleSummary {
   };
 }
 
+/** Propiedades cuyo valor son palabras, no números. */
+const KEYWORD_PROPERTIES = new Set(["font-family", "font-style", "text-anchor"]);
+
+const normalizeKeywords = (value: string) =>
+  value
+    .replace(/["']/g, "")
+    .replace(/\s*,\s*/g, ",")
+    .trim()
+    .toLowerCase();
+
 /** True si el valor calculado de la propiedad ya es el pedido. */
 function applied(element: Element, property: string, value: string): boolean {
   const computed = getComputedStyle(element).getPropertyValue(property);
   if (property === "fill" || property === "stroke")
     return paintOf(computed) === value.toLowerCase();
   if (property === "fill-rule") return computed.trim() === value;
+  // Propiedades de palabras (la fuente, la alineación…): se comparan sin comillas ni espacios.
+  if (KEYWORD_PROPERTIES.has(property))
+    return normalizeKeywords(computed) === normalizeKeywords(value);
   return Math.abs(Number.parseFloat(computed) - Number.parseFloat(value)) < 1e-6;
 }
 

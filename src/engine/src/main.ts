@@ -34,6 +34,8 @@ import {
   installVertexTool,
   installPenTool,
   installTextTool,
+  NEW_TEXT_FONT,
+  NEW_TEXT_SIZE,
   installContextMenu,
   applyShape,
   changedFields,
@@ -57,6 +59,7 @@ import {
   type PathData,
 } from "./paths";
 import { applyStyle, readStyle } from "./style";
+import { applyTextChange, fontFamilyValue, readTextProperties } from "./text";
 import { arrange, group, ungroup } from "./structure";
 import { rotationOf, setGeometry } from "./transform";
 import { gridSpacing, Guides, type Viewport } from "./viewport";
@@ -107,6 +110,7 @@ function emitSelection(documentId: string): void {
   const { items, scope } = selection.state;
   const [single] = items;
   const shape = single && items.length === 1 ? readShape(single) : null;
+  const text = readTextProperties(items);
   bridge.emit("selection.changed", {
     documentId,
     items: items.map(describeElement),
@@ -115,6 +119,7 @@ function emitSelection(documentId: string): void {
     ...(single && items.length === 1 ? { rotation: rotationOf(single, target.root) } : {}),
     ...(items.length > 0 ? { style: readStyle(items) } : {}),
     ...(shape ? { shape } : {}),
+    ...(text ? { text } : {}),
   });
 }
 
@@ -548,6 +553,20 @@ bridge.handle("selection.setStyle", ({ documentId, ...style }) =>
   }),
 );
 
+bridge.handle("selection.setText", ({ documentId, ...change }) =>
+  withDocumentErrors(() => {
+    const { document: doc, selection } = documents.open(documentId);
+    const changed = applyTextChange(selection.items, change, doc.history);
+    // Los textos nuevos usan la última fuente y el último tamaño elegidos.
+    if (change.fontFamily?.trim()) textDefaults.fontFamily = fontFamilyValue(change.fontFamily);
+    if (change.fontSize !== undefined && change.fontSize > 0)
+      textDefaults.fontSize = change.fontSize;
+    // El cursor y el campo de texto de la edición siguen al texto, que ha cambiado de tamaño o sitio.
+    textTool.refresh();
+    return { documentId, changed };
+  }),
+);
+
 bridge.handle("selection.setShape", ({ documentId, ...change }) =>
   withDocumentErrors(() => {
     const { document: doc, selection } = documents.open(documentId);
@@ -702,12 +721,16 @@ const penTool = installPenTool(window, {
   style: () => shapeStyle,
   changed: refreshOverlay,
 });
+/** Fuente y tamaño de los textos nuevos: los últimos elegidos en el panel. */
+const textDefaults = { fontFamily: NEW_TEXT_FONT, fontSize: NEW_TEXT_SIZE };
+
 const textTool = installTextTool(
   window,
   {
     tool: () => activeTool,
     active: activeDocument,
     style: () => shapeStyle,
+    defaults: () => textDefaults,
     changed: refreshOverlay,
     locked: (reason) => {
       const id = documents.active?.id;

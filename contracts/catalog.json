@@ -66,6 +66,13 @@
       "response": "ObjectChange"
     },
     {
+      "name": "selection.setText",
+      "kind": "command",
+      "description": "Cambia la fuente, el tamaño, el peso, la cursiva, la alineación o el interlineado de los textos seleccionados. Los cambios seguidos de las mismas propiedades se funden en un paso del historial.",
+      "payload": "TextChange",
+      "response": "ObjectChange"
+    },
+    {
       "name": "selection.setShape",
       "kind": "command",
       "description": "Cambia propiedades propias de la forma seleccionada (radio de las esquinas, lados de un polígono…) en un paso que se puede deshacer. Los cambios seguidos de la misma propiedad son un solo paso del historial.",

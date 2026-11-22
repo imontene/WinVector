@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TextChange",
+  "description": "Cambio de las propiedades tipográficas de los textos seleccionados. Lo que no está no cambia.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "fontFamily": {
+      "type": "string",
+      "description": "Fuente; se escribe con una familia genérica de reserva."
+    },
+    "fontSize": {
+      "type": "number",
+      "description": "Tamaño de la fuente, mayor que 0."
+    },
+    "fontWeight": {
+      "type": "integer",
+      "description": "Peso de 100 a 900."
+    },
+    "italic": {
+      "type": "boolean",
+      "description": "Cursiva."
+    },
+    "anchor": {
+      "$ref": "./text-anchor.schema.json",
+      "description": "Alineación."
+    },
+    "lineHeight": {
+      "type": "number",
+      "description": "Interlineado en múltiplos del tamaño de la fuente, mayor que 0."
+    }
+  }
+}

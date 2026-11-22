@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -74,6 +75,8 @@ public sealed partial class MainWindow : Window
             presenter.PreferredMinimumWidth = MinimumWidth;
             presenter.PreferredMinimumHeight = MinimumHeight;
         }
+
+        LoadSystemFonts();
 
         EngineCanvas.BridgeCreated += (_, bridge) =>
         {
@@ -342,6 +345,71 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>Se ha elegido una fuente de la lista del panel.</summary>
+    private void OnTextFontChanged(object sender, SelectionChangedEventArgs args)
+    {
+        if (sender is ComboBox { SelectedItem: string family })
+        {
+            ViewModel.SetTextFontFamily(family);
+        }
+    }
+
+    /// <summary>Se ha escrito el nombre de una fuente en el panel (también una que no está en la lista).</summary>
+    private void OnTextFontSubmitted(ComboBox sender, ComboBoxTextSubmittedEventArgs args)
+    {
+        ViewModel.SetTextFontFamily(args.Text);
+        args.Handled = true;
+    }
+
+    private void OnTextSizeChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!double.IsNaN(args.NewValue))
+        {
+            ViewModel.SetTextFontSize(args.NewValue);
+        }
+    }
+
+    private void OnTextLineHeightChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!double.IsNaN(args.NewValue))
+        {
+            ViewModel.SetTextLineHeight(args.NewValue);
+        }
+    }
+
+    private void OnTextWeightChanged(object sender, SelectionChangedEventArgs args)
+    {
+        if (sender is ComboBox { SelectedItem: int weight })
+        {
+            ViewModel.SetTextFontWeight(weight);
+        }
+    }
+
+    private void OnTextItalicClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleButton button)
+        {
+            ViewModel.SetTextItalic(button.IsChecked == true);
+            // El botón muestra lo que tienen los textos, no el clic: lo corrige la selección.
+            button.IsChecked = ViewModel.IsTextItalic;
+        }
+    }
+
+    private void OnTextAlignClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleButton { Tag: string tag } button)
+        {
+            var anchor = tag switch
+            {
+                "middle" => TextAnchor.Middle,
+                "end" => TextAnchor.End,
+                _ => TextAnchor.Start,
+            };
+            ViewModel.SetTextAnchor(anchor);
+            button.IsChecked = ViewModel.TextAnchor == anchor;
+        }
+    }
+
     /// <summary>
     /// El radio de las esquinas ha cambiado en el panel. Si el cambio viene de la propia selección, el
     /// valor coincide y no se envía nada.
@@ -551,6 +619,24 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>Las herramientas son excluyentes: activar una desactiva las demás.</summary>
+    /// <summary>Lee las fuentes instaladas en segundo plano y las pasa al panel de texto.</summary>
+    private void LoadSystemFonts()
+    {
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                using var installed = new System.Drawing.Text.InstalledFontCollection();
+                var names = installed.Families.Select(family => family.Name).ToList();
+                DispatcherQueue.TryEnqueue(() => ViewModel.SetSystemFonts(names));
+            }
+            catch (Exception ex) when (ex is ExternalException or ArgumentException or TypeInitializationException)
+            {
+                // Sin lista, la fuente se puede escribir a mano en el panel.
+            }
+        });
+    }
+
     private void OnToolClick(object sender, RoutedEventArgs e)
     {
         CheckOnly(sender as ToggleButton);

@@ -106,10 +106,7 @@
   <data name="MenuText.Title" xml:space="preserve">
     <value>Texto</value>
   </data>
-  <data name="MenuTextFont.Text" xml:space="preserve">
-    <value>Fuente…</value>
-  </data>
-  <data name="MenuView.Title" xml:space="preserve">
+<data name="MenuView.Title" xml:space="preserve">
     <value>Ver</value>
   </data>
   <data name="MenuViewZoomIn.Text" xml:space="preserve">
@@ -1246,5 +1243,86 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="TextLockedOtherContent" xml:space="preserve">
     <value>Este texto contiene enlaces u otros elementos: se puede mover y cambiar de estilo, pero no editar en el lienzo.</value>
+  </data>
+  <data name="MenuTextBold.Text" xml:space="preserve">
+    <value>Negrita</value>
+  </data>
+  <data name="MenuTextItalic.Text" xml:space="preserve">
+    <value>Cursiva</value>
+  </data>
+  <data name="MenuTextAlignStart.Text" xml:space="preserve">
+    <value>Alinear al principio</value>
+  </data>
+  <data name="MenuTextAlignCenter.Text" xml:space="preserve">
+    <value>Centrar</value>
+  </data>
+  <data name="MenuTextAlignEnd.Text" xml:space="preserve">
+    <value>Alinear al final</value>
+  </data>
+  <data name="PaletteNameTextBold" xml:space="preserve">
+    <value>Negrita</value>
+  </data>
+  <data name="PaletteShortcutTextBold" xml:space="preserve">
+    <value>Ctrl+B</value>
+  </data>
+  <data name="PaletteNameTextItalic" xml:space="preserve">
+    <value>Cursiva</value>
+  </data>
+  <data name="PaletteShortcutTextItalic" xml:space="preserve">
+    <value>Ctrl+I</value>
+  </data>
+  <data name="PaletteNameTextAlignStart" xml:space="preserve">
+    <value>Alinear el texto al principio</value>
+  </data>
+  <data name="PaletteNameTextAlignCenter" xml:space="preserve">
+    <value>Centrar el texto</value>
+  </data>
+  <data name="PaletteNameTextAlignEnd" xml:space="preserve">
+    <value>Alinear el texto al final</value>
+  </data>
+  <data name="HistoryActionTextStyle" xml:space="preserve">
+    <value>cambiar el texto</value>
+  </data>
+  <data name="TextTitle.Text" xml:space="preserve">
+    <value>Texto</value>
+  </data>
+  <data name="TextFontBox.Header" xml:space="preserve">
+    <value>Fuente</value>
+  </data>
+  <data name="TextFontBox.PlaceholderText" xml:space="preserve">
+    <value>Varias</value>
+  </data>
+  <data name="TextSizeBox.Header" xml:space="preserve">
+    <value>Tamaño</value>
+  </data>
+  <data name="TextWeightBox.Header" xml:space="preserve">
+    <value>Peso</value>
+  </data>
+  <data name="TextItalicButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Cursiva (Ctrl+I)</value>
+  </data>
+  <data name="TextItalicButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Cursiva</value>
+  </data>
+  <data name="TextAlignStartButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Alinear al principio</value>
+  </data>
+  <data name="TextAlignStartButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Alinear al principio</value>
+  </data>
+  <data name="TextAlignCenterButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Centrar</value>
+  </data>
+  <data name="TextAlignCenterButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Centrar</value>
+  </data>
+  <data name="TextAlignEndButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Alinear al final</value>
+  </data>
+  <data name="TextAlignEndButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Alinear al final</value>
+  </data>
+  <data name="TextLineHeightBox.Header" xml:space="preserve">
+    <value>Interlineado</value>
   </data>
 </root>

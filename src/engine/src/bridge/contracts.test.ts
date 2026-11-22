@@ -356,6 +356,13 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "command",
+    id: "c28",
+    name: "selection.setText",
+    payload: { documentId: "d1", fontFamily: "Georgia", fontWeight: 700, anchor: "middle" },
+  },
+  {
+    ...base,
+    kind: "command",
     id: "c27",
     name: "path.cornerRadius",
     payload: { documentId: "d1", radius: 4.5 },
@@ -416,6 +423,7 @@ function summarize(message: BridgeMessage): string {
       case "path.nodes":
       case "path.operation":
       case "path.cornerRadius":
+      case "selection.setText":
       case "selection.duplicate":
       case "selection.delete":
       case "selection.setStyle":
@@ -461,6 +469,8 @@ function summarize(message: BridgeMessage): string {
         return `trazado ${message.payload.operation}`;
       case "path.cornerRadius":
         return `radio ${String(message.payload.radius)}`;
+      case "selection.setText":
+        return `texto ${String(message.payload.fontFamily)} ${String(message.payload.anchor)}`;
       case "object.group":
       case "object.ungroup":
       case "object.toPath":
@@ -569,6 +579,7 @@ describe("contrato del puente", () => {
       "menú en 10,20",
       "nodos smooth",
       "trazado combine",
+      "texto Georgia middle",
       "radio 4.5",
       "texto bloqueado: text-path",
       "2 nodos mixed",

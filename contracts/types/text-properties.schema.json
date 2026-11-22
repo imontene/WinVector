@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TextProperties",
+  "description": "Propiedades tipográficas comunes de los textos seleccionados. null: los textos tienen valores distintos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fontFamily",
+    "fontSize",
+    "fontWeight",
+    "italic",
+    "anchor",
+    "lineHeight"
+  ],
+  "properties": {
+    "fontFamily": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "La fuente pedida: la primera familia de font-family, sin comillas."
+    },
+    "fontSize": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Tamaño de la fuente en unidades del documento."
+    },
+    "fontWeight": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Peso de 100 a 900 (400 normal, 700 negrita)."
+    },
+    "italic": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "Cursiva."
+    },
+    "anchor": {
+      "anyOf": [
+        {
+          "$ref": "./text-anchor.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Alineación."
+    },
+    "lineHeight": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Interlineado en múltiplos del tamaño de la fuente."
+    }
+  }
+}
