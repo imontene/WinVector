@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Text.RegularExpressions;
+using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Input;
 using FlaUI.Core.Tools;
 using FlaUI.Core.WindowsAPI;
@@ -119,7 +120,7 @@ public sealed partial class TextTests
     }
 
     /// <summary>Busca un control del panel, lo desplaza hasta que se ve y espera a que esté activo.</summary>
-    private FlaUI.Core.AutomationElements.AutomationElement PanelControl(string automationId)
+    private AutomationElement PanelControl(string automationId)
     {
         var control = Retry.WhileNull(() => Session.FindById(automationId), EngineTimeout).Result
             ?? throw new AssertFailedException($"No aparece {automationId} en el panel.");
@@ -172,7 +173,7 @@ public sealed partial class TextTests
     }
 
     /// <summary>La fuente que muestra la lista del panel: la elegida o, si no está en la lista, la escrita.</summary>
-    private static string FontShown(FlaUI.Core.AutomationElements.ComboBox box)
+    private static string FontShown(ComboBox box)
     {
         try
         {
