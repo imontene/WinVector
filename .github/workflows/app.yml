@@ -46,7 +46,8 @@ jobs:
   build:
     name: Compilar y empaquetar (${{ matrix.platform }})
     runs-on: windows-latest
-    timeout-minutes: 30
+    # Las ejecuciones repetidas de las pruebas de interfaz (ui_test_runs) necesitan más tiempo.
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 120 || 30 }}
     strategy:
       fail-fast: false
       matrix:
