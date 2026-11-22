@@ -6,6 +6,10 @@ import { SVG_NS, TextEditor, textEditability, type TextEditScene } from "../text
 import { formatNumber } from "../transform";
 import type { ShapeStyle } from "./shapes";
 
+/** Tiempo y distancia en píxeles entre clics para que cuenten como doble o triple clic. */
+const CLICK_INTERVAL = 500;
+const CLICK_DISTANCE = 4;
+
 /** Tamaño de la fuente de un texto nuevo, en unidades del documento. */
 export const NEW_TEXT_SIZE = 16;
 /** Familia de un texto nuevo, con una genérica de reserva para los equipos sin ella. */
@@ -51,7 +55,8 @@ function textAt(event: Event, root: SVGSVGElement): SVGTextElement | null {
  * Mientras se edita:
  * - Las teclas van al texto (no a los atajos de las herramientas), con tildes, IME, portapapeles y
  *   deshacer del sistema. `Intro` empieza otra línea.
- * - Clic en el texto coloca el cursor (arrastrar selecciona, `Mayús` amplía la selección).
+ * - Clic en el texto coloca el cursor (arrastrar selecciona, `Mayús` amplía la selección); doble clic
+ *   selecciona una palabra y triple clic una línea (issue #94).
  * - `Esc` o un clic fuera terminan la edición; el texto queda seleccionado. Un texto vacío desaparece.
  *
  * Toda la edición es un solo paso del historial ("edit-text"); si no cambia nada, no deja ninguno.
@@ -61,6 +66,18 @@ function textAt(event: Event, root: SVGSVGElement): SVGTextElement | null {
 export function installTextTool(target: Window, host: TextToolHost, label: () => string) {
   let editing: Editing | null = null;
   let dragging = false;
+  /** Último clic, para contar los dobles y triples clics (palabra y línea). */
+  let lastClick: { time: number; x: number; y: number; count: number } | null = null;
+
+  const countClick = (event: PointerEvent) => {
+    const near =
+      lastClick &&
+      event.timeStamp - lastClick.time < CLICK_INTERVAL &&
+      Math.hypot(event.clientX - lastClick.x, event.clientY - lastClick.y) <= CLICK_DISTANCE;
+    const count = near && lastClick ? lastClick.count + 1 : 1;
+    lastClick = { time: event.timeStamp, x: event.clientX, y: event.clientY, count };
+    return count;
+  };
 
   const isActive = () => host.tool() === "text";
   const consume = (event: Event) => {
@@ -164,9 +181,14 @@ export function installTextTool(target: Window, host: TextToolHost, label: () =>
     const active = host.active();
     if (!active) return;
     const text = textAt(event, active.root);
+    const clicks = countClick(event);
     if (text && text === editing?.editor.text) {
-      editing.editor.pointerDown(event.clientX, event.clientY, event.shiftKey);
-      dragging = true;
+      const editor = editing.editor;
+      // Doble clic selecciona la palabra; triple, la línea.
+      if (clicks === 2) editor.selectWordAt(event.clientX, event.clientY);
+      else if (clicks >= 3) editor.selectLineAt(event.clientX, event.clientY);
+      else editor.pointerDown(event.clientX, event.clientY, event.shiftKey);
+      dragging = clicks === 1;
       target.document.documentElement.setPointerCapture(event.pointerId);
       return;
     }
