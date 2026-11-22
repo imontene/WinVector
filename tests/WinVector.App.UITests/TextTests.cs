@@ -119,6 +119,15 @@ public sealed partial class TextTests
         }
     }
 
+    private void InvokeMenu(string menu, string automationId)
+    {
+        Session.GetById(menu).Patterns.ExpandCollapse.Pattern.Expand();
+        var item = Retry.WhileNull(() => Session.FindInApp(automationId), TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(250)).Result
+            ?? throw new AssertFailedException($"No aparece {automationId} en el menú.");
+        Assert.IsTrue(Retry.WhileFalse(() => item.IsEnabled, EngineTimeout).Result, $"{automationId} está desactivado.");
+        item.Patterns.Invoke.Pattern.Invoke();
+    }
+
     /// <summary>Busca un control del panel, lo desplaza hasta que se ve y espera a que esté activo.</summary>
     private AutomationElement PanelControl(string automationId)
     {
@@ -143,13 +152,14 @@ public sealed partial class TextTests
         Keyboard.Type(VirtualKeyShort.ESCAPE);
         WaitForSelection("text");
 
-        // La fuente, escrita en su lista (también vale una que no esté instalada); y centrado.
+        // La fuente, escrita en su lista (también vale una que no esté instalada); y centrado, desde
+        // el menú Texto.
         var font = PanelControl("TextFontBox");
         font.Focus();
         Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
         Keyboard.Type("Georgia");
         Keyboard.Type(VirtualKeyShort.RETURN);
-        PanelControl("TextAlignCenterButton").Click();
+        InvokeMenu("TextMenu", "MenuTextAlignCenter");
 
         var svg = Retry.WhileNull(() => SaveContaining("text-anchor=\"middle\""), EngineTimeout, TimeSpan.FromSeconds(1)).Result
             ?? throw new AssertFailedException("La alineación no se guardó.");
