@@ -284,7 +284,7 @@ Tras el MVP 1 se podrán abordar las siguientes funciones. El orden es una propu
 - Exportación por lotes de varias mesas de trabajo o tamaños.
 
 ### MVP 4 · Texto vectorial, rellenos y bordes
-- **Texto vectorial:** convertir texto a trazados, texto sobre un trazado, funciones OpenType (ligaduras, versalitas), espaciado entre letras y palabras, texto en área con ajuste de línea.
+- **Texto vectorial:** convertir texto a trazados, texto sobre un trazado, funciones OpenType (ligaduras, versalitas), espaciado entre letras y palabras, texto en área con ajuste de línea, y estilos distintos dentro de un mismo texto (tramos, #96).
 - **Rellenos:** patrones, rellenos con imagen, muestras de color y estilos guardados en el documento.
 - **Bordes:** líneas discontinuas, extremos y uniones, alineación del trazo, marcadores (flechas), contorno de trazo a forma.
 
