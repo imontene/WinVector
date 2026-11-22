@@ -1,6 +1,7 @@
 import type { History } from "../history";
 import { isContainer } from "../selection";
 import { outermost } from "../transform";
+import { commonGradient, type GradientSummary } from "../paint/gradient";
 import { declaresProperty, setDeclaration } from "./declarations";
 
 /**
@@ -17,6 +18,9 @@ export interface StyleSummary {
   readonly opacity: number | null;
   /** Regla de relleno común; ausente si son distintas o no hay formas (issue #79). */
   readonly fillRule?: FillRule;
+  /** Degradado común del relleno y del trazo (issue #108). */
+  readonly fillGradient?: GradientSummary;
+  readonly strokeGradient?: GradientSummary;
 }
 
 export type FillRule = "nonzero" | "evenodd";
@@ -87,7 +91,15 @@ export function readStyle(items: readonly Element[]): StyleSummary {
       ),
     ),
     ...(fillRule !== null && isFillRule(fillRule) ? { fillRule } : {}),
+    ...gradients(targets),
   };
+}
+
+/** Degradados comunes del relleno y del trazo, si los hay. */
+function gradients(targets: readonly Element[]) {
+  const fill = commonGradient(targets, "fill");
+  const stroke = commonGradient(targets, "stroke");
+  return { ...(fill ? { fillGradient: fill } : {}), ...(stroke ? { strokeGradient: stroke } : {}) };
 }
 
 /** Propiedades cuyo valor son palabras, no números. */

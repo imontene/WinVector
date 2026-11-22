@@ -209,6 +209,36 @@ public enum FillRule
 public sealed record FontUse(
     [property: JsonPropertyName("families")] IReadOnlyList<string> Families);
 
+/// <summary>Tipo de degradado: lineal o radial.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<GradientKind>))]
+public enum GradientKind
+{
+    [JsonStringEnumMemberName("linear")]
+    Linear,
+    [JsonStringEnumMemberName("radial")]
+    Radial,
+}
+
+/// <summary>Degradado con el que se pinta el relleno o el trazo, con lo heredado por href ya resuelto (ADR 0009).</summary>
+/// <param name="Id">Identificador del degradado en el documento.</param>
+/// <param name="Stops">Paradas en orden. Vacío si el degradado no tiene ninguna (no se dibuja).</param>
+/// <param name="Users">Cuántas pinturas de objetos usan este degradado directamente. Con más de una, cambiarlo para un objeto le crea una copia propia.</param>
+public sealed record GradientPaint(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("kind")] GradientKind Kind,
+    [property: JsonPropertyName("spread")] SpreadMethod Spread,
+    [property: JsonPropertyName("stops")] IReadOnlyList<GradientStop> Stops,
+    [property: JsonPropertyName("users")] int Users);
+
+/// <summary>Parada de un degradado, como se dibuja.</summary>
+/// <param name="Offset">Posición de 0 a 1, nunca menor que la de la parada anterior.</param>
+/// <param name="Color">Color "#rrggbb".</param>
+/// <param name="Opacity">Opacidad de 0 a 1.</param>
+public sealed record GradientStop(
+    [property: JsonPropertyName("offset")] double Offset,
+    [property: JsonPropertyName("color")] string Color,
+    [property: JsonPropertyName("opacity")] double Opacity);
+
 /// <summary>Estado del historial de deshacer de un documento.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="CanUndo">Hay algún paso que deshacer.</param>
@@ -391,12 +421,16 @@ public sealed record SelectionGeometry(
 /// <param name="StrokeWidth">Grosor del trazo en unidades del elemento.</param>
 /// <param name="Opacity">Opacidad del objeto, de 0 a 1.</param>
 /// <param name="FillRule">Regla de relleno común de la selección; ausente si los objetos tienen reglas distintas o no hay formas.</param>
+/// <param name="FillGradient">Degradado del relleno, si todos los objetos pintan su relleno con el mismo (issue #108).</param>
+/// <param name="StrokeGradient">Degradado del trazo, si todos los objetos pintan su trazo con el mismo.</param>
 public sealed record SelectionStyle(
     [property: JsonPropertyName("fill")] string? Fill,
     [property: JsonPropertyName("stroke")] string? Stroke,
     [property: JsonPropertyName("strokeWidth")] double? StrokeWidth,
     [property: JsonPropertyName("opacity")] double? Opacity,
-    [property: JsonPropertyName("fillRule"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] FillRule? FillRule = null);
+    [property: JsonPropertyName("fillRule"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] FillRule? FillRule = null,
+    [property: JsonPropertyName("fillGradient"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] GradientPaint? FillGradient = null,
+    [property: JsonPropertyName("strokeGradient"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] GradientPaint? StrokeGradient = null);
 
 /// <summary>Cambio de propiedades propias de la forma seleccionada. Solo cambian las que se indican; las que no son de su tipo se ignoran.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -503,6 +537,18 @@ public enum ShapeType
     Polygon,
     [JsonStringEnumMemberName("star")]
     Star,
+}
+
+/// <summary>Qué hay fuera del degradado (spreadMethod): pad prolonga el color de los extremos, reflect lo repite en espejo y repeat lo repite.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<SpreadMethod>))]
+public enum SpreadMethod
+{
+    [JsonStringEnumMemberName("pad")]
+    Pad,
+    [JsonStringEnumMemberName("reflect")]
+    Reflect,
+    [JsonStringEnumMemberName("repeat")]
+    Repeat,
 }
 
 /// <summary>Cambio de estilo de la selección. Un campo null no cambia.</summary>
@@ -854,6 +900,8 @@ public static class BridgeEvents
 [JsonSerializable(typeof(EngineReady))]
 [JsonSerializable(typeof(FilesDropped))]
 [JsonSerializable(typeof(FontUse))]
+[JsonSerializable(typeof(GradientPaint))]
+[JsonSerializable(typeof(GradientStop))]
 [JsonSerializable(typeof(HistoryState))]
 [JsonSerializable(typeof(KeyboardShortcut))]
 [JsonSerializable(typeof(NodeSelection))]

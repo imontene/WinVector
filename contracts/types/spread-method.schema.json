@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SpreadMethod",
+  "description": "Qué hay fuera del degradado (spreadMethod): pad prolonga el color de los extremos, reflect lo repite en espejo y repeat lo repite.",
+  "type": "string",
+  "enum": [
+    "pad",
+    "reflect",
+    "repeat"
+  ]
+}
