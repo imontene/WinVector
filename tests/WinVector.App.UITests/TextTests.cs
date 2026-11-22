@@ -103,8 +103,16 @@ public sealed partial class TextTests
     private string Save()
     {
         var before = File.GetLastWriteTimeUtc(_file);
-        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_S);
-        Assert.IsTrue(Retry.WhileFalse(() => File.GetLastWriteTimeUtc(_file) > before, TimeSpan.FromSeconds(10)).Result, "Ctrl+S no escribió el archivo.");
+        // Justo después de usar un menú, Ctrl+S puede llegar a su ventana emergente mientras se cierra
+        // y perderse: se vuelve a pulsar. Guardar dos veces no cambia el archivo.
+        var written = false;
+        for (var attempt = 0; attempt < 3 && !written; attempt++)
+        {
+            Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_S);
+            written = Retry.WhileFalse(() => File.GetLastWriteTimeUtc(_file) > before, TimeSpan.FromSeconds(5)).Result;
+        }
+
+        Assert.IsTrue(written, "Ctrl+S no escribió el archivo.");
         for (var attempt = 0; ; attempt++)
         {
             try
