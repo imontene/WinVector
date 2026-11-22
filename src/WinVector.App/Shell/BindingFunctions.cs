@@ -47,7 +47,7 @@ public static class BindingFunctions
 
     private static Color StopColor(BridgeStop stop)
     {
-        TryParseColor(stop.Color, out var color);
+        var color = TryParseColor(stop.Color, out var parsed) ? parsed : Colors.Black;
         color.A = (byte)Math.Round(Math.Clamp(stop.Opacity, 0, 1) * 255);
         return color;
     }
