@@ -19,6 +19,7 @@ import {
   type ArtboardSettings,
 } from "./document";
 import type { Rect } from "./geometry";
+import { installDiag91 } from "./diag91";
 import { EMPTY_SCENE, Overlay } from "./overlay";
 import sampleSvg from "./sample.svg?raw";
 import type { History } from "./history";
@@ -678,6 +679,7 @@ function activeDocument() {
 }
 
 trackModifiers(window);
+installDiag91(window);
 installEyedropper(window, {
   tool: () => activeTool,
   active: activeDocument,

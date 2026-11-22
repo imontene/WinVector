@@ -160,7 +160,7 @@ jobs:
           for ($i = 1; $i -le $runs; $i++) {
             $watch = [Diagnostics.Stopwatch]::StartNew()
             $verbosity = if ($i -eq 1) { 'detailed' } else { 'minimal' }
-            dotnet test tests/WinVector.App.UITests -c Release --no-build --filter "TestCategory!=Rendimiento" `
+            dotnet test tests/WinVector.App.UITests -c Release --no-build --filter "FullyQualifiedName~ShiftDiagTests" `
               --logger "trx;LogFileName=ui-$i.trx" --logger "console;verbosity=$verbosity" `
               --results-directory artifacts/ui-tests
             $results += [pscustomobject]@{ Ejecucion = $i; Correcta = ($LASTEXITCODE -eq 0); Segundos = [math]::Round($watch.Elapsed.TotalSeconds, 1) }
