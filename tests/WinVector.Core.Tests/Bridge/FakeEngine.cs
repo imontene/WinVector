@@ -40,6 +40,9 @@ internal sealed class FakeEngine
     /// <summary>Payloads de selection.setShape recibidos, tal cual.</summary>
     public List<string> ShapesSet { get; } = [];
 
+    /// <summary>Cambios de selection.setText recibidos, en JSON.</summary>
+    public List<string> TextChanges { get; } = [];
+
     /// <summary>Acciones de path.nodes y operaciones de path.operation recibidas (corner, combine…).</summary>
     public List<string> NodeActions { get; } = [];
 
@@ -195,6 +198,10 @@ internal sealed class FakeEngine
                 break;
             case "selection.setStyle":
                 StylesSet.Add(payload.GetRawText());
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
+                break;
+            case "selection.setText":
+                TextChanges.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
             case "path.cornerRadius":

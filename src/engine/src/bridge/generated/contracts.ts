@@ -295,6 +295,8 @@ export interface SelectionChanged {
   readonly style?: SelectionStyle;
   /** Propiedades propias de la forma; solo con un único objeto seleccionado que sea una forma (rectángulo, elipse, círculo, línea, polígono o estrella de WinVector). */
   readonly shape?: ShapeProperties;
+  /** Propiedades tipográficas de los textos seleccionados; ausente si no hay ningún texto. */
+  readonly text?: TextProperties;
 }
 
 /** Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia. */
@@ -438,6 +440,27 @@ export interface StyleChange {
   readonly fillRule?: FillRule;
 }
 
+/** Alineación de un texto respecto a su origen (text-anchor): al principio, centrado o al final. */
+export type TextAnchor = "start" | "middle" | "end";
+
+/** Cambio de las propiedades tipográficas de los textos seleccionados. Lo que no está no cambia. */
+export interface TextChange {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Fuente; se escribe con una familia genérica de reserva. */
+  readonly fontFamily?: string;
+  /** Tamaño de la fuente, mayor que 0. */
+  readonly fontSize?: number;
+  /** Peso de 100 a 900. */
+  readonly fontWeight?: number;
+  /** Cursiva. */
+  readonly italic?: boolean;
+  /** Alineación. */
+  readonly anchor?: TextAnchor;
+  /** Interlineado en múltiplos del tamaño de la fuente, mayor que 0. */
+  readonly lineHeight?: number;
+}
+
 /** Por qué un texto no se puede editar en el lienzo: sigue un trazado, coloca o gira caracteres sueltos, los desplaza de forma relativa o fuerza su longitud, tiene tramos con estilos distintos o contiene otros elementos. */
 export type TextLock =
   "text-path" | "per-character" | "relative-position" | "styled-runs" | "other-content";
@@ -448,6 +471,22 @@ export interface TextLocked {
   readonly documentId: string;
   /** Por qué no se puede editar. */
   readonly reason: TextLock;
+}
+
+/** Propiedades tipográficas comunes de los textos seleccionados. null: los textos tienen valores distintos. */
+export interface TextProperties {
+  /** La fuente pedida: la primera familia de font-family, sin comillas. */
+  readonly fontFamily: string | null;
+  /** Tamaño de la fuente en unidades del documento. */
+  readonly fontSize: number | null;
+  /** Peso de 100 a 900 (400 normal, 700 negrita). */
+  readonly fontWeight: number | null;
+  /** Cursiva. */
+  readonly italic: boolean | null;
+  /** Alineación. */
+  readonly anchor: TextAnchor | null;
+  /** Interlineado en múltiplos del tamaño de la fuente. */
+  readonly lineHeight: number | null;
 }
 
 /** Herramienta del lienzo que ya implementa el motor. */
@@ -513,6 +552,8 @@ export interface BridgeCommands {
   };
   /** Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial. */
   readonly "selection.setStyle": { readonly payload: StyleChange; readonly response: ObjectChange };
+  /** Cambia la fuente, el tamaño, el peso, la cursiva, la alineación o el interlineado de los textos seleccionados. Los cambios seguidos de las mismas propiedades se funden en un paso del historial. */
+  readonly "selection.setText": { readonly payload: TextChange; readonly response: ObjectChange };
   /** Cambia propiedades propias de la forma seleccionada (radio de las esquinas, lados de un polígono…) en un paso que se puede deshacer. Los cambios seguidos de la misma propiedad son un solo paso del historial. */
   readonly "selection.setShape": { readonly payload: ShapeChange; readonly response: ObjectChange };
   /** Trae al frente, envía al fondo, sube o baja un nivel la selección. Se puede deshacer. */
@@ -614,6 +655,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "selection.selectAll",
   "selection.setGeometry",
   "selection.setStyle",
+  "selection.setText",
   "selection.setShape",
   "object.arrange",
   "object.toPath",

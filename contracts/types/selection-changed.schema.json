@@ -55,6 +55,10 @@
     "shape": {
       "$ref": "./shape-properties.schema.json",
       "description": "Propiedades propias de la forma; solo con un único objeto seleccionado que sea una forma (rectángulo, elipse, círculo, línea, polígono o estrella de WinVector)."
+    },
+    "text": {
+      "$ref": "./text-properties.schema.json",
+      "description": "Propiedades tipográficas de los textos seleccionados; ausente si no hay ningún texto."
     }
   }
 }

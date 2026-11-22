@@ -338,6 +338,7 @@ public sealed record SelectedElement(
 /// <param name="Rotation">Giro del objeto seleccionado respecto al documento, en grados entre -180 y 180. Solo cuando hay un único objeto seleccionado.</param>
 /// <param name="Style">Estilo de la selección; solo cuando hay algo seleccionado.</param>
 /// <param name="Shape">Propiedades propias de la forma; solo con un único objeto seleccionado que sea una forma (rectángulo, elipse, círculo, línea, polígono o estrella de WinVector).</param>
+/// <param name="Text">Propiedades tipográficas de los textos seleccionados; ausente si no hay ningún texto.</param>
 public sealed record SelectionChanged(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("items")] IReadOnlyList<SelectedElement> Items,
@@ -345,7 +346,8 @@ public sealed record SelectionChanged(
     [property: JsonPropertyName("scope")] SelectedElement? Scope,
     [property: JsonPropertyName("rotation"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? Rotation = null,
     [property: JsonPropertyName("style"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SelectionStyle? Style = null,
-    [property: JsonPropertyName("shape"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShapeProperties? Shape = null);
+    [property: JsonPropertyName("shape"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShapeProperties? Shape = null,
+    [property: JsonPropertyName("text"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] TextProperties? Text = null);
 
 /// <summary>Posición, tamaño y giro que se quieren para la selección, en unidades del documento. Un campo null no cambia.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -497,6 +499,35 @@ public sealed record StyleChange(
     [property: JsonPropertyName("opacity")] double? Opacity,
     [property: JsonPropertyName("fillRule"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] FillRule? FillRule = null);
 
+/// <summary>Alineación de un texto respecto a su origen (text-anchor): al principio, centrado o al final.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<TextAnchor>))]
+public enum TextAnchor
+{
+    [JsonStringEnumMemberName("start")]
+    Start,
+    [JsonStringEnumMemberName("middle")]
+    Middle,
+    [JsonStringEnumMemberName("end")]
+    End,
+}
+
+/// <summary>Cambio de las propiedades tipográficas de los textos seleccionados. Lo que no está no cambia.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="FontFamily">Fuente; se escribe con una familia genérica de reserva.</param>
+/// <param name="FontSize">Tamaño de la fuente, mayor que 0.</param>
+/// <param name="FontWeight">Peso de 100 a 900.</param>
+/// <param name="Italic">Cursiva.</param>
+/// <param name="Anchor">Alineación.</param>
+/// <param name="LineHeight">Interlineado en múltiplos del tamaño de la fuente, mayor que 0.</param>
+public sealed record TextChange(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("fontFamily"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? FontFamily = null,
+    [property: JsonPropertyName("fontSize"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? FontSize = null,
+    [property: JsonPropertyName("fontWeight"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? FontWeight = null,
+    [property: JsonPropertyName("italic"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? Italic = null,
+    [property: JsonPropertyName("anchor"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] TextAnchor? Anchor = null,
+    [property: JsonPropertyName("lineHeight"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? LineHeight = null);
+
 /// <summary>Por qué un texto no se puede editar en el lienzo: sigue un trazado, coloca o gira caracteres sueltos, los desplaza de forma relativa o fuerza su longitud, tiene tramos con estilos distintos o contiene otros elementos.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<TextLock>))]
 public enum TextLock
@@ -519,6 +550,21 @@ public enum TextLock
 public sealed record TextLocked(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("reason")] TextLock Reason);
+
+/// <summary>Propiedades tipográficas comunes de los textos seleccionados. null: los textos tienen valores distintos.</summary>
+/// <param name="FontFamily">La fuente pedida: la primera familia de font-family, sin comillas.</param>
+/// <param name="FontSize">Tamaño de la fuente en unidades del documento.</param>
+/// <param name="FontWeight">Peso de 100 a 900 (400 normal, 700 negrita).</param>
+/// <param name="Italic">Cursiva.</param>
+/// <param name="Anchor">Alineación.</param>
+/// <param name="LineHeight">Interlineado en múltiplos del tamaño de la fuente.</param>
+public sealed record TextProperties(
+    [property: JsonPropertyName("fontFamily")] string? FontFamily,
+    [property: JsonPropertyName("fontSize")] double? FontSize,
+    [property: JsonPropertyName("fontWeight")] int? FontWeight,
+    [property: JsonPropertyName("italic")] bool? Italic,
+    [property: JsonPropertyName("anchor")] TextAnchor? Anchor,
+    [property: JsonPropertyName("lineHeight")] double? LineHeight);
 
 /// <summary>Herramienta del lienzo que ya implementa el motor.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ToolName>))]
@@ -640,6 +686,9 @@ public static class BridgeCommands
 
     /// <summary>Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial.</summary>
     public static readonly BridgeCommand<StyleChange, ObjectChange> SelectionSetStyle = new("selection.setStyle");
+
+    /// <summary>Cambia la fuente, el tamaño, el peso, la cursiva, la alineación o el interlineado de los textos seleccionados. Los cambios seguidos de las mismas propiedades se funden en un paso del historial.</summary>
+    public static readonly BridgeCommand<TextChange, ObjectChange> SelectionSetText = new("selection.setText");
 
     /// <summary>Cambia propiedades propias de la forma seleccionada (radio de las esquinas, lados de un polígono…) en un paso que se puede deshacer. Los cambios seguidos de la misma propiedad son un solo paso del historial.</summary>
     public static readonly BridgeCommand<ShapeChange, ObjectChange> SelectionSetShape = new("selection.setShape");
@@ -795,7 +844,9 @@ public static class BridgeEvents
 [JsonSerializable(typeof(ShapeConverted))]
 [JsonSerializable(typeof(ShapeProperties))]
 [JsonSerializable(typeof(StyleChange))]
+[JsonSerializable(typeof(TextChange))]
 [JsonSerializable(typeof(TextLocked))]
+[JsonSerializable(typeof(TextProperties))]
 [JsonSerializable(typeof(ToolState))]
 [JsonSerializable(typeof(ViewOptions))]
 [JsonSerializable(typeof(ViewportChanged))]

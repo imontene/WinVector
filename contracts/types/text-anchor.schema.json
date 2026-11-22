@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TextAnchor",
+  "description": "Alineación de un texto respecto a su origen (text-anchor): al principio, centrado o al final.",
+  "type": "string",
+  "enum": [
+    "start",
+    "middle",
+    "end"
+  ]
+}

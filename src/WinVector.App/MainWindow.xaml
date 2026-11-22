@@ -314,8 +314,37 @@
                             Command="{x:Bind ViewModel.MakeSegmentsCurveCommand}" />
                     </MenuBarItem>
 
-                    <MenuBarItem x:Uid="MenuText">
-                        <MenuFlyoutItem x:Uid="MenuTextFont" IsEnabled="False" />
+                    <!-- Texto (issue #95): con el lienzo enfocado, el motor reenvía Ctrl+B y Ctrl+I a la aplicación. -->
+                    <MenuBarItem x:Name="TextMenu" x:Uid="MenuText">
+                        <MenuFlyoutItem
+                            x:Uid="MenuTextBold"
+                            AutomationProperties.AutomationId="MenuTextBold"
+                            Command="{x:Bind ViewModel.ToggleBoldCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="B" Modifiers="Control" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            x:Uid="MenuTextItalic"
+                            AutomationProperties.AutomationId="MenuTextItalic"
+                            Command="{x:Bind ViewModel.ToggleItalicCommand}">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="I" Modifiers="Control" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            x:Uid="MenuTextAlignStart"
+                            AutomationProperties.AutomationId="MenuTextAlignStart"
+                            Command="{x:Bind ViewModel.AlignTextStartCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuTextAlignCenter"
+                            AutomationProperties.AutomationId="MenuTextAlignCenter"
+                            Command="{x:Bind ViewModel.AlignTextCenterCommand}" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuTextAlignEnd"
+                            AutomationProperties.AutomationId="MenuTextAlignEnd"
+                            Command="{x:Bind ViewModel.AlignTextEndCommand}" />
                     </MenuBarItem>
 
                     <MenuBarItem x:Name="ViewMenu" x:Uid="MenuView">
@@ -975,6 +1004,102 @@
                                     ValueChanged="OnCornerRadiusChanged"
                                     Value="{x:Bind ViewModel.SelectedCornerRadius, Mode=OneWay}"
                                     Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.CanRoundCorners), Mode=OneWay}" />
+                            </StackPanel>
+
+                            <!-- Propiedades tipográficas de los textos seleccionados (issue #95). -->
+                            <StackPanel Spacing="8" Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasTextProperties), Mode=OneWay}">
+                                <TextBlock
+                                    x:Uid="TextTitle"
+                                    Margin="0,8,0,0"
+                                    Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <ComboBox
+                                    x:Uid="TextFontBox"
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.AutomationId="TextFontBox"
+                                    IsEditable="True"
+                                    ItemsSource="{x:Bind ViewModel.SystemFonts}"
+                                    SelectedItem="{x:Bind ViewModel.TextFontFamily, Mode=OneWay}"
+                                    SelectionChanged="OnTextFontChanged"
+                                    Text="{x:Bind ViewModel.TextFontFamily, Mode=OneWay}"
+                                    TextSubmitted="OnTextFontSubmitted" />
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <NumberBox
+                                        x:Uid="TextSizeBox"
+                                        AutomationProperties.AutomationId="TextSizeBox"
+                                        LargeChange="4"
+                                        Minimum="0.1"
+                                        SmallChange="1"
+                                        SpinButtonPlacementMode="Compact"
+                                        ValueChanged="OnTextSizeChanged"
+                                        Value="{x:Bind ViewModel.TextFontSize, Mode=OneWay}" />
+                                    <ComboBox
+                                        x:Uid="TextWeightBox"
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="TextWeightBox"
+                                        ItemsSource="{x:Bind shell:MainViewModel.FontWeights}"
+                                        SelectedIndex="{x:Bind ViewModel.TextFontWeightIndex, Mode=OneWay}"
+                                        SelectionChanged="OnTextWeightChanged" />
+                                </Grid>
+                                <Grid ColumnSpacing="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <ToggleButton
+                                        x:Uid="TextItalicButton"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="TextItalicButton"
+                                        Click="OnTextItalicClick"
+                                        IsChecked="{x:Bind ViewModel.IsTextItalic, Mode=OneWay}">
+                                        <FontIcon FontSize="14" Glyph="&#xE8DB;" />
+                                    </ToggleButton>
+                                    <ToggleButton
+                                        x:Uid="TextAlignStartButton"
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="TextAlignStartButton"
+                                        Click="OnTextAlignClick"
+                                        IsChecked="{x:Bind ViewModel.IsTextAlignedStart, Mode=OneWay}"
+                                        Tag="start">
+                                        <FontIcon FontSize="14" Glyph="&#xE8E4;" />
+                                    </ToggleButton>
+                                    <ToggleButton
+                                        x:Uid="TextAlignCenterButton"
+                                        Grid.Column="2"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="TextAlignCenterButton"
+                                        Click="OnTextAlignClick"
+                                        IsChecked="{x:Bind ViewModel.IsTextAlignedCenter, Mode=OneWay}"
+                                        Tag="middle">
+                                        <FontIcon FontSize="14" Glyph="&#xE8E3;" />
+                                    </ToggleButton>
+                                    <ToggleButton
+                                        x:Uid="TextAlignEndButton"
+                                        Grid.Column="3"
+                                        HorizontalAlignment="Stretch"
+                                        AutomationProperties.AutomationId="TextAlignEndButton"
+                                        Click="OnTextAlignClick"
+                                        IsChecked="{x:Bind ViewModel.IsTextAlignedEnd, Mode=OneWay}"
+                                        Tag="end">
+                                        <FontIcon FontSize="14" Glyph="&#xE8E2;" />
+                                    </ToggleButton>
+                                </Grid>
+                                <NumberBox
+                                    x:Uid="TextLineHeightBox"
+                                    AutomationProperties.AutomationId="TextLineHeightBox"
+                                    LargeChange="0.5"
+                                    Minimum="0.1"
+                                    SmallChange="0.1"
+                                    SpinButtonPlacementMode="Compact"
+                                    ValueChanged="OnTextLineHeightChanged"
+                                    Value="{x:Bind ViewModel.TextLineHeight, Mode=OneWay}" />
                             </StackPanel>
                         </StackPanel>
 
