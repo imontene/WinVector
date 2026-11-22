@@ -1325,4 +1325,19 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="TextLineHeightBox.Header" xml:space="preserve">
     <value>Interlineado</value>
   </data>
+  <data name="MissingFontsBar.Title" xml:space="preserve">
+    <value>Fuentes que faltan</value>
+  </data>
+  <data name="MissingFontsMessage" xml:space="preserve">
+    <value>Este documento usa fuentes que no están instaladas en este equipo: {0}. El archivo no cambia.</value>
+  </data>
+  <data name="MissingFontItem" xml:space="preserve">
+    <value>{0} (se ve con {1})</value>
+  </data>
+  <data name="MissingFontItemDefault" xml:space="preserve">
+    <value>{0} (se ve con la fuente por defecto)</value>
+  </data>
+  <data name="TextFontMissing.Text" xml:space="preserve">
+    <value>No está instalada en este equipo: el texto se ve con otra fuente.</value>
+  </data>
 </root>

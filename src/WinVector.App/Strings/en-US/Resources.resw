@@ -1323,4 +1323,19 @@ Licensed under the Apache License 2.0.</value>
   <data name="TextLineHeightBox.Header" xml:space="preserve">
     <value>Line spacing</value>
   </data>
+  <data name="MissingFontsBar.Title" xml:space="preserve">
+    <value>Missing fonts</value>
+  </data>
+  <data name="MissingFontsMessage" xml:space="preserve">
+    <value>This document uses fonts that are not installed on this computer: {0}. The file does not change.</value>
+  </data>
+  <data name="MissingFontItem" xml:space="preserve">
+    <value>{0} (shown with {1})</value>
+  </data>
+  <data name="MissingFontItemDefault" xml:space="preserve">
+    <value>{0} (shown with the default font)</value>
+  </data>
+  <data name="TextFontMissing.Text" xml:space="preserve">
+    <value>Not installed on this computer: the text is shown with another font.</value>
+  </data>
 </root>

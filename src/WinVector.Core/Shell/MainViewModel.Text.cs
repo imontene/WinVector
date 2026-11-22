@@ -73,6 +73,8 @@ public sealed partial class MainViewModel
         {
             SystemFonts.Add(font);
         }
+
+        UpdateMissingFonts();
     }
 
     /// <summary>Cambia la fuente de los textos seleccionados.</summary>

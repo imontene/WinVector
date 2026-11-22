@@ -33,6 +33,12 @@
       "payload": "TextLocked"
     },
     {
+      "name": "document.fonts",
+      "kind": "event",
+      "description": "Las fuentes que usan los textos de un documento: al cargarlo y cuando cambian. La aplicación avisa de las que no están instaladas; el documento no cambia.",
+      "payload": "DocumentFonts"
+    },
+    {
       "name": "nodes.changed",
       "kind": "event",
       "description": "Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.",

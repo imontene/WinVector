@@ -345,6 +345,9 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>El usuario ha cerrado el aviso de fuentes que faltan.</summary>
+    private void OnMissingFontsClosed(InfoBar sender, object args) => ViewModel.DismissMissingFonts();
+
     /// <summary>Se ha elegido una fuente de la lista del panel.</summary>
     private void OnTextFontChanged(object sender, SelectionChangedEventArgs args)
     {

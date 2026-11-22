@@ -46,6 +46,15 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string TextLocked(TextLock reason) => TryGetString($"TextLocked{reason}");
 
+    public string MissingFonts(IReadOnlyList<(string Font, string? Replacement)> fonts)
+    {
+        ArgumentNullException.ThrowIfNull(fonts);
+        var items = fonts.Select(f => f.Replacement is { } replacement
+            ? Format("MissingFontItem", f.Font, replacement)
+            : Format("MissingFontItemDefault", f.Font));
+        return Format("MissingFontsMessage", string.Join(CultureInfo.CurrentCulture.TextInfo.ListSeparator + " ", items));
+    }
+
     public string SelectedNodes(int count, NodeKind? kind)
     {
         var nodes = count == 1 ? resources.GetString("SelectedNodesOne") : Format("SelectedNodesMany", count);

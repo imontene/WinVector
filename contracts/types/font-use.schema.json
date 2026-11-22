@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FontUse",
+  "description": "Una lista de font-family que usa algún texto del documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "families"
+  ],
+  "properties": {
+    "families": {
+      "type": "array",
+      "description": "Las familias en orden, sin comillas: la primera es la pedida, las demás son de reserva.",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
