@@ -165,10 +165,23 @@ public sealed partial class TextTests
         UseShortcut(VirtualKeyShort.KEY_V, "ToolSelect");
         Mouse.Click(At(20, 20));
         WaitForSelection("text");
-        var reopened = PanelControl("TextFontBox");
+        var reopened = PanelControl("TextFontBox").AsComboBox();
         Assert.IsTrue(
-            Retry.WhileFalse(() => (reopened.Patterns.Value.PatternOrDefault?.Value.ValueOrDefault ?? reopened.Name).Contains("Georgia", StringComparison.Ordinal), EngineTimeout).Result,
-            "Al volver a abrir, el panel no muestra la fuente del texto.");
+            Retry.WhileFalse(() => FontShown(reopened).Contains("Georgia", StringComparison.Ordinal), EngineTimeout, TimeSpan.FromMilliseconds(500)).Result,
+            $"Al volver a abrir, el panel no muestra la fuente del texto (muestra '{FontShown(reopened)}').");
+    }
+
+    /// <summary>La fuente que muestra la lista del panel: la elegida o, si no está en la lista, la escrita.</summary>
+    private static string FontShown(FlaUI.Core.AutomationElements.ComboBox box)
+    {
+        try
+        {
+            return box.SelectedItem?.Text is { Length: > 0 } selected ? selected : box.EditableText ?? string.Empty;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException or FlaUI.Core.Exceptions.PatternNotSupportedException)
+        {
+            return string.Empty;
+        }
     }
 
     /// <summary>Guarda y devuelve el texto si contiene <paramref name="text"/>, o null para volver a intentarlo.</summary>
