@@ -107,6 +107,14 @@ export interface DocumentContent {
   readonly revision: number;
 }
 
+/** Fuentes que usan los textos de un documento, para avisar de las que no están instaladas. */
+export interface DocumentFonts {
+  /** Documento. */
+  readonly documentId: string;
+  /** Cada lista de font-family distinta, una vez. */
+  readonly fonts: readonly FontUse[];
+}
+
 /** Documento que la aplicación entrega al motor. */
 export interface DocumentLoad {
   /** Identificador del documento, asignado por la aplicación. */
@@ -171,6 +179,12 @@ export interface FilesDropped {
 
 /** Regla de relleno: qué zonas de un trazado que se corta a sí mismo, o con subtrazados unos dentro de otros, se rellenan. evenodd deja agujeros donde se superponen. */
 export type FillRule = "nonzero" | "evenodd";
+
+/** Una lista de font-family que usa algún texto del documento. */
+export interface FontUse {
+  /** Las familias en orden, sin comillas: la primera es la pedida, las demás son de reserva. */
+  readonly families: readonly string[];
+}
 
 /** Estado del historial de deshacer de un documento. */
 export interface HistoryState {
@@ -625,6 +639,8 @@ export interface BridgeEvents {
   readonly "shape.converted": ShapeConverted;
   /** Con la herramienta Texto (o con doble clic), se ha intentado editar un texto que no se puede editar en el lienzo. La aplicación explica por qué en la barra de estado. */
   readonly "text.locked": TextLocked;
+  /** Las fuentes que usan los textos de un documento: al cargarlo y cuando cambian. La aplicación avisa de las que no están instaladas; el documento no cambia. */
+  readonly "document.fonts": DocumentFonts;
   /** Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel. */
   readonly "nodes.changed": NodeSelection;
   /** El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado. */
@@ -684,6 +700,7 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "selection.changed",
   "shape.converted",
   "text.locked",
+  "document.fonts",
   "nodes.changed",
   "canvas.contextMenu",
   "error",

@@ -83,4 +83,10 @@ public interface IShellTexts
 
     /// <summary>Aviso cuando se intenta editar en el lienzo un texto que no se puede editar, con el motivo.</summary>
     string TextLocked(TextLock reason);
+
+    /// <summary>
+    /// Aviso de las fuentes que usa el documento y no están instaladas, con la que se usa en su
+    /// lugar (null: la de por defecto).
+    /// </summary>
+    string MissingFonts(IReadOnlyList<(string Font, string? Replacement)> fonts);
 }

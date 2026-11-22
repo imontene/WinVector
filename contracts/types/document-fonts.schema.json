@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentFonts",
+  "description": "Fuentes que usan los textos de un documento, para avisar de las que no están instaladas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "fonts"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Documento."
+    },
+    "fonts": {
+      "type": "array",
+      "description": "Cada lista de font-family distinta, una vez.",
+      "items": {
+        "$ref": "./font-use.schema.json"
+      }
+    }
+  }
+}

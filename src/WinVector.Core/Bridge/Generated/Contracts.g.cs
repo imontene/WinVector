@@ -130,6 +130,13 @@ public sealed record DocumentContent(
     [property: JsonPropertyName("svg")] string Svg,
     [property: JsonPropertyName("revision")] int Revision);
 
+/// <summary>Fuentes que usan los textos de un documento, para avisar de las que no están instaladas.</summary>
+/// <param name="DocumentId">Documento.</param>
+/// <param name="Fonts">Cada lista de font-family distinta, una vez.</param>
+public sealed record DocumentFonts(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("fonts")] IReadOnlyList<FontUse> Fonts);
+
 /// <summary>Documento que la aplicación entrega al motor.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Name">Nombre que se muestra en la pestaña, por ejemplo el nombre del archivo.</param>
@@ -194,6 +201,11 @@ public enum FillRule
     [JsonStringEnumMemberName("evenodd")]
     Evenodd,
 }
+
+/// <summary>Una lista de font-family que usa algún texto del documento.</summary>
+/// <param name="Families">Las familias en orden, sin comillas: la primera es la pedida, las demás son de reserva.</param>
+public sealed record FontUse(
+    [property: JsonPropertyName("families")] IReadOnlyList<string> Families);
 
 /// <summary>Estado del historial de deshacer de un documento.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -772,6 +784,9 @@ public static class BridgeEvents
     /// <summary>Con la herramienta Texto (o con doble clic), se ha intentado editar un texto que no se puede editar en el lienzo. La aplicación explica por qué en la barra de estado.</summary>
     public static readonly BridgeEvent<TextLocked> TextLocked = new("text.locked");
 
+    /// <summary>Las fuentes que usan los textos de un documento: al cargarlo y cuando cambian. La aplicación avisa de las que no están instaladas; el documento no cambia.</summary>
+    public static readonly BridgeEvent<DocumentFonts> DocumentFonts = new("document.fonts");
+
     /// <summary>Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.</summary>
     public static readonly BridgeEvent<NodeSelection> NodesChanged = new("nodes.changed");
 
@@ -821,6 +836,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(ContextMenuRequest))]
 [JsonSerializable(typeof(CornerRadiusChange))]
 [JsonSerializable(typeof(DocumentContent))]
+[JsonSerializable(typeof(DocumentFonts))]
 [JsonSerializable(typeof(DocumentLoad))]
 [JsonSerializable(typeof(DocumentLoadResult))]
 [JsonSerializable(typeof(DocumentParseError))]
@@ -828,6 +844,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(DocumentState))]
 [JsonSerializable(typeof(EngineReady))]
 [JsonSerializable(typeof(FilesDropped))]
+[JsonSerializable(typeof(FontUse))]
 [JsonSerializable(typeof(HistoryState))]
 [JsonSerializable(typeof(KeyboardShortcut))]
 [JsonSerializable(typeof(NodeSelection))]

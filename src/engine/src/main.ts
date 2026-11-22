@@ -59,7 +59,7 @@ import {
   type PathData,
 } from "./paths";
 import { applyStyle, readStyle } from "./style";
-import { applyTextChange, fontFamilyValue, readTextProperties } from "./text";
+import { applyTextChange, documentFonts, fontFamilyValue, readTextProperties } from "./text";
 import { arrange, group, ungroup } from "./structure";
 import { rotationOf, setGeometry } from "./transform";
 import { gridSpacing, Guides, type Viewport } from "./viewport";
@@ -89,6 +89,7 @@ const documents = new DocumentManager(workspace, {
     // Lo seleccionado puede haber cambiado de tamaño o de sitio.
     if (documents.open(documentId).selection.items.length > 0) emitSelection(documentId);
     announceArtboard(documentId);
+    scheduleFonts(documentId);
     if (documents.active?.id === documentId) refreshOverlay();
   },
   onViewportChanged: (documentId, { zoom }) => {
@@ -135,6 +136,30 @@ function announceArtboard(documentId: string): void {
   if (previous && sameArtboard(previous, artboard)) return;
   announcedArtboard.set(documentId, artboard);
   bridge.emit("artboard.changed", { documentId, ...artboard });
+}
+
+/** Fuentes anunciadas de cada documento, para no repetirlas. */
+const announcedFonts = new Map<string, string>();
+const fontTimers = new Map<string, number>();
+
+/**
+ * Anuncia las fuentes que usan los textos de un documento si han cambiado. Se espera un momento
+ * después de cada cambio: leer el estilo de todos los textos no debe frenar un arrastre.
+ */
+function scheduleFonts(documentId: string, delay = 300): void {
+  window.clearTimeout(fontTimers.get(documentId));
+  fontTimers.set(
+    documentId,
+    window.setTimeout(() => {
+      fontTimers.delete(documentId);
+      if (!documents.ids.includes(documentId)) return;
+      const fonts = documentFonts(documents.get(documentId).root).map((families) => ({ families }));
+      const key = JSON.stringify(fonts);
+      if (announcedFonts.get(documentId) === key) return;
+      announcedFonts.set(documentId, key);
+      bridge.emit("document.fonts", { documentId, fonts });
+    }, delay),
+  );
 }
 
 let overlayFrame = 0;
@@ -237,6 +262,8 @@ bridge.handle("document.load", ({ documentId, name, svg }) => {
     announcedArtboard.delete(documentId);
     announcedZoom.delete(documentId);
     announceArtboard(documentId);
+    announcedFonts.delete(documentId);
+    scheduleFonts(documentId, 0);
     return {
       documentId,
       loaded: true,
@@ -283,6 +310,7 @@ bridge.handle("document.close", ({ documentId }) =>
     documents.close(documentId);
     announcedZoom.delete(documentId);
     announcedArtboard.delete(documentId);
+    announcedFonts.delete(documentId);
     refreshOverlay();
     return { documentId };
   }),

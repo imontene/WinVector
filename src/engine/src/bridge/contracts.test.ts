@@ -213,6 +213,13 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "event",
+    id: "e9",
+    name: "document.fonts",
+    payload: { documentId: "d1", fonts: [{ families: ["Segoe UI", "sans-serif"] }] },
+  },
+  {
+    ...base,
+    kind: "event",
     id: "e8",
     name: "tool.changed",
     payload: { tool: "zoom" },
@@ -499,6 +506,8 @@ function summarize(message: BridgeMessage): string {
       return `motor ${message.payload.engineVersion}`;
     case "shape.converted":
       return `${message.payload.from} pasa a polígono`;
+    case "document.fonts":
+      return `fuentes: ${message.payload.fonts.map((f) => f.families[0] ?? "").join(", ")}`;
     case "text.locked":
       return `texto bloqueado: ${message.payload.reason}`;
     case "nodes.changed":
@@ -560,6 +569,7 @@ describe("contrato del puente", () => {
       "elegir hand",
       "viewBox 210",
       "zoom 2",
+      "fuentes: Segoe UI",
       "herramienta zoom",
       "alto 100",
       "atajo Ctrl+s",

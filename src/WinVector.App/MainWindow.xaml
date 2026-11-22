@@ -681,6 +681,17 @@
                 <!-- Con una forma seleccionada el panel puede no caber: se desplaza. -->
                 <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
                     <StackPanel Padding="16,12" Spacing="8">
+                        <!--
+                            Fuentes que faltan (issue #97). Aquí y no sobre el lienzo: el WebView2 del lienzo puede
+                            quedar por encima de lo que se le superpone.
+                        -->
+                        <InfoBar
+                            x:Uid="MissingFontsBar"
+                            AutomationProperties.AutomationId="MissingFontsBar"
+                            CloseButtonClick="OnMissingFontsClosed"
+                            IsOpen="{x:Bind ViewModel.HasMissingFonts, Mode=OneWay}"
+                            Message="{x:Bind ViewModel.MissingFontsMessage, Mode=OneWay}"
+                            Severity="Warning" />
                         <TextBlock x:Uid="PropertiesTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
                         <!-- Con algo seleccionado: posición, tamaño y giro, en unidades del documento. -->
                         <StackPanel Spacing="8" Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelection), Mode=OneWay}">
@@ -1021,6 +1032,13 @@
                                     SelectionChanged="OnTextFontChanged"
                                     Text="{x:Bind ViewModel.TextFontFamily, Mode=OneWay}"
                                     TextSubmitted="OnTextFontSubmitted" />
+                                <TextBlock
+                                    x:Uid="TextFontMissing"
+                                    AutomationProperties.AutomationId="TextFontMissing"
+                                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    TextWrapping="Wrap"
+                                    Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.IsTextFontMissing), Mode=OneWay}" />
                                 <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
