@@ -319,17 +319,22 @@ export class TextEditor {
   #columnAt(line: number, x: number): Position {
     const text = this.#lines[line] ?? "";
     const first = firstChar(this.#lines, line);
-    const parts = graphemes(text);
-    for (const [i, { index }] of parts.entries()) {
-      // Un grafema de varias unidades se dibuja con la primera (las demás no tienen anchura): va de
-      // donde empieza la primera a donde empieza el siguiente grafema (o acaba la línea).
-      const left = this.text.getStartPositionOfChar(first + index).x;
-      const next = parts[i + 1];
-      const right = next
-        ? this.text.getStartPositionOfChar(first + next.index).x
-        : this.text.getEndPositionOfChar(first + text.length - 1).x;
-      if (x < (left + right) / 2) return { line, column: index };
+    // Cada grafema va de donde empieza (en el orden del texto) a donde acaba: en un texto de
+    // derecha a izquierda, el principio está a la derecha. El punto va al lado más cercano del
+    // grafema que lo contiene, o del más cercano si cae fuera de todos (issue #98).
+    let best: { column: number; distance: number } | null = null;
+    for (const { index, segment } of graphemes(text)) {
+      const start = this.text.getStartPositionOfChar(first + index).x;
+      const end = this.text.getEndPositionOfChar(first + index + segment.length - 1).x;
+      const inside = x >= Math.min(start, end) && x <= Math.max(start, end);
+      const toStart = Math.abs(x - start);
+      const toEnd = Math.abs(x - end);
+      const column = toStart <= toEnd ? index : index + segment.length;
+      const distance = inside ? 0 : Math.min(toStart, toEnd);
+      if (!best || distance < best.distance) best = { column, distance };
+      if (inside) break;
     }
+    if (best) return { line, column: best.column };
     return { line, column: text.length };
   }
 

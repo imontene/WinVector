@@ -4,6 +4,8 @@ import { SvgDocument } from "../document";
 import { localBox, selectableChildren, selectionBounds } from "../selection";
 import {
   applyTransform,
+  restore,
+  snapshot,
   elementToRoot,
   moveBy,
   rotateAround,
@@ -163,16 +165,23 @@ describe("aplicar transformaciones", () => {
     expect(byId(doc, "u").getAttribute("x")).toBe("1mm");
   });
 
-  it("un texto con tspan colocados se mueve con transform; uno simple, con x e y", () => {
+  it("un texto se mueve con sus posiciones, también las de sus tspan; sobre un trazado, con transform", () => {
     const doc = load(
       svg(
-        `<text id="a" x="5" y="10">Hola</text><text id="b" x="5" y="10">a<tspan x="20">b</tspan></text>`,
+        `<text id="a" x="5" y="10">Hola</text><text id="b" x="5" y="10">a<tspan x="20 22" dy="3">bc</tspan></text><text id="c">sin x</text>`,
       ),
     );
     applyTransform(byId(doc, "a"), moveBy(1, 1), doc.root);
     applyTransform(byId(doc, "b"), moveBy(1, 1), doc.root);
+    applyTransform(byId(doc, "c"), moveBy(4, 2), doc.root);
     expect(byId(doc, "a").getAttribute("x")).toBe("6");
-    expect(byId(doc, "b").getAttribute("transform")).toBe("translate(1 1)");
+    expect(byId(doc, "b").hasAttribute("transform")).toBe(false);
+    expect(byId(doc, "b").querySelector("tspan")?.getAttribute("x")).toBe("21 23");
+    expect(byId(doc, "b").querySelector("tspan")?.getAttribute("dy")).toBe("3");
+    expect([byId(doc, "c").getAttribute("x"), byId(doc, "c").getAttribute("y")]).toEqual([
+      "4",
+      "2",
+    ]);
     const onPath = load(
       svg(
         `<defs><path id="c" d="M0 50 Q50 0 100 50"/></defs><text id="t"><textPath href="#c">Curva</textPath></text>`,
@@ -180,6 +189,41 @@ describe("aplicar transformaciones", () => {
     );
     applyTransform(byId(onPath, "t"), moveBy(10, 0), onPath.root);
     expect(byId(onPath, "t").getAttribute("transform")).toBe("translate(10 0)");
+  });
+
+  it("escalar un texto en proporción cambia su tamaño de fuente y sus líneas; sin proporción, transform", () => {
+    const doc = load(
+      svg(
+        `<g font-size="10"><text id="a" x="10" y="20" stroke="#000" stroke-width="1"><tspan x="10" y="20">a</tspan><tspan x="10" y="32" style="font-size:8px">b</tspan></text></g><text id="b" x="0" y="10" font-size="10">c</text>`,
+      ),
+    );
+    const before = (byId(doc, "a") as SVGGraphicsElement).getBBox();
+    applyTransform(byId(doc, "a"), scaleAround(2, 2, { x: 10, y: 20 }), doc.root);
+    const text = byId(doc, "a");
+    expect(text.hasAttribute("transform")).toBe(false);
+    // El tamaño heredado del grupo pasa al texto; el de su tramo, en su estilo.
+    expect(text.getAttribute("font-size")).toBe("20");
+    expect(text.getAttribute("stroke-width")).toBe("2");
+    expect(text.lastElementChild?.getAttribute("y")).toBe("44");
+    expect(text.lastElementChild?.getAttribute("style")).toBe("font-size:16");
+    const after = (text as SVGGraphicsElement).getBBox();
+    expect(after.width).toBeCloseTo(before.width * 2, 0);
+
+    applyTransform(byId(doc, "b"), scaleAround(2, 1, { x: 0, y: 0 }), doc.root);
+    expect(byId(doc, "b").getAttribute("transform")).toBe("matrix(2 0 0 1 0 0)");
+    expect(byId(doc, "b").getAttribute("font-size")).toBe("10");
+  });
+
+  it("la instantánea de un texto devuelve también sus tspan", () => {
+    const doc = load(
+      svg(`<text id="a" x="10" y="20" font-size="10"><tspan x="10" y="20">a</tspan></text>`),
+    );
+    const saved = snapshot(byId(doc, "a"));
+    applyTransform(byId(doc, "a"), scaleAround(3, 3, { x: 0, y: 0 }), doc.root);
+    restore(saved);
+    expect(byId(doc, "a").outerHTML).toBe(
+      '<text id="a" x="10" y="20" font-size="10"><tspan x="10" y="20">a</tspan></text>',
+    );
   });
 
   it("con un transform previo, lo compone", () => {
