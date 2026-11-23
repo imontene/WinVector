@@ -416,6 +416,12 @@ export function installGradientTool(target: Window, host: GradientToolHost) {
   const onPointerMove = (event: PointerEvent) => {
     if (!isActive() || !press) return;
     consume(event);
+    drag(event);
+  };
+
+  /** Aplica la posición del puntero al arrastre en curso. */
+  const drag = (event: PointerEvent) => {
+    if (!press) return;
     const p = point(event);
     if (!press.dragged && Math.hypot(p.x - press.start.x, p.y - press.start.y) < DRAG_THRESHOLD)
       return;
@@ -456,6 +462,8 @@ export function installGradientTool(target: Window, host: GradientToolHost) {
   const onPointerUp = (event: PointerEvent) => {
     if (!isActive() || !press) return;
     consume(event);
+    // La posición final cuenta aunque no haya llegado ningún movimiento (un arrastre de un salto).
+    drag(event);
     finish(false);
   };
 
