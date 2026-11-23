@@ -894,6 +894,19 @@ export function installVertexTool(target: Window, host: VertexToolHost) {
       const node = first === undefined ? undefined : pathNodes(path.data)[first];
       return node ? { subpath: node.subpath, index: node.index } : null;
     },
+    /**
+     * Selecciona todos los nodos o vértices de la forma que se edita (Ctrl+A, issue #114). Devuelve
+     * false si no se edita ninguna.
+     */
+    selectAllNodes(): boolean {
+      if (!isActive()) return false;
+      const editing = current();
+      const count = editing ? (displayVertices(editing.element)?.points.length ?? 0) : 0;
+      if (count === 0) return false;
+      selected = new Set(Array.from({ length: count }, (_, i) => i));
+      host.changed();
+      return true;
+    },
     /** Olvida los nodos seleccionados: después de una operación, su numeración ya no vale. */
     clearNodes() {
       selected = new Set();

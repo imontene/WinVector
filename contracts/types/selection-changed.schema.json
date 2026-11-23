@@ -59,6 +59,10 @@
     "text": {
       "$ref": "./text-properties.schema.json",
       "description": "Propiedades tipográficas de los textos seleccionados; ausente si no hay ningún texto."
+    },
+    "corners": {
+      "$ref": "./selection-corners.schema.json",
+      "description": "Esquinas de los objetos seleccionados que se pueden redondear todas a la vez (issue #114); ausente si ninguno las tiene."
     }
   }
 }

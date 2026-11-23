@@ -91,6 +91,16 @@ export function cornerOf(data: PathData, key: string): Corner | null {
   return node && subpath ? cornerAt(chainOf(subpath), node.index) : null;
 }
 
+/** Claves de todos los nodos que son esquinas entre dos rectas (los que se pueden redondear). */
+export function cornerKeys(data: PathData): string[] {
+  return data.flatMap((subpath, s) => {
+    const chain = chainOf(subpath);
+    return chain.nodes.flatMap((_, i) =>
+      cornerAt(chain, i) ? [nodeKey({ subpath: s, index: i })] : [],
+    );
+  });
+}
+
 /**
  * Redondea las esquinas de un subtrazado. `tangent` da, para cada esquina, la distancia del vértice
  * a la que empieza el arco (0: sin redondear); se reduce si no cabe.

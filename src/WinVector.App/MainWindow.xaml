@@ -286,6 +286,12 @@
                             x:Uid="MenuPathSeparate"
                             AutomationProperties.AutomationId="MenuPathSeparate"
                             Command="{x:Bind ViewModel.SeparatePathCommand}" />
+                        <!-- Lleva al radio de las esquinas del panel (issue #114). -->
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            x:Uid="MenuPathRoundCorners"
+                            AutomationProperties.AutomationId="MenuPathRoundCorners"
+                            Command="{x:Bind ViewModel.RoundCornersCommand}" />
                         <!--
                             Nodos de un trazado con la herramienta Vértices (issue #77). Sin acelerador: Mayús+letra
                             escribiría mayúsculas en los cuadros de texto. Con el lienzo enfocado los atiende el motor.
@@ -949,6 +955,19 @@
                                 </ItemsControl>
                             </StackPanel>
 
+                            <!-- Todas las esquinas de los polígonos y trazados seleccionados (issue #114). -->
+                            <NumberBox
+                                x:Name="ObjectCornerRadiusBox"
+                                x:Uid="ObjectCornerRadiusBox"
+                                AutomationProperties.AutomationId="ObjectCornerRadiusBox"
+                                LargeChange="10"
+                                Minimum="0"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Compact"
+                                ValueChanged="OnObjectCornerRadiusChanged"
+                                Value="{x:Bind ViewModel.ObjectCornerRadius, Mode=OneWay}"
+                                Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasObjectCorners), Mode=OneWay}" />
+
                             <!-- Nodos seleccionados de un trazado con la herramienta Vértices (issue #77). -->
                             <StackPanel Spacing="8" Visibility="{x:Bind app:BindingFunctions.VisibleWhen(ViewModel.HasSelectedNodes), Mode=OneWay}">
                                 <TextBlock
@@ -1006,6 +1025,7 @@
                                 </Grid>
                                 <!-- Radio de las esquinas seleccionadas entre dos rectas (issue #80). -->
                                 <NumberBox
+                                    x:Name="CornerRadiusBox"
                                     x:Uid="CornerRadiusBox"
                                     AutomationProperties.AutomationId="CornerRadiusBox"
                                     LargeChange="10"

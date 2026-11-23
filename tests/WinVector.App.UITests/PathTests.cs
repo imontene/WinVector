@@ -300,6 +300,47 @@ public sealed partial class PathTests
         StringAssert.Matches(Save(), RoundedPath("0:3=3"));
     }
 
+    [TestMethod]
+    public void TodasLasEsquinasDeDosFigurasSeRedondeanALaVez()
+    {
+        // Dos rectángulos convertidos en trazados, en el cielo a la izquierda de la tarjeta.
+        UseShortcut(VirtualKeyShort.KEY_R, "ToolRectangle");
+        Mouse.Drag(At(4, 8), At(30, 40));
+        WaitForSelection("rect");
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.SHIFT, VirtualKeyShort.KEY_C);
+        WaitForSelection("path");
+        Mouse.Drag(At(36, 8), At(44, 40));
+        WaitForSelection("rect");
+        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.SHIFT, VirtualKeyShort.KEY_C);
+        WaitForSelection("path");
+
+        // Con Selección, los dos; el radio del panel redondea todas sus esquinas (issue #114).
+        UseToolButton("ToolSelect");
+        AppSession.ShiftClick(At(16, 24));
+        WaitForSelection("2");
+        SetNumber("ObjectCornerRadiusBox", 3);
+
+        var svg = Retry.WhileNull(() => SaveContaining("data-winvector-corner-radii"), EngineTimeout, TimeSpan.FromSeconds(1)).Result
+            ?? throw new AssertFailedException("El redondeo no se guardó.");
+        Assert.AreEqual(2, RoundedPath("0:0=3 0:1=3 0:2=3 0:3=3").Count(svg), "Las dos figuras deben tener sus cuatro esquinas redondeadas.");
+
+        // Se vuelve a abrir: el panel muestra el radio y 0 lo quita.
+        _session?.Dispose();
+        _session = null;
+        Launch();
+        UseShortcut(VirtualKeyShort.KEY_V, "ToolSelect");
+        Mouse.Click(At(16, 24));
+        WaitForSelection("path");
+        var box = Retry.WhileNull(() => Session.FindById("ObjectCornerRadiusBox"), EngineTimeout).Result
+            ?? throw new AssertFailedException("No aparece el radio de las esquinas.");
+        Assert.IsTrue(
+            Retry.WhileFalse(() => Math.Abs(box.Patterns.RangeValue.Pattern.Value - 3) < 0.01, EngineTimeout).Result,
+            "Al volver a abrir, el panel no muestra el radio de las esquinas.");
+        SetNumber("ObjectCornerRadiusBox", 0);
+
+        Assert.AreEqual(1, Regex.Count(Save(), "data-winvector-corner-radii="), "Solo la otra figura sigue redondeada.");
+    }
+
     [GeneratedRegex("<path [^>]*d=\"M[^\"]*[CcSs][^\"]*Z\"")]
     private static partial Regex CurvedClosedPath();
 

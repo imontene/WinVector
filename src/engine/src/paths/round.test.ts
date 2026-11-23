@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { pointAt } from "./curves";
 import { insertNode } from "./nodeEdit";
 import { parsePath } from "./parse";
-import { effectiveRadii, remapRadii, roundCorners, roundPolygon } from "./round";
+import { cornerKeys, effectiveRadii, remapRadii, roundCorners, roundPolygon } from "./round";
 import { serializePath } from "./serialize";
 
 const parse = (d: string) => parsePath(d).data;
@@ -69,6 +69,28 @@ describe("redondear esquinas", () => {
     expect([...remapRadii(before, after, radii({ "0:1": 3, "0:3": 1 }))]).toEqual([
       ["0:2", 3],
       ["0:4", 1],
+    ]);
+  });
+});
+
+describe("esquinas de una figura (issue #114)", () => {
+  it("encuentra todas las esquinas entre dos rectas, también la del cierre", () => {
+    expect(cornerKeys(parsePath("M0 0H10V10H0Z").data)).toEqual(["0:0", "0:1", "0:2", "0:3"]);
+  });
+
+  it("en un trazado abierto se salta los extremos, y en las curvas los nodos que tocan una", () => {
+    expect(cornerKeys(parsePath("M0 0L10 0L0 10L10 10").data)).toEqual(["0:1", "0:2"]);
+    expect(cornerKeys(parsePath("M0 0L10 0C15 5 15 10 10 10L0 10Z").data)).toEqual(["0:0", "0:3"]);
+  });
+
+  it("cada subtrazado tiene sus claves", () => {
+    expect(cornerKeys(parsePath("M0 0H10V10Z M20 20H30V30Z").data)).toEqual([
+      "0:0",
+      "0:1",
+      "0:2",
+      "1:0",
+      "1:1",
+      "1:2",
     ]);
   });
 });

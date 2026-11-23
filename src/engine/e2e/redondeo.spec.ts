@@ -194,3 +194,87 @@ test("sin esquinas que redondear no cambia nada", async ({ page }) => {
   });
   expect(await tag(page)).toBe("polygon");
 });
+
+// ---------------------------------------------------------------------------------------------
+// Redondear todas las esquinas de una figura a la vez (issue #114).
+// ---------------------------------------------------------------------------------------------
+
+const MIXED = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <polygon id="cuadro" points="${SQUARE}" fill="#3a7bd5"/>
+  <path id="flecha" d="M250 100 L350 150 L250 200 Z" fill="#1f4f99"/>
+  <polyline id="zeta" points="20,20 80,20 20,80 80,80" fill="none" stroke="#000"/>
+</svg>
+`;
+
+const selectionChanged = async (page: Page) =>
+  (await sent(page)).filter((m) => m.name === "selection.changed").at(-1)?.payload as
+    { items: unknown[]; corners?: { radius?: number } } | undefined;
+
+const attributeOf = (page: Page, id: string, name: string) =>
+  page.locator(`#workspace #${id}`).evaluate((e, n) => e.getAttribute(n), name);
+
+test("con Selección, el radio se aplica a todas las esquinas de varias figuras en un paso", async ({
+  page,
+}) => {
+  await load(page, "d3", MIXED);
+  await send(page, "d3", "selection.selectAll", {});
+  await expect.poll(() => selectionChanged(page)).toMatchObject({ corners: { radius: 0 } });
+
+  const result = await send(page, "d3", "path.cornerRadius", { radius: 10, all: true });
+  expect(result).toMatchObject({ ok: true, payload: { changed: true } });
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "corner-radius" });
+
+  // El cuadrado y la flecha, todas sus esquinas; la zeta (abierta), sus dos esquinas interiores.
+  expect(await attributeOf(page, "cuadro", "data-winvector-corner-radii")).toBe(
+    "0:0=10 0:1=10 0:2=10 0:3=10",
+  );
+  expect(await attributeOf(page, "flecha", "data-winvector-corner-radii")).toBe(
+    "0:0=10 0:1=10 0:2=10",
+  );
+  expect(await attributeOf(page, "zeta", "data-winvector-corner-radii")).toBe("0:1=10 0:2=10");
+  await expect.poll(() => selectionChanged(page)).toMatchObject({ corners: { radius: 10 } });
+
+  // Un solo paso: deshacer devuelve las tres figuras como estaban.
+  await send(page, "d3", "history.undo", {});
+  await expect(page.locator("#workspace polygon#cuadro")).toHaveCount(1);
+  await expect(page.locator("#workspace polyline#zeta")).toHaveCount(1);
+  expect(await attributeOf(page, "flecha", "d")).toBe("M250 100 L350 150 L250 200 Z");
+});
+
+test("con radios distintos el radio común no se indica, y 0 quita el redondeo", async ({
+  page,
+}) => {
+  await load(page, "d4", MIXED);
+  await send(page, "d4", "selection.selectAll", {});
+  // Un radio que no cabe se reduce en cada esquina según sus lados: ya no tienen todas el mismo.
+  await send(page, "d4", "path.cornerRadius", { radius: 200, all: true });
+  await expect.poll(async () => (await selectionChanged(page))?.corners).toEqual({});
+
+  await send(page, "d4", "path.cornerRadius", { radius: 0, all: true });
+  expect(await attributeOf(page, "cuadro", "data-winvector-corner-radii")).toBeNull();
+  expect(await attributeOf(page, "cuadro", "d")).toBe("M100 100H200V200H100Z");
+  await expect.poll(() => selectionChanged(page)).toMatchObject({ corners: { radius: 0 } });
+});
+
+test("los rectángulos, las estrellas y las elipses no tienen esquinas que redondear", async ({
+  page,
+}) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect id="r" x="10" y="10" width="50" height="40"/>
+  <ellipse id="e" cx="200" cy="100" rx="40" ry="20"/>
+</svg>
+`;
+  await load(page, "d5", svg);
+  await send(page, "d5", "selection.selectAll", {});
+  await expect.poll(async () => (await selectionChanged(page))?.items.length).toBe(2);
+  expect((await selectionChanged(page))?.corners).toBeUndefined();
+  const result = await send(page, "d5", "path.cornerRadius", { radius: 5, all: true });
+  expect(result).toMatchObject({ ok: true, payload: { changed: false } });
+});
+
+test("con Vértices, Ctrl+A (selection.selectAll) selecciona todos los nodos", async ({ page }) => {
+  await editCaja(page);
+  await send(page, "d2", "selection.selectAll", {});
+  await expect.poll(() => nodesChanged(page)).toMatchObject({ count: 4, canRound: true });
+  await expect(page.locator(".overlay .overlay-vertex-selected")).toHaveCount(4);
+});

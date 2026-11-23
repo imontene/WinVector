@@ -38,6 +38,7 @@ public sealed partial class MainViewModel
 
     /// <summary>Alguna esquina seleccionada se puede redondear (issue #80).</summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RoundCornersCommand))]
     private bool _canRoundCorners;
 
     /// <summary>Radio común de las esquinas seleccionadas, o NaN si son distintos o no hay ninguna.</summary>

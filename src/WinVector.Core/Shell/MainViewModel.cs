@@ -100,6 +100,7 @@ public sealed partial class MainViewModel : ObservableObject
         Add("path-reverse", ReversePathCommand);
         Add("path-combine", CombinePathsCommand);
         Add("path-separate", SeparatePathCommand);
+        Add("path-round-corners", RoundCornersCommand);
         Add("bring-to-front", BringToFrontCommand);
         Add("bring-forward", BringForwardCommand);
         Add("send-backward", SendBackwardCommand);
@@ -1241,6 +1242,7 @@ public sealed partial class MainViewModel : ObservableObject
         ShowShape(null);
         ShowNodes(null);
         ShowText(null);
+        ShowObjectCorners(null);
         UpdateMissingFonts();
         OnPropertyChanged(nameof(ZoomText));
         OnPropertyChanged(nameof(CurrentArtboard));
@@ -1406,6 +1408,7 @@ public sealed partial class MainViewModel : ObservableObject
         ShowStyle(selection.Items.Count > 0 ? selection.Style : null);
         ShowShape(selection.Items.Count == 1 ? selection.Shape : null);
         ShowText(selection.Text);
+        ShowObjectCorners(selection.Items.Count > 0 ? selection.Corners : null);
         // Lo mismo que vertexEditKind en el motor: polígonos, polilíneas, líneas, rectángulos y trazados.
         CanEditVertices = selection.Items is [{ TagName: "polygon" or "polyline" or "line" or "rect" or "path" }];
         var items = selection.Items.Count switch
