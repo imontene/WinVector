@@ -39,6 +39,12 @@
       "payload": "DocumentFonts"
     },
     {
+      "name": "document.gradients",
+      "kind": "event",
+      "description": "La biblioteca de degradados de un documento: al cargarlo y cuando cambia.",
+      "payload": "DocumentGradients"
+    },
+    {
       "name": "nodes.changed",
       "kind": "event",
       "description": "Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.",
@@ -76,6 +82,13 @@
       "kind": "command",
       "description": "Aplica o cambia un degradado en el relleno o el trazo de la selección: tipo, paradas y repetición. Crea el degradado si hace falta y copia el que compartan otros objetos. Los cambios seguidos de las posiciones o colores de las mismas paradas son un solo paso del historial.",
       "payload": "GradientRequest",
+      "response": "ObjectChange"
+    },
+    {
+      "name": "selection.useGradient",
+      "kind": "command",
+      "description": "Pinta el relleno o el trazo de la selección con un degradado de la biblioteca, compartiendo sus paradas o con una copia. Se puede deshacer.",
+      "payload": "UseGradient",
       "response": "ObjectChange"
     },
     {

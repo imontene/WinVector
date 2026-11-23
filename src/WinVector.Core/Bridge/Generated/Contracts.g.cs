@@ -139,6 +139,13 @@ public sealed record DocumentFonts(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("fonts")] IReadOnlyList<FontUse> Fonts);
 
+/// <summary>Biblioteca de degradados de un documento (issue #112): los que tienen paradas propias, con cuántas pinturas de objetos las usan.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Gradients">En el orden del documento.</param>
+public sealed record DocumentGradients(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("gradients")] IReadOnlyList<GradientPaint> Gradients);
+
 /// <summary>Documento que la aplicación entrega al motor.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Name">Nombre que se muestra en la pestaña, por ejemplo el nombre del archivo.</param>
@@ -223,23 +230,29 @@ public enum GradientKind
 /// <param name="Id">Identificador del degradado en el documento.</param>
 /// <param name="Stops">Paradas en orden. Vacío si el degradado no tiene ninguna (no se dibuja).</param>
 /// <param name="Users">Cuántas pinturas de objetos usan este degradado directamente. Con más de una, cambiarlo para un objeto le crea una copia propia.</param>
+/// <param name="StopsId">Degradado de la biblioteca que tiene sus paradas: él mismo o uno del que las hereda por href (issue #112). Ausente si no tiene paradas.</param>
+/// <param name="StopsUsers">Cuántas pinturas de objetos comparten esas paradas. Con más de una, se pueden cambiar para todos a la vez (shared en selection.setGradient).</param>
 public sealed record GradientPaint(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("kind")] GradientKind Kind,
     [property: JsonPropertyName("spread")] SpreadMethod Spread,
     [property: JsonPropertyName("stops")] IReadOnlyList<GradientStop> Stops,
-    [property: JsonPropertyName("users")] int Users);
+    [property: JsonPropertyName("users")] int Users,
+    [property: JsonPropertyName("stopsId"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StopsId = null,
+    [property: JsonPropertyName("stopsUsers"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? StopsUsers = null);
 
 /// <summary>Degradado que se quiere en el relleno o el trazo de la selección (issue #109). Lo que no se indica no cambia. Un objeto que no pinta con un degradado recibe uno nuevo (ADR 0009); uno compartido con otros objetos se copia antes de cambiarlo.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Kind">Tipo de degradado. Si el objeto ya tiene uno de otro tipo, se convierte conservando las paradas; si no tiene, se crea de este tipo.</param>
 /// <param name="Stops">Paradas, en orden. Si el objeto no tiene degradado y no se indican, van de su color a ese color transparente.</param>
+/// <param name="Shared">True: las paradas y la repetición se cambian donde están, para todos los objetos que las comparten (biblioteca, issue #112). Ausente o false: en un degradado propio de cada objeto.</param>
 public sealed record GradientRequest(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("property")] PaintProperty Property,
     [property: JsonPropertyName("kind"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] GradientKind? Kind = null,
     [property: JsonPropertyName("stops"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<GradientStop>? Stops = null,
-    [property: JsonPropertyName("spread"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SpreadMethod? Spread = null);
+    [property: JsonPropertyName("spread"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SpreadMethod? Spread = null,
+    [property: JsonPropertyName("shared"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? Shared = null);
 
 /// <summary>Parada de un degradado, como se dibuja.</summary>
 /// <param name="Offset">Posición de 0 a 1, nunca menor que la de la parada anterior.</param>
@@ -689,6 +702,16 @@ public enum ToolName
 public sealed record ToolState(
     [property: JsonPropertyName("tool")] ToolName Tool);
 
+/// <summary>Pintar el relleno o el trazo de la selección con un degradado de la biblioteca del documento (issue #112). Cada objeto recibe uno colocado sobre él que hereda sus paradas; si es en objectBoundingBox, lo usa tal cual.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Id">Degradado de la biblioteca.</param>
+/// <param name="Copy">True: usa una copia de sus paradas, para cambiarla sin tocar a los demás objetos.</param>
+public sealed record UseGradient(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("property")] PaintProperty Property,
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("copy"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? Copy = null);
+
 /// <summary>Guías del lienzo; valen para todos los documentos.</summary>
 /// <param name="ShowRulers">Muestra las reglas en las unidades del documento.</param>
 /// <param name="ShowGrid">Muestra la cuadrícula sobre la mesa de trabajo.</param>
@@ -778,6 +801,9 @@ public static class BridgeCommands
     /// <summary>Aplica o cambia un degradado en el relleno o el trazo de la selección: tipo, paradas y repetición. Crea el degradado si hace falta y copia el que compartan otros objetos. Los cambios seguidos de las posiciones o colores de las mismas paradas son un solo paso del historial.</summary>
     public static readonly BridgeCommand<GradientRequest, ObjectChange> SelectionSetGradient = new("selection.setGradient");
 
+    /// <summary>Pinta el relleno o el trazo de la selección con un degradado de la biblioteca, compartiendo sus paradas o con una copia. Se puede deshacer.</summary>
+    public static readonly BridgeCommand<UseGradient, ObjectChange> SelectionUseGradient = new("selection.useGradient");
+
     /// <summary>Cambia la fuente, el tamaño, el peso, la cursiva, la alineación o el interlineado de los textos seleccionados. Los cambios seguidos de las mismas propiedades se funden en un paso del historial.</summary>
     public static readonly BridgeCommand<TextChange, ObjectChange> SelectionSetText = new("selection.setText");
 
@@ -866,6 +892,9 @@ public static class BridgeEvents
     /// <summary>Las fuentes que usan los textos de un documento: al cargarlo y cuando cambian. La aplicación avisa de las que no están instaladas; el documento no cambia.</summary>
     public static readonly BridgeEvent<DocumentFonts> DocumentFonts = new("document.fonts");
 
+    /// <summary>La biblioteca de degradados de un documento: al cargarlo y cuando cambia.</summary>
+    public static readonly BridgeEvent<DocumentGradients> DocumentGradients = new("document.gradients");
+
     /// <summary>Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel.</summary>
     public static readonly BridgeEvent<NodeSelection> NodesChanged = new("nodes.changed");
 
@@ -916,6 +945,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(CornerRadiusChange))]
 [JsonSerializable(typeof(DocumentContent))]
 [JsonSerializable(typeof(DocumentFonts))]
+[JsonSerializable(typeof(DocumentGradients))]
 [JsonSerializable(typeof(DocumentLoad))]
 [JsonSerializable(typeof(DocumentLoadResult))]
 [JsonSerializable(typeof(DocumentParseError))]
@@ -948,6 +978,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(TextLocked))]
 [JsonSerializable(typeof(TextProperties))]
 [JsonSerializable(typeof(ToolState))]
+[JsonSerializable(typeof(UseGradient))]
 [JsonSerializable(typeof(ViewOptions))]
 [JsonSerializable(typeof(ViewportChanged))]
 [JsonSerializable(typeof(ViewZoom))]

@@ -29,6 +29,10 @@
     },
     "spread": {
       "$ref": "./spread-method.schema.json"
+    },
+    "shared": {
+      "type": "boolean",
+      "description": "True: las paradas y la repetición se cambian donde están, para todos los objetos que las comparten (biblioteca, issue #112). Ausente o false: en un degradado propio de cada objeto."
     }
   }
 }

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentGradients",
+  "description": "Biblioteca de degradados de un documento (issue #112): los que tienen paradas propias, con cuántas pinturas de objetos las usan.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "gradients"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "gradients": {
+      "type": "array",
+      "description": "En el orden del documento.",
+      "items": {
+        "$ref": "./gradient-paint.schema.json"
+      }
+    }
+  }
+}

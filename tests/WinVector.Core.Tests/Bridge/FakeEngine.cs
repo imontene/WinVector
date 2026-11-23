@@ -203,6 +203,10 @@ internal sealed class FakeEngine
                 StylesSet.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
+            case "selection.useGradient":
+                Gradients.Add("use " + payload.GetRawText());
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
+                break;
             case "selection.setGradient":
                 Gradients.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");

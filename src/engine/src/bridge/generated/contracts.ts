@@ -117,6 +117,14 @@ export interface DocumentFonts {
   readonly fonts: readonly FontUse[];
 }
 
+/** Biblioteca de degradados de un documento (issue #112): los que tienen paradas propias, con cuántas pinturas de objetos las usan. */
+export interface DocumentGradients {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** En el orden del documento. */
+  readonly gradients: readonly GradientPaint[];
+}
+
 /** Documento que la aplicación entrega al motor. */
 export interface DocumentLoad {
   /** Identificador del documento, asignado por la aplicación. */
@@ -201,6 +209,10 @@ export interface GradientPaint {
   readonly stops: readonly GradientStop[];
   /** Cuántas pinturas de objetos usan este degradado directamente. Con más de una, cambiarlo para un objeto le crea una copia propia. */
   readonly users: number;
+  /** Degradado de la biblioteca que tiene sus paradas: él mismo o uno del que las hereda por href (issue #112). Ausente si no tiene paradas. */
+  readonly stopsId?: string;
+  /** Cuántas pinturas de objetos comparten esas paradas. Con más de una, se pueden cambiar para todos a la vez (shared en selection.setGradient). */
+  readonly stopsUsers?: number;
 }
 
 /** Degradado que se quiere en el relleno o el trazo de la selección (issue #109). Lo que no se indica no cambia. Un objeto que no pinta con un degradado recibe uno nuevo (ADR 0009); uno compartido con otros objetos se copia antes de cambiarlo. */
@@ -213,6 +225,8 @@ export interface GradientRequest {
   /** Paradas, en orden. Si el objeto no tiene degradado y no se indican, van de su color a ese color transparente. */
   readonly stops?: readonly GradientStop[];
   readonly spread?: SpreadMethod;
+  /** True: las paradas y la repetición se cambian donde están, para todos los objetos que las comparten (biblioteca, issue #112). Ausente o false: en un degradado propio de cada objeto. */
+  readonly shared?: boolean;
 }
 
 /** Parada de un degradado, como se dibuja. */
@@ -581,6 +595,17 @@ export interface ToolState {
   readonly tool: ToolName;
 }
 
+/** Pintar el relleno o el trazo de la selección con un degradado de la biblioteca del documento (issue #112). Cada objeto recibe uno colocado sobre él que hereda sus paradas; si es en objectBoundingBox, lo usa tal cual. */
+export interface UseGradient {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  readonly property: PaintProperty;
+  /** Degradado de la biblioteca. */
+  readonly id: string;
+  /** True: usa una copia de sus paradas, para cambiarla sin tocar a los demás objetos. */
+  readonly copy?: boolean;
+}
+
 /** Guías del lienzo; valen para todos los documentos. */
 export interface ViewOptions {
   /** Muestra las reglas en las unidades del documento. */
@@ -626,6 +651,11 @@ export interface BridgeCommands {
   /** Aplica o cambia un degradado en el relleno o el trazo de la selección: tipo, paradas y repetición. Crea el degradado si hace falta y copia el que compartan otros objetos. Los cambios seguidos de las posiciones o colores de las mismas paradas son un solo paso del historial. */
   readonly "selection.setGradient": {
     readonly payload: GradientRequest;
+    readonly response: ObjectChange;
+  };
+  /** Pinta el relleno o el trazo de la selección con un degradado de la biblioteca, compartiendo sus paradas o con una copia. Se puede deshacer. */
+  readonly "selection.useGradient": {
+    readonly payload: UseGradient;
     readonly response: ObjectChange;
   };
   /** Cambia la fuente, el tamaño, el peso, la cursiva, la alineación o el interlineado de los textos seleccionados. Los cambios seguidos de las mismas propiedades se funden en un paso del historial. */
@@ -703,6 +733,8 @@ export interface BridgeEvents {
   readonly "text.locked": TextLocked;
   /** Las fuentes que usan los textos de un documento: al cargarlo y cuando cambian. La aplicación avisa de las que no están instaladas; el documento no cambia. */
   readonly "document.fonts": DocumentFonts;
+  /** La biblioteca de degradados de un documento: al cargarlo y cuando cambia. */
+  readonly "document.gradients": DocumentGradients;
   /** Han cambiado los nodos seleccionados de la forma que se edita con la herramienta Vértices, o lo que se puede hacer con ellos. La aplicación habilita las órdenes de nodos del menú Trazado y del panel. */
   readonly "nodes.changed": NodeSelection;
   /** El usuario ha pedido el menú contextual del lienzo (clic derecho, Mayús+F10 o la tecla de menú). La aplicación lo abre en el punto indicado. */
@@ -734,6 +766,7 @@ export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "selection.setGeometry",
   "selection.setStyle",
   "selection.setGradient",
+  "selection.useGradient",
   "selection.setText",
   "selection.setShape",
   "object.arrange",
@@ -764,6 +797,7 @@ export const BRIDGE_EVENT_NAMES: readonly BridgeEventName[] = [
   "shape.converted",
   "text.locked",
   "document.fonts",
+  "document.gradients",
   "nodes.changed",
   "canvas.contextMenu",
   "error",

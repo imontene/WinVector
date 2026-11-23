@@ -218,6 +218,29 @@ export interface GradientSummary {
   readonly spread: SpreadMethod;
   readonly stops: readonly GradientStop[];
   readonly users: number;
+  /** Degradado de la biblioteca que tiene sus paradas (él mismo o uno que hereda por `href`). */
+  readonly stopsId?: string;
+  /** Pinturas de objetos que comparten esas paradas (issue #112). */
+  readonly stopsUsers?: number;
+}
+
+/** El degradado de la cadena que tiene las paradas que se dibujan, o `null` si ninguno tiene. */
+export function stopsOwner(
+  gradient: SVGGradientElement,
+  root: ParentNode,
+): SVGGradientElement | null {
+  return gradientChain(gradient, root).find((g) => ownStops(g).length > 0) ?? null;
+}
+
+/** Pinturas de objetos cuyas paradas son las de `owner` (directamente o heredadas por `href`). */
+export function stopsUsers(owner: SVGGradientElement, root: Element): number {
+  let users = 0;
+  for (const gradient of root.querySelectorAll("linearGradient, radialGradient")) {
+    if (isGradient(gradient) && stopsOwner(gradient, root) === owner) {
+      users += gradientUsers(gradient, root);
+    }
+  }
+  return users;
 }
 
 /**
@@ -235,12 +258,14 @@ export function commonGradient(
   const [gradient] = gradients;
   if (!gradient || gradients.some((other) => other !== gradient)) return null;
   const read = readGradient(gradient, root);
+  const owner = stopsOwner(gradient, root);
   return {
     id: gradient.id,
     kind: read.kind,
     spread: read.spread,
     stops: read.stops,
     users: gradientUsers(gradient, root),
+    ...(owner?.id ? { stopsId: owner.id, stopsUsers: stopsUsers(owner, root) } : {}),
   };
 }
 

@@ -604,6 +604,42 @@ Licensed under the Apache License 2.0.</value>
   <data name="GradientSpreadRepeat.Content" xml:space="preserve">
     <value>Repeat</value>
   </data>
+  <data name="GradientEditShared.Content" xml:space="preserve">
+    <value>Change it everywhere it is used</value>
+  </data>
+  <data name="GradientDuplicate.Content" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="GradientDuplicate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Duplicate the stops for this object</value>
+  </data>
+  <data name="GradientLibraryTitle.Text" xml:space="preserve">
+    <value>Document gradients</value>
+  </data>
+  <data name="GradientPresetsTitle.Text" xml:space="preserve">
+    <value>Presets</value>
+  </data>
+  <data name="GradientPresetFade" xml:space="preserve">
+    <value>White to transparent</value>
+  </data>
+  <data name="GradientPresetBlackWhite" xml:space="preserve">
+    <value>Black to white</value>
+  </data>
+  <data name="GradientPresetSunset" xml:space="preserve">
+    <value>Sunset</value>
+  </data>
+  <data name="GradientPresetOcean" xml:space="preserve">
+    <value>Ocean</value>
+  </data>
+  <data name="GradientPresetForest" xml:space="preserve">
+    <value>Forest</value>
+  </data>
+  <data name="GradientPresetMetal" xml:space="preserve">
+    <value>Metal</value>
+  </data>
+  <data name="GradientPresetRainbow" xml:space="preserve">
+    <value>Rainbow</value>
+  </data>
   <data name="ToolEyedropper.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Eyedropper (I): click to give its color to the selection; with Shift, to the stroke</value>
   </data>

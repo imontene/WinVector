@@ -26,23 +26,29 @@ public sealed partial class GradientEditorViewModel : ObservableObject
 
     private readonly Func<GradientRequestChange, bool> _send;
     private readonly Func<string, bool> _setColor;
+    private readonly Func<UseGradientChange, bool> _use;
     private IReadOnlyList<GradientStop> _stops = [];
+    private IReadOnlyList<GradientPaint> _library = [];
 
     /// <param name="property">Pintura que edita: el relleno o el trazo.</param>
     /// <param name="send">Envía un cambio de degradado de la selección; false si no se pudo.</param>
     /// <param name="setColor">Pone un color en la pintura (al volver al modo color).</param>
-    public GradientEditorViewModel(PaintProperty property, Func<GradientRequestChange, bool> send, Func<string, bool> setColor)
+    /// <param name="use">Pinta la selección con un degradado de la biblioteca (issue #112).</param>
+    public GradientEditorViewModel(
+        PaintProperty property, Func<GradientRequestChange, bool> send, Func<string, bool> setColor, Func<UseGradientChange, bool> use)
     {
         Property = property;
         _send = send;
         _setColor = setColor;
+        _use = use;
     }
 
     public PaintProperty Property { get; }
 
     /// <summary>Modo de la pintura; null si los objetos pintan de formas distintas o con un patrón.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGradient), nameof(ModeIndex))]
+    [NotifyPropertyChangedFor(nameof(IsGradient), nameof(ModeIndex), nameof(CanEditShared))]
+    [NotifyCanExecuteChangedFor(nameof(DuplicateCommand))]
     private PaintMode? _mode;
 
     /// <summary>Repetición del degradado.</summary>
@@ -55,6 +61,39 @@ public sealed partial class GradientEditorViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SelectedStop), nameof(SelectedOffsetPercent))]
     [NotifyCanExecuteChangedFor(nameof(RemoveStopCommand))]
     private int _selectedIndex = -1;
+
+    /// <summary>Degradado de la biblioteca que tiene las paradas de la pintura, o null.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanEditShared))]
+    [NotifyCanExecuteChangedFor(nameof(DuplicateCommand))]
+    private string? _stopsId;
+
+    /// <summary>Pinturas de objetos que comparten esas paradas.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanEditShared))]
+    [NotifyCanExecuteChangedFor(nameof(DuplicateCommand))]
+    private int _stopsUsers;
+
+    /// <summary>
+    /// Los cambios de paradas y repetición se hacen para todos los objetos que las comparten, en
+    /// lugar de en un degradado propio (issue #112).
+    /// </summary>
+    [ObservableProperty]
+    private bool _editShared;
+
+    /// <summary>Las paradas las comparten otros objetos: se pueden cambiar para todos o duplicar.</summary>
+    public bool CanEditShared => IsGradient && StopsId is not null && StopsUsers > 1;
+
+    /// <summary>Degradados de la biblioteca del documento (los que tienen paradas propias).</summary>
+    public IReadOnlyList<GradientPaint> Library
+    {
+        get => _library;
+        private set
+        {
+            _library = value;
+            OnPropertyChanged(nameof(Library));
+        }
+    }
 
     /// <summary>La pintura es un degradado: el panel muestra el editor de paradas.</summary>
     public bool IsGradient => Mode is PaintMode.Linear or PaintMode.Radial;
@@ -99,6 +138,13 @@ public sealed partial class GradientEditorViewModel : ObservableObject
     {
         if (gradient is not null)
         {
+            if (gradient.StopsId != StopsId)
+            {
+                EditShared = false;
+            }
+
+            StopsId = gradient.StopsId;
+            StopsUsers = gradient.StopsUsers ?? 0;
             Mode = gradient.Kind == GradientKind.Radial ? PaintMode.Radial : PaintMode.Linear;
             Spread = gradient.Spread;
             Stops = gradient.Stops;
@@ -107,6 +153,9 @@ public sealed partial class GradientEditorViewModel : ObservableObject
         }
 
         Mode = paint is null or "url" ? null : PaintMode.Color;
+        StopsId = null;
+        StopsUsers = 0;
+        EditShared = false;
         Spread = SpreadMethod.Pad;
         Stops = [];
         SelectedIndex = -1;
@@ -255,7 +304,7 @@ public sealed partial class GradientEditorViewModel : ObservableObject
     /// <summary>Cambia la repetición del degradado.</summary>
     public bool SetSpread(SpreadMethod spread)
     {
-        if (!IsGradient || spread == Spread || !_send(new GradientRequestChange(Property, Spread: spread)))
+        if (!IsGradient || spread == Spread || !_send(new GradientRequestChange(Property, Spread: spread, Shared: SharedFlag)))
         {
             return false;
         }
@@ -264,9 +313,37 @@ public sealed partial class GradientEditorViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Marca de los cambios para todos, solo si se pueden hacer así.</summary>
+    private bool? SharedFlag => EditShared && CanEditShared ? true : null;
+
+    /// <summary>Muestra la biblioteca del documento.</summary>
+    public void ShowLibrary(IReadOnlyList<GradientPaint> gradients) => Library = gradients;
+
+    /// <summary>Pinta la selección con un degradado de la biblioteca, compartiendo sus paradas.</summary>
+    public bool ApplyLibrary(string id) => !string.IsNullOrEmpty(id) && _use(new UseGradientChange(Property, id));
+
+    /// <summary>Pinta la selección con un degradado predefinido (uno nuevo, con sus paradas).</summary>
+    public bool ApplyPreset(GradientPreset preset)
+    {
+        ArgumentNullException.ThrowIfNull(preset);
+        var kind = Mode == PaintMode.Radial ? GradientKind.Radial : GradientKind.Linear;
+        // Si ya es un degradado, solo cambian sus paradas; si no, se crea uno con ellas.
+        return _send(new GradientRequestChange(Property, Kind: IsGradient ? null : kind, Stops: preset.Stops, Shared: SharedFlag));
+    }
+
+    /// <summary>Da al objeto una copia propia de las paradas compartidas, para cambiarlas aparte.</summary>
+    [RelayCommand(CanExecute = nameof(CanEditShared))]
+    private void Duplicate()
+    {
+        if (StopsId is { } id && _use(new UseGradientChange(Property, id, Copy: true)))
+        {
+            EditShared = false;
+        }
+    }
+
     private bool SendStops(List<GradientStop> stops, int selected)
     {
-        if (!IsGradient || !_send(new GradientRequestChange(Property, Stops: stops)))
+        if (!IsGradient || !_send(new GradientRequestChange(Property, Stops: stops, Shared: SharedFlag)))
         {
             return false;
         }
@@ -312,4 +389,8 @@ public sealed record GradientRequestChange(
     PaintProperty Property,
     GradientKind? Kind = null,
     IReadOnlyList<GradientStop>? Stops = null,
-    SpreadMethod? Spread = null);
+    SpreadMethod? Spread = null,
+    bool? Shared = null);
+
+/// <summary>Degradado de la biblioteca para una pintura de la selección, sin el documento.</summary>
+public sealed record UseGradientChange(PaintProperty Property, string Id, bool? Copy = null);

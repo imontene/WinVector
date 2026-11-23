@@ -125,6 +125,8 @@ describe("leer degradados", () => {
         { offset: 1, color: "#ffffff", opacity: 1 },
       ],
       users: 3,
+      stopsId: "g",
+      stopsUsers: 3,
     });
     expect(both.strokeGradient).toBeUndefined();
     expect(readStyle([pick(doc, "#a"), pick(doc, "#c")]).fillGradient).toBeUndefined();

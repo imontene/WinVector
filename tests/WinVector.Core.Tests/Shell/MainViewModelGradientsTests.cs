@@ -165,4 +165,65 @@ public sealed class MainViewModelGradientsTests : IDisposable
         await _viewModel.EngineWork;
         Assert.AreEqual(0, _engine.Gradients.Count);
     }
+
+    private void SelectShared(int stopsUsers) =>
+        Select($$$"""{"fill":"url","stroke":"none","strokeWidth":1,"opacity":1,"fillGradient":{"id":"g-2","kind":"linear","spread":"pad","stops":{{{TwoStops}}},"users":1,"stopsId":"g","stopsUsers":{{{stopsUsers}}}}}""");
+
+    [TestMethod]
+    public async Task LaBibliotecaDelDocumentoSeMuestraYSeAplica()
+    {
+        await ReadyAsync();
+        _transport.SendEvent("document.gradients", $$"""{"documentId":"d1","gradients":[{"id":"cielo","kind":"linear","spread":"pad","stops":{{TwoStops}},"users":2}]}""");
+        Assert.AreEqual("cielo", Fill.Library.Single().Id);
+        Assert.AreEqual("cielo", _viewModel.StrokeGradient.Library.Single().Id);
+
+        Select("""{"fill":"#ff0000","stroke":"none","strokeWidth":1,"opacity":1}""");
+        Assert.IsTrue(Fill.ApplyLibrary("cielo"));
+        Assert.IsTrue(Fill.ApplyPreset(GradientPreset.All[2]));
+        await _viewModel.EngineWork;
+        StringAssert.StartsWith(_engine.Gradients[0], """use {"documentId":"d1","property":"fill","id":"cielo"}""");
+        StringAssert.Contains(_engine.Gradients[1], "\"kind\":\"linear\"");
+        StringAssert.Contains(_engine.Gradients[1], "#ff7e5f");
+
+        // Otro documento no tiene biblioteca.
+        _viewModel.NewDocument();
+        await _viewModel.EngineWork;
+        Assert.AreEqual(0, Fill.Library.Count);
+    }
+
+    [TestMethod]
+    public async Task ConParadasCompartidasSePuedenCambiarParaTodosODuplicar()
+    {
+        await ReadyAsync();
+        SelectShared(1);
+        Assert.IsFalse(Fill.CanEditShared, "Si solo lo usa este objeto, no hay nada que compartir.");
+        Assert.IsFalse(Fill.DuplicateCommand.CanExecute(null));
+
+        SelectShared(3);
+        Assert.IsTrue(Fill.CanEditShared);
+        Fill.EditShared = true;
+        Assert.IsTrue(Fill.MoveStop(0, 0.5));
+        Fill.EditShared = false;
+        Assert.IsTrue(Fill.MoveStop(0, 0.25));
+        Fill.DuplicateCommand.Execute(null);
+        await _viewModel.EngineWork;
+        StringAssert.Contains(_engine.Gradients[0], "\"shared\":true");
+        Assert.IsFalse(_engine.Gradients[1].Contains("shared", StringComparison.Ordinal));
+        Assert.AreEqual("""use {"documentId":"d1","property":"fill","id":"g","copy":true}""", _engine.Gradients[2]);
+
+        // Otra selección con otras paradas: vuelve a editar solo el objeto.
+        Fill.EditShared = true;
+        Select("""{"fill":"#ff0000","stroke":"none","strokeWidth":1,"opacity":1}""");
+        Assert.IsFalse(Fill.EditShared);
+    }
+
+    [TestMethod]
+    public void LosPredefinidosTienenAlMenosDosParadasOrdenadas()
+    {
+        foreach (var preset in GradientPreset.All)
+        {
+            Assert.IsTrue(preset.Stops.Count >= 2, preset.Key);
+            Assert.IsTrue(preset.Stops.Zip(preset.Stops.Skip(1)).All(pair => pair.First.Offset <= pair.Second.Offset), preset.Key);
+        }
+    }
 }

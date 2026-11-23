@@ -1220,6 +1220,7 @@ public sealed partial class MainViewModel : ObservableObject
             bridge.Subscribe(BridgeEvents.ShapeConverted, OnShapeConverted),
             bridge.Subscribe(BridgeEvents.TextLocked, OnTextLocked),
             bridge.Subscribe(BridgeEvents.DocumentFonts, OnDocumentFonts),
+            bridge.Subscribe(BridgeEvents.DocumentGradients, OnDocumentGradients),
             bridge.Subscribe(BridgeEvents.CanvasContextMenu, OnContextMenu),
             bridge.Subscribe(BridgeEvents.NodesChanged, OnNodesChanged),
             bridge.Subscribe(BridgeEvents.KeyboardShortcut, shortcut => _ = HandleShortcutAsync(shortcut)),
@@ -1244,6 +1245,7 @@ public sealed partial class MainViewModel : ObservableObject
         ShowNodes(null);
         ShowText(null);
         ShowObjectCorners(null);
+        ShowLibrary();
         UpdateMissingFonts();
         OnPropertyChanged(nameof(ZoomText));
         OnPropertyChanged(nameof(CurrentArtboard));

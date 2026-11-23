@@ -259,3 +259,80 @@ test("convertir en trazado, separar y combinar conservan el degradado", async ({
   await send(page, "path.operation", { operation: "combine" });
   await expect(page.locator('#workspace path[fill="url(#degradado)"]')).toHaveCount(1);
 });
+
+// ---------------------------------------------------------------------------------------------
+// Biblioteca de degradados (issue #112).
+// ---------------------------------------------------------------------------------------------
+
+const library = async (page: Page) =>
+  (await sent(page)).filter((m) => m.name === "document.gradients").at(-1)?.payload as
+    { gradients: { id: string; users: number; stops: Stop[] }[] } | undefined;
+
+test("la biblioteca anuncia los degradados con paradas y cuántos los usan", async ({ page }) => {
+  await expect
+    .poll(async () => (await library(page))?.gradients.map((g) => [g.id, g.users]))
+    .toEqual([["cielo", 1]]);
+  await tarjeta(page).dblclick();
+  await send(page, "selection.setGradient", { property: "fill", kind: "linear" });
+  await expect
+    .poll(async () => (await library(page))?.gradients.map((g) => g.id))
+    .toEqual(["cielo", "degradado"]);
+});
+
+test("usar uno de la biblioteca lo comparte, y editarlo para todos cambia a todos", async ({
+  page,
+}) => {
+  // #cielo está en objectBoundingBox: el sol lo usa tal cual.
+  await sol(page).dblclick();
+  await send(page, "selection.useGradient", { property: "fill", id: "cielo" });
+  expect(await sol(page).getAttribute("fill")).toBe("url(#cielo)");
+  await expect
+    .poll(() => lastStyle(page))
+    .toMatchObject({ fillGradient: { id: "cielo", stopsId: "cielo", stopsUsers: 2 } });
+
+  const black: Stop[] = [
+    { offset: 0, color: "#000000", opacity: 1 },
+    { offset: 1, color: "#ffffff", opacity: 1 },
+  ];
+  await send(page, "selection.setGradient", { property: "fill", stops: black, shared: true });
+  expect(await sol(page).getAttribute("fill")).toBe("url(#cielo)");
+  expect(
+    await page
+      .locator("#workspace #cielo stop")
+      .evaluateAll((stops) => stops.map((s) => s.getAttribute("stop-color"))),
+  ).toEqual(["#000000", "#ffffff"]);
+  await expect(page.locator("#workspace linearGradient")).toHaveCount(1);
+});
+
+test("un degradado en coordenadas del documento se coloca sobre cada objeto y hereda sus paradas", async ({
+  page,
+}) => {
+  await tarjetaConDegradado(page);
+  await sol(page).dblclick();
+  await send(page, "selection.useGradient", { property: "fill", id: "degradado" });
+  const fill = await sol(page).getAttribute("fill");
+  expect(fill).toBe("url(#degradado-2)");
+  const placed = page.locator("#workspace #degradado-2");
+  expect(
+    await placed.evaluate((g) =>
+      ["href", "gradientUnits", "x1", "x2"].map((name) => g.getAttribute(name)),
+    ),
+  ).toEqual(["#degradado", "userSpaceOnUse", "248", "352"]);
+  expect(await placed.locator("stop").count()).toBe(0);
+  await expect
+    .poll(() => lastStyle(page))
+    .toMatchObject({
+      fillGradient: { id: "degradado-2", stopsId: "degradado", stopsUsers: 2 },
+    });
+
+  // Una copia de las paradas: cambiarla no toca a la tarjeta.
+  await send(page, "selection.useGradient", { property: "fill", id: "degradado", copy: true });
+  await expect
+    .poll(() => lastStyle(page))
+    .toMatchObject({ fillGradient: { stopsId: "degradado-3", stopsUsers: 1 } });
+
+  // Todo es un paso cada vez: deshacer dos veces vuelve al sol naranja.
+  await send(page, "history.undo", {});
+  await send(page, "history.undo", {});
+  expect(await sol(page).getAttribute("fill")).toBe("#ffb547");
+});
