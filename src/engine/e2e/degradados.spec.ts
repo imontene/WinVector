@@ -181,3 +181,81 @@ test("el trazo tiene su propio degradado", async ({ page }) => {
   expect(await page.locator("#workspace #tarjeta").getAttribute("fill")).toBe("#ffffff");
   await expect.poll(async () => (await lastStyle(page))?.strokeGradient?.id).toBe("degradado");
 });
+
+// ---------------------------------------------------------------------------------------------
+// El degradado acompaña al objeto en las operaciones (issue #111).
+// ---------------------------------------------------------------------------------------------
+
+const tarjeta = (page: Page) => page.locator("#workspace #tarjeta");
+
+const gradientAttributes = (page: Page, id: string) =>
+  page
+    .locator(`#workspace [id="${id}"]`)
+    .evaluate((g) => ["x1", "y1", "x2", "y2"].map((name) => g.getAttribute(name)));
+
+/** La tarjeta (rect de 48,58 a 198,146) con un degradado lineal nuevo en su relleno. */
+async function tarjetaConDegradado(page: Page) {
+  await tarjeta(page).dblclick();
+  await send(page, "selection.setGradient", { property: "fill", kind: "linear" });
+  expect(await gradientAttributes(page, "degradado")).toEqual(["48", "102", "198", "102"]);
+}
+
+test("mover la tarjeta desde el panel mueve su degradado", async ({ page }) => {
+  await tarjetaConDegradado(page);
+  await send(page, "selection.setGeometry", { x: 58, y: 78 });
+  expect(await tarjeta(page).getAttribute("x")).toBe("58");
+  expect(await gradientAttributes(page, "degradado")).toEqual(["58", "122", "208", "122"]);
+});
+
+test("duplicar lleva el degradado a la copia, movido con ella; el original no cambia", async ({
+  page,
+}) => {
+  await tarjetaConDegradado(page);
+  await send(page, "selection.duplicate", {});
+  const copy = page.locator('#workspace rect[fill="url(#degradado-2)"]');
+  await expect(copy).toHaveCount(1);
+  expect(await copy.getAttribute("x")).toBe("58");
+  expect(await gradientAttributes(page, "degradado-2")).toEqual(["58", "112", "208", "112"]);
+  expect(await gradientAttributes(page, "degradado")).toEqual(["48", "102", "198", "102"]);
+});
+
+test("copiar y pegar en otro documento lleva el degradado", async ({ page }) => {
+  await tarjetaConDegradado(page);
+  const copied = await send(page, "clipboard.copy", {});
+  const svg = (copied?.payload as { svg: string }).svg;
+  expect(svg).toContain("linearGradient");
+
+  await hostSend(
+    page,
+    command("c-load-d2", "document.load", {
+      documentId: "d2",
+      name: "otro",
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"/>',
+    }),
+  );
+  await hostSend(page, command("c-act-d2", "document.activate", { documentId: "d2" }));
+  await expect
+    .poll(async () => (await sent(page)).find((m) => m.id === "c-act-d2"))
+    .toMatchObject({ ok: true });
+  await hostSend(page, command("c-paste-d2", "clipboard.paste", { documentId: "d2", svg }));
+  await expect
+    .poll(async () => (await sent(page)).find((m) => m.id === "c-paste-d2"))
+    .toMatchObject({ ok: true });
+  await hostSend(page, command("c-ser-d2", "document.serialize", { documentId: "d2" }));
+  await expect
+    .poll(async () => {
+      const message = (await sent(page)).find((m) => m.id === "c-ser-d2");
+      return (message?.payload as { svg?: string } | undefined)?.svg ?? "";
+    })
+    .toMatch(/<linearGradient id="degradado"[\s\S]*<rect[^>]*fill="url\(#degradado\)"/);
+});
+
+test("convertir en trazado, separar y combinar conservan el degradado", async ({ page }) => {
+  await tarjetaConDegradado(page);
+  await send(page, "object.toPath", {});
+  await expect(page.locator('#workspace path[fill="url(#degradado)"]')).toHaveCount(1);
+  await send(page, "path.operation", { operation: "separate" });
+  await send(page, "selection.selectAll", {});
+  await send(page, "path.operation", { operation: "combine" });
+  await expect(page.locator('#workspace path[fill="url(#degradado)"]')).toHaveCount(1);
+});

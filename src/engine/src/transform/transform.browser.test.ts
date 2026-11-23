@@ -392,3 +392,160 @@ describe("posición, tamaño y giro exactos", () => {
     ).toBe(false);
   });
 });
+
+describe("degradados que acompañan al objeto (issue #111)", () => {
+  const defs = (gradients: string) => `<defs>${gradients}</defs>`;
+  const stops = `<stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>`;
+  const attributes = (element: Element, names: string[]) =>
+    names.map((name) => element.getAttribute(name));
+
+  it("mover o escalar un rect mueve las coordenadas de su degradado en userSpaceOnUse", () => {
+    const doc = load(
+      svg(
+        defs(
+          `<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="10" y1="20" x2="40" y2="20">${stops}</linearGradient>`,
+        ) + `<rect id="r" x="10" y="20" width="30" height="40" fill="url(#g)"/>`,
+      ),
+    );
+    applyTransform(byId(doc, "r"), moveBy(5, 7), doc.root);
+    expect(byId(doc, "r").getAttribute("x")).toBe("15");
+    expect(attributes(byId(doc, "g"), ["x1", "y1", "x2", "y2"])).toEqual(["15", "27", "45", "27"]);
+
+    applyTransform(byId(doc, "r"), scaleAround(2, 1, { x: 15, y: 27 }), doc.root);
+    expect(attributes(byId(doc, "g"), ["x1", "y1", "x2", "y2"])).toEqual(["15", "27", "75", "27"]);
+  });
+
+  it("un radial con escala desigual, o con gradientTransform, compone su transformación", () => {
+    const doc = load(
+      svg(
+        defs(
+          `<radialGradient id="g" gradientUnits="userSpaceOnUse" cx="25" cy="40" r="20">${stops}</radialGradient>` +
+            `<linearGradient id="h" gradientUnits="userSpaceOnUse" x1="0" x2="10" gradientTransform="rotate(90)">${stops}</linearGradient>`,
+        ) +
+          `<rect id="r" x="10" y="20" width="30" height="40" fill="url(#g)"/>` +
+          `<ellipse id="e" cx="100" cy="100" rx="10" ry="5" fill="url(#h)"/>`,
+      ),
+    );
+    applyTransform(byId(doc, "r"), scaleAround(2, 1, { x: 10, y: 20 }), doc.root);
+    expect(byId(doc, "g").getAttribute("r")).toBe("20");
+    expect(byId(doc, "g").getAttribute("gradientTransform")).toBe("matrix(2 0 0 1 -10 0)");
+
+    applyTransform(byId(doc, "e"), moveBy(3, 4), doc.root);
+    expect(byId(doc, "h").getAttribute("x1")).toBe("0");
+    expect(byId(doc, "h").getAttribute("gradientTransform")).toBe("matrix(0 1 -1 0 3 4)");
+  });
+
+  it("un radial con escala uniforme escala su radio y su foco solo si lo tenía", () => {
+    const doc = load(
+      svg(
+        defs(
+          `<radialGradient id="g" gradientUnits="userSpaceOnUse" cx="10" cy="10" r="10" fx="12">${stops}</radialGradient>`,
+        ) + `<circle id="c" cx="10" cy="10" r="10" fill="url(#g)"/>`,
+      ),
+    );
+    applyTransform(byId(doc, "c"), scaleAround(2, 2, { x: 0, y: 0 }), doc.root);
+    expect(attributes(byId(doc, "g"), ["cx", "cy", "r", "fx", "fy"])).toEqual([
+      "20",
+      "20",
+      "20",
+      "24",
+      null,
+    ]);
+  });
+
+  it("los degradados en objectBoundingBox, y los objetos con transform o trazados, no se tocan", () => {
+    const source = svg(
+      defs(
+        `<linearGradient id="caja">${stops}</linearGradient>` +
+          `<linearGradient id="u" gradientUnits="userSpaceOnUse" x2="10">${stops}</linearGradient>`,
+      ) +
+        `<rect id="r" x="0" y="0" width="5" height="5" fill="url(#caja)"/>` +
+        `<path id="p" d="M0 0H10V10Z" fill="url(#u)"/>` +
+        `<rect id="t" x="0" y="0" width="5" height="5" transform="rotate(10)" fill="url(#u)"/>`,
+    );
+    const doc = load(source);
+    applyTransform(byId(doc, "r"), moveBy(5, 5), doc.root);
+    applyTransform(byId(doc, "p"), moveBy(5, 5), doc.root);
+    applyTransform(byId(doc, "t"), moveBy(5, 5), doc.root);
+    expect(byId(doc, "caja").outerHTML).not.toContain("gradientTransform");
+    expect(byId(doc, "u").getAttribute("x2")).toBe("10");
+    expect(byId(doc, "p").getAttribute("transform")).toBe("translate(5 5)");
+    expect(doc.root.querySelectorAll("linearGradient")).toHaveLength(2);
+  });
+
+  it("un degradado compartido se copia para el objeto que se mueve; el otro no cambia", () => {
+    const doc = load(
+      svg(
+        defs(
+          `<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="10" y2="0">${stops}</linearGradient>`,
+        ) +
+          `<rect id="a" x="0" y="0" width="10" height="10" fill="url(#g)"/>` +
+          `<rect id="b" x="20" y="0" width="10" height="10" fill="url(#g)"/>`,
+      ),
+    );
+    applyTransform(byId(doc, "a"), moveBy(100, 0), doc.root);
+    expect(byId(doc, "a").getAttribute("fill")).toBe("url(#g-2)");
+    expect(byId(doc, "g-2").getAttribute("x1")).toBe("100");
+    expect(byId(doc, "g").getAttribute("x1")).toBe("0");
+    expect(byId(doc, "b").getAttribute("fill")).toBe("url(#g)");
+  });
+
+  it("en un arrastre el degradado se mueve una sola vez, y todo es un paso que se deshace", () => {
+    const source = svg(
+      defs(
+        `<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="10" y2="0">${stops}</linearGradient>`,
+      ) +
+        `<rect id="a" x="0" y="0" width="10" height="10" fill="url(#g)"/>` +
+        `<rect id="b" x="20" y="0" width="10" height="10" fill="url(#g)"/>`,
+    );
+    const doc = load(source);
+    const session = new TransformSession([byId(doc, "a")], doc.root, doc.history, "move");
+    for (let i = 1; i <= 10; i++) session.update(moveBy(i, 0));
+    session.commit();
+    expect(byId(doc, "a").getAttribute("x")).toBe("10");
+    expect(byId(doc, "g-2").getAttribute("x1")).toBe("10");
+    expect(byId(doc, "g").getAttribute("x1")).toBe("0");
+    doc.history.undo();
+    expect(doc.history.state.canUndo).toBe(false);
+    expect(doc.serialize()).toBe(source);
+  });
+
+  it("un gesto sin movimiento, o cancelado, no deja paso ni copia del degradado", () => {
+    const source = svg(
+      defs(
+        `<linearGradient id="g" gradientUnits="userSpaceOnUse" x2="10">${stops}</linearGradient>`,
+      ) +
+        `<rect id="a" width="10" height="10" fill="url(#g)"/>` +
+        `<rect id="b" width="10" height="10" fill="url(#g)"/>`,
+    );
+    const doc = load(source);
+    new TransformSession([byId(doc, "a")], doc.root, doc.history, "move").commit();
+    const cancelled = new TransformSession([byId(doc, "a")], doc.root, doc.history, "move");
+    cancelled.update(moveBy(5, 5));
+    cancelled.cancel();
+    expect(doc.history.state.canUndo).toBe(false);
+    expect(doc.serialize()).toBe(source);
+  });
+
+  it("corpus: el degradado con gradientTransform de un rect se mueve con él", () => {
+    const files = import.meta.glob<string>(
+      "../../../../tests/corpus/degradados/espacio-de-usuario-y-transformacion.svg",
+      { query: "?raw", import: "default", eager: true },
+    );
+    const [source] = Object.values(files);
+    if (!source) throw new Error("Falta el archivo del corpus");
+    const doc = load(source);
+    const rect = doc.root.querySelector("rect");
+    if (!rect) throw new Error("Sin rect");
+    applyTransform(rect, moveBy(10, 0), doc.root);
+    expect(rect.getAttribute("x")).toBe("10");
+    expect(byId(doc, "usuario").getAttribute("gradientTransform")).toMatch(/^matrix\(/);
+    const m = (byId(doc, "usuario") as SVGGradientElement).gradientTransform.baseVal.consolidate()
+      ?.matrix;
+    // rotate(20 100 100) seguido de mover 10 a la derecha.
+    expect(m?.e).toBeCloseTo(
+      10 + 100 - 100 * Math.cos(Math.PI / 9) + 100 * Math.sin(Math.PI / 9),
+      4,
+    );
+  });
+});

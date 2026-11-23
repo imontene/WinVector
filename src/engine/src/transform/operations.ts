@@ -5,6 +5,7 @@ import {
   circleToEllipse,
   elementToRoot,
   outermost,
+  prepareGradients,
   restore,
   snapshot,
   type Snapshot,
@@ -42,8 +43,11 @@ export class TransformSession {
   constructor(items: readonly Element[], root: SVGSVGElement, history: History, action: string) {
     this.#root = root;
     this.#history = history;
-    this.#snapshots = outermost(items).map(snapshot);
     history.begin(action);
+    // Dentro del paso del gesto: los degradados que se moverán con los objetos pasan a ser suyos.
+    const outer = outermost(items);
+    prepareGradients(outer);
+    this.#snapshots = outer.map(snapshot);
   }
 
   /** Deja la selección como al empezar transformada por `m`. */
@@ -64,6 +68,11 @@ export class TransformSession {
     const replaced = new Map<Element, Element>();
     if (!this.#open) return replaced;
     this.#open = false;
+    // Un gesto que no movió nada (un clic) no deja paso, ni las copias de degradados que preparó.
+    if (this.#snapshots.every(unchanged)) {
+      this.#history.rollback();
+      return replaced;
+    }
     for (const saved of this.#snapshots) {
       if (saved.attributes.get("transform") !== null) continue;
       const ellipse = circleToEllipse(saved.element);
@@ -78,8 +87,17 @@ export class TransformSession {
     if (!this.#open) return;
     for (const saved of this.#snapshots) restore(saved);
     this.#open = false;
-    this.#history.commit();
+    this.#history.rollback();
   }
+}
+
+/** True si el elemento (y sus tramos y degradados) siguen como en la instantánea. */
+function unchanged({ element, attributes, inner, gradients }: Snapshot): boolean {
+  return (
+    [...attributes].every(([name, value]) => element.getAttribute(name) === value) &&
+    (inner ?? []).every(unchanged) &&
+    (gradients ?? []).every(unchanged)
+  );
 }
 
 /**

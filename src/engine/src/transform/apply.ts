@@ -1,4 +1,13 @@
 import { IDENTITY, invert, multiply, toSvgTransform, type Matrix } from "../geometry";
+import {
+  documentRoot,
+  gradientChain,
+  ownGradient,
+  type PaintProperty,
+  paintGradient,
+  readGradient,
+  writeGradient,
+} from "../paint/gradient";
 import { declaresProperty, setDeclaration } from "../style/declarations";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -105,11 +114,131 @@ export function applyTransform(element: Element, m: Matrix, root: SVGSVGElement)
   const next = multiply(multiply(inverseParent, multiply(m, parent)), current);
 
   if (isIdentity(current) && !element.hasAttribute("transform") && rewriteGeometry(element, next)) {
+    // Sus degradados en coordenadas del objeto se mueven con él (issue #111).
+    moveGradients(element, next, root);
     return true;
   }
   if (isIdentity(next)) element.removeAttribute("transform");
   else element.setAttribute("transform", simplestTransform(next));
   return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Degradados que acompañan a la geometría (issue #111).
+// ---------------------------------------------------------------------------------------------
+
+const PAINTS: readonly PaintProperty[] = ["fill", "stroke"];
+
+/** Atributos de un degradado que cambian al moverlo con su objeto. */
+const GRADIENT_ATTRIBUTES = [
+  "gradientTransform",
+  "x1",
+  "y1",
+  "x2",
+  "y2",
+  "cx",
+  "cy",
+  "r",
+  "fx",
+  "fy",
+  "fr",
+];
+
+/** True si `applyTransform` reescribirá las coordenadas del elemento en lugar de su `transform`. */
+const rewritesGeometry = (element: Element) =>
+  element.namespaceURI === SVG_NS &&
+  element.localName !== "use" &&
+  GEOMETRY[element.localName] !== undefined &&
+  !element.hasAttribute("transform");
+
+/**
+ * Degradados en `userSpaceOnUse` con los que se pinta el elemento: están en sus mismas coordenadas,
+ * así que si se reescriben las coordenadas del elemento hay que moverlos también. Con un
+ * `transform`, en cambio, el degradado ya lo acompaña; y uno en `objectBoundingBox` sigue a su caja.
+ */
+function userSpaceGradients(element: Element, root: Element): SVGGradientElement[] {
+  return PAINTS.flatMap((property) => {
+    const gradient = paintGradient(element, property, root);
+    return gradient && readGradient(gradient, root).units === "userSpaceOnUse" ? [gradient] : [];
+  });
+}
+
+/**
+ * Antes de transformar los elementos en un gesto: los que reescribirán sus coordenadas pasan a
+ * tener sus degradados en `userSpaceOnUse` propios (ADR 0009), para moverlos sin cambiar los de
+ * otros objetos. Hay que llamarla dentro del paso del historial del gesto.
+ */
+export function prepareGradients(items: readonly Element[]): void {
+  for (const element of items) {
+    const root = documentRoot(element);
+    if (!root || !rewritesGeometry(element)) continue;
+    for (const property of PAINTS) {
+      const gradient = paintGradient(element, property, root);
+      if (gradient && readGradient(gradient, root).units === "userSpaceOnUse") {
+        ownGradient(element, property, root);
+      }
+    }
+  }
+}
+
+/** Matriz de un atributo `transform` de SVG (con la sintaxis de SVG, no la de CSS). */
+function parseTransform(text: string, document: Document): Matrix {
+  const probe = document.createElementNS(SVG_NS, "g");
+  probe.setAttribute("transform", text);
+  const matrix = probe.transform.baseVal.consolidate()?.matrix;
+  return matrix
+    ? { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.e, f: matrix.f }
+    : IDENTITY;
+}
+
+/**
+ * Aplica `m` (en las coordenadas del elemento) a sus degradados en `userSpaceOnUse`, copiándolos
+ * antes si los comparte. Si el degradado no tiene `gradientTransform` y `m` solo mueve y escala, se
+ * cambian sus coordenadas; si no, se compone su `gradientTransform`.
+ */
+function moveGradients(element: Element, m: Matrix, root: Element): void {
+  for (const property of PAINTS) {
+    const found = paintGradient(element, property, root);
+    if (!found || readGradient(found, root).units !== "userSpaceOnUse") continue;
+    const gradient = ownGradient(element, property, root);
+    if (gradient) transformGradient(gradient, m, root);
+  }
+}
+
+function transformGradient(gradient: SVGGradientElement, m: Matrix, root: Element): void {
+  const read = readGradient(gradient, root);
+  const chain = gradientChain(gradient, root);
+  const present = (name: string) => chain.find((g) => g.hasAttribute(name))?.getAttribute(name);
+  const axisAligned = Math.abs(m.b) < 1e-9 && Math.abs(m.c) < 1e-9;
+  const x = (value: number) => m.a * value + m.e;
+  const y = (value: number) => m.d * value + m.f;
+  // Solo números (no porcentajes) y todos escritos: así se sabe qué significa cada coordenada.
+  const plain = (names: readonly string[]) =>
+    names.every((name) => {
+      const value = present(name);
+      return value !== null && value !== undefined && !value.trim().endsWith("%");
+    });
+  if (read.transform === null && axisAligned) {
+    if (read.linear && plain(["x1", "y1", "x2", "y2"])) {
+      const { x1, y1, x2, y2 } = read.linear;
+      writeGradient(gradient, root, { linear: { x1: x(x1), y1: y(y1), x2: x(x2), y2: y(y2) } });
+      return;
+    }
+    if (read.radial && Math.abs(m.a - m.d) < 1e-9 && plain(["cx", "cy", "r"])) {
+      const { cx, cy, r, fx, fy, fr } = read.radial;
+      // El foco y su radio solo se escriben si ya estaban: si no, siguen al centro.
+      const focus = {
+        ...(present("fx") ? { fx: x(fx) } : {}),
+        ...(present("fy") ? { fy: y(fy) } : {}),
+        ...(present("fr") ? { fr: m.a * fr } : {}),
+      };
+      writeGradient(gradient, root, { radial: { cx: x(cx), cy: y(cy), r: m.a * r, ...focus } });
+      return;
+    }
+  }
+  const current =
+    read.transform === null ? IDENTITY : parseTransform(read.transform, gradient.ownerDocument);
+  writeGradient(gradient, root, { transform: toSvgTransform(multiply(m, current)) });
 }
 
 /** `translate(…)` si solo desplaza; si no, `matrix(…)`. */
@@ -179,6 +308,8 @@ export interface Snapshot {
   readonly attributes: ReadonlyMap<string, string | null>;
   /** Las líneas y tramos de un texto, que también cambian al escalarlo (issue #98). */
   readonly inner?: readonly Snapshot[];
+  /** Sus degradados en `userSpaceOnUse`, que se mueven con él (issue #111). */
+  readonly gradients?: readonly Snapshot[];
 }
 
 /** Atributos de un texto y sus tramos que cambian al moverlo o escalarlo. */
@@ -189,6 +320,20 @@ const attributesOf = (element: Element, names: Iterable<string>) =>
 
 /** Guarda los atributos que puede cambiar una transformación del elemento. */
 export function snapshot(element: Element): Snapshot {
+  const saved = elementSnapshot(element);
+  const root = rewritesGeometry(element) ? documentRoot(element) : null;
+  const gradients = root ? userSpaceGradients(element, root) : [];
+  if (gradients.length === 0) return saved;
+  return {
+    ...saved,
+    gradients: gradients.map((gradient) => ({
+      element: gradient,
+      attributes: attributesOf(gradient, GRADIENT_ATTRIBUTES),
+    })),
+  };
+}
+
+function elementSnapshot(element: Element): Snapshot {
   if (element.namespaceURI === SVG_NS && element.localName === "text") {
     return {
       element,
@@ -209,13 +354,14 @@ export function snapshot(element: Element): Snapshot {
 }
 
 /** Devuelve el elemento al estado guardado, tocando solo los atributos que han cambiado. */
-export function restore({ element, attributes, inner }: Snapshot): void {
+export function restore({ element, attributes, inner, gradients }: Snapshot): void {
   for (const [name, value] of attributes) {
     if (element.getAttribute(name) === value) continue;
     if (value === null) element.removeAttribute(name);
     else element.setAttribute(name, value);
   }
   for (const saved of inner ?? []) restore(saved);
+  for (const saved of gradients ?? []) restore(saved);
 }
 
 /** Lista de números sin unidades de un atributo (`x="1 2 3"`), o `null` si falta o tiene unidades. */
