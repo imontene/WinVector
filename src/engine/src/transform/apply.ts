@@ -182,7 +182,7 @@ export function prepareGradients(items: readonly Element[]): void {
 }
 
 /** Matriz de un atributo `transform` de SVG (con la sintaxis de SVG, no la de CSS). */
-function parseTransform(text: string, document: Document): Matrix {
+export function parseTransform(text: string, document: Document): Matrix {
   const probe = document.createElementNS(SVG_NS, "g");
   probe.setAttribute("transform", text);
   const matrix = probe.transform.baseVal.consolidate()?.matrix;

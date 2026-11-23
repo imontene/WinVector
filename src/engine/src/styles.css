@@ -246,6 +246,31 @@ body[data-handle="radius"] {
   stroke-width: 1.5;
 }
 
+/* Herramienta Degradado (src/tools/gradientTool.ts): la línea, sus manejadores y las paradas. Los
+   del trazo, con la línea discontinua. */
+.overlay-gradient-line {
+  stroke-width: 1.5;
+}
+
+.overlay-gradient-line.overlay-gradient-stroke {
+  stroke-dasharray: 4 3;
+}
+
+.overlay-gradient-handle {
+  fill: var(--handle-fill, #fff);
+  stroke-width: 1.5;
+}
+
+.overlay-gradient-stop {
+  stroke: var(--handle-fill, #fff);
+  stroke-width: 2;
+}
+
+.overlay-gradient-stop-selected {
+  stroke: var(--selection);
+  stroke-width: 2.5;
+}
+
 /* Primer vértice de la forma libre (src/tools/penTool.ts): más grande cuando un clic la cerraría. */
 .overlay-pen-start {
   fill: var(--handle-fill, #fff);

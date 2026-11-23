@@ -1,5 +1,6 @@
 import { applyToPoint, corners, union, type Point, type Rect } from "../geometry";
 import { HANDLE_SIZE, handlePositions, localBox, screenBounds, screenMatrix } from "../selection";
+import type { GradientScene } from "../tools/gradientTool";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -31,6 +32,8 @@ export interface OverlayScene {
     readonly caret: readonly [Point, Point] | null;
     readonly selection: readonly (readonly Point[])[];
   } | null;
+  /** Degradados del objeto seleccionado con la herramienta Degradado (issue #110), en pantalla. */
+  readonly gradient?: GradientScene | null;
   /** Primer nodo de la forma que se dibuja con la pluma, si un clic la cerraría y sus manejadores. */
   readonly pen?: {
     readonly start: Point;
@@ -145,8 +148,56 @@ export class Overlay {
       line.setAttribute("y2", String(round(caret[1].y)));
       shapes.push(line);
     }
+    if (scene.gradient) shapes.push(...this.#gradient(scene.gradient));
     if (scene.marquee) shapes.push(this.#rect(scene.marquee, "overlay-marquee"));
     this.element.replaceChildren(...shapes);
+  }
+
+  /** Línea, manejadores y paradas de los degradados (issue #110). */
+  #gradient(scene: GradientScene): SVGElement[] {
+    const doc = this.element.ownerDocument;
+    const shapes: SVGElement[] = [];
+    for (const { from, to, stroke } of scene.lines) {
+      const line = doc.createElementNS(SVG_NS, "line");
+      line.classList.add("overlay-gradient-line");
+      if (stroke) line.classList.add("overlay-gradient-stroke");
+      line.setAttribute("x1", String(round(from.x)));
+      line.setAttribute("y1", String(round(from.y)));
+      line.setAttribute("x2", String(round(to.x)));
+      line.setAttribute("y2", String(round(to.y)));
+      shapes.push(line);
+    }
+    for (const { at, color, selected, stroke } of scene.stops) {
+      const circle = doc.createElementNS(SVG_NS, "circle");
+      circle.classList.add("overlay-gradient-stop");
+      if (selected) circle.classList.add("overlay-gradient-stop-selected");
+      if (stroke) circle.classList.add("overlay-gradient-stroke");
+      circle.setAttribute("cx", String(round(at.x)));
+      circle.setAttribute("cy", String(round(at.y)));
+      circle.setAttribute("r", selected ? "5" : "4");
+      circle.style.fill = color;
+      shapes.push(circle);
+    }
+    for (const { at, kind, stroke } of scene.handles) {
+      const size = 9;
+      // El radio y el foco son círculos; los extremos y el centro, cuadrados.
+      const circular = kind === "radius" || kind === "focus";
+      const handle = circular
+        ? doc.createElementNS(SVG_NS, "circle")
+        : this.#rect(
+            { x: at.x - size / 2, y: at.y - size / 2, width: size, height: size },
+            "overlay-gradient-square",
+          );
+      handle.classList.add("overlay-gradient-handle", `overlay-gradient-${kind}`);
+      if (stroke) handle.classList.add("overlay-gradient-stroke");
+      if (circular) {
+        handle.setAttribute("cx", String(round(at.x)));
+        handle.setAttribute("cy", String(round(at.y)));
+        handle.setAttribute("r", "4.5");
+      }
+      shapes.push(handle);
+    }
+    return shapes;
   }
 
   dispose(): void {

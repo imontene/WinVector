@@ -35,6 +35,7 @@ import {
   installVertexTool,
   installPenTool,
   installTextTool,
+  installGradientTool,
   NEW_TEXT_FONT,
   NEW_TEXT_SIZE,
   installContextMenu,
@@ -228,6 +229,7 @@ function refreshOverlay(): void {
             vertices: activeTool === "vertex" ? vertexTool.scene() : null,
             pen: penTool.scene(),
             text: textTool.scene(),
+            gradient: gradientTool.scene(),
           }
         : { ...EMPTY_SCENE, marquee: null },
     );
@@ -249,6 +251,7 @@ function setTool(tool: ToolName, fromCanvas: boolean): void {
   // Una forma libre a medias se termina al cambiar de herramienta.
   if (tool !== "pen") penTool.finish();
   if (tool !== "text") textTool.finish();
+  if (tool !== "gradient") gradientTool.finish();
   activeTool = tool;
   const cursor = cursorForTool(tool);
   if (cursor) document.body.dataset.cursor = cursor;
@@ -808,6 +811,16 @@ const textTool = installTextTool(
   },
   () => "Texto",
 );
+const gradientTool = installGradientTool(window, {
+  tool: () => activeTool,
+  active: () => {
+    const active = documents.active;
+    return active
+      ? { document: active.document, selection: active.selection, history: active.document.history }
+      : null;
+  },
+  changed: refreshOverlay,
+});
 const vertexTool = installVertexTool(window, {
   tool: () => activeTool,
   active: activeDocument,

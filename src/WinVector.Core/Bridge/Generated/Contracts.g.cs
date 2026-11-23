@@ -695,6 +695,8 @@ public enum ToolName
     Pen,
     [JsonStringEnumMemberName("text")]
     Text,
+    [JsonStringEnumMemberName("gradient")]
+    Gradient,
 }
 
 /// <summary>Herramienta activa del lienzo.</summary>
