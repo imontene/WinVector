@@ -148,7 +148,7 @@ public sealed partial class GradientEditor : UserControl
     }
 
     /// <summary>Muestra de un degradado de la biblioteca: un botón con sus paradas.</summary>
-    private Button Swatch(IReadOnlyList<WinVector.Core.Bridge.GradientStop> stops, string name, string automationId, Action apply)
+    private static Button Swatch(IReadOnlyList<WinVector.Core.Bridge.GradientStop> stops, string name, string automationId, Action apply)
     {
         var button = new Button
         {
