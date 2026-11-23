@@ -243,7 +243,10 @@ public sealed partial class GradientTests
         UseShortcut(VirtualKeyShort.KEY_D, "ToolGradient");
         Mouse.Drag(At(60, 100), At(180, 100));
         var created = Retry.WhileNull(() => SaveContaining("<linearGradient id=\"degradado\""), EngineTimeout, TimeSpan.FromSeconds(1)).Result
-            ?? throw new AssertFailedException("Arrastrar sobre la tarjeta no le puso un degradado.");
+            ?? throw new AssertFailedException(
+                "Arrastrar sobre la tarjeta no le puso un degradado. Selección: '"
+                + (Session.FindById("SelectionStatus")?.Name ?? "?") + "'. Tarjeta: "
+                + Regex.Match(File.ReadAllText(_file), "<rect id=\"tarjeta\"[^>]*>").Value);
         StringAssert.Contains(created, "fill=\"url(#degradado)\"");
         Assert.AreEqual(60, GradientNumber(created, "x1"), 2);
         Assert.AreEqual(180, GradientNumber(created, "x2"), 2);
