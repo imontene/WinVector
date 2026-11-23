@@ -72,6 +72,13 @@
       "response": "ObjectChange"
     },
     {
+      "name": "selection.setGradient",
+      "kind": "command",
+      "description": "Aplica o cambia un degradado en el relleno o el trazo de la selección: tipo, paradas y repetición. Crea el degradado si hace falta y copia el que compartan otros objetos. Los cambios seguidos de las posiciones o colores de las mismas paradas son un solo paso del historial.",
+      "payload": "GradientRequest",
+      "response": "ObjectChange"
+    },
+    {
       "name": "selection.setText",
       "kind": "command",
       "description": "Cambia la fuente, el tamaño, el peso, la cursiva, la alineación o el interlineado de los textos seleccionados. Los cambios seguidos de las mismas propiedades se funden en un paso del historial.",

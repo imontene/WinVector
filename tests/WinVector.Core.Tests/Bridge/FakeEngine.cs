@@ -34,6 +34,9 @@ internal sealed class FakeEngine
     /// <summary>Payloads de selection.setStyle recibidos, tal cual.</summary>
     public List<string> StylesSet { get; } = [];
 
+    /// <summary>Peticiones de degradado recibidas (selection.setGradient), en JSON.</summary>
+    public List<string> Gradients { get; } = [];
+
     /// <summary>Payloads de selection.setGeometry recibidos, tal cual.</summary>
     public List<string> GeometriesSet { get; } = [];
 
@@ -198,6 +201,10 @@ internal sealed class FakeEngine
                 break;
             case "selection.setStyle":
                 StylesSet.Add(payload.GetRawText());
+                _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
+                break;
+            case "selection.setGradient":
+                Gradients.Add(payload.GetRawText());
                 _transport.RespondOk(id, name, $$"""{"documentId":"{{documentId}}","changed":true}""");
                 break;
             case "selection.setText":

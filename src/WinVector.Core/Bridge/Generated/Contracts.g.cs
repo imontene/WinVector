@@ -230,6 +230,17 @@ public sealed record GradientPaint(
     [property: JsonPropertyName("stops")] IReadOnlyList<GradientStop> Stops,
     [property: JsonPropertyName("users")] int Users);
 
+/// <summary>Degradado que se quiere en el relleno o el trazo de la selección (issue #109). Lo que no se indica no cambia. Un objeto que no pinta con un degradado recibe uno nuevo (ADR 0009); uno compartido con otros objetos se copia antes de cambiarlo.</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Kind">Tipo de degradado. Si el objeto ya tiene uno de otro tipo, se convierte conservando las paradas; si no tiene, se crea de este tipo.</param>
+/// <param name="Stops">Paradas, en orden. Si el objeto no tiene degradado y no se indican, van de su color a ese color transparente.</param>
+public sealed record GradientRequest(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("property")] PaintProperty Property,
+    [property: JsonPropertyName("kind"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] GradientKind? Kind = null,
+    [property: JsonPropertyName("stops"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<GradientStop>? Stops = null,
+    [property: JsonPropertyName("spread"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SpreadMethod? Spread = null);
+
 /// <summary>Parada de un degradado, como se dibuja.</summary>
 /// <param name="Offset">Posición de 0 a 1, nunca menor que la de la parada anterior.</param>
 /// <param name="Color">Color "#rrggbb".</param>
@@ -325,6 +336,16 @@ public sealed record ObjectArrange(
 public sealed record ObjectChange(
     [property: JsonPropertyName("documentId")] string DocumentId,
     [property: JsonPropertyName("changed")] bool Changed);
+
+/// <summary>Pintura de un objeto: su relleno o su trazo.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<PaintProperty>))]
+public enum PaintProperty
+{
+    [JsonStringEnumMemberName("fill")]
+    Fill,
+    [JsonStringEnumMemberName("stroke")]
+    Stroke,
+}
 
 /// <summary>Cambia el tipo de los nodos seleccionados con la herramienta Vértices, o el de los segmentos entre ellos.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
@@ -754,6 +775,9 @@ public static class BridgeCommands
     /// <summary>Cambia el relleno, el trazo, su grosor o la opacidad de la selección tocando lo mínimo del archivo. Los cambios seguidos de las mismas propiedades son un solo paso del historial.</summary>
     public static readonly BridgeCommand<StyleChange, ObjectChange> SelectionSetStyle = new("selection.setStyle");
 
+    /// <summary>Aplica o cambia un degradado en el relleno o el trazo de la selección: tipo, paradas y repetición. Crea el degradado si hace falta y copia el que compartan otros objetos. Los cambios seguidos de las posiciones o colores de las mismas paradas son un solo paso del historial.</summary>
+    public static readonly BridgeCommand<GradientRequest, ObjectChange> SelectionSetGradient = new("selection.setGradient");
+
     /// <summary>Cambia la fuente, el tamaño, el peso, la cursiva, la alineación o el interlineado de los textos seleccionados. Los cambios seguidos de las mismas propiedades se funden en un paso del historial.</summary>
     public static readonly BridgeCommand<TextChange, ObjectChange> SelectionSetText = new("selection.setText");
 
@@ -901,6 +925,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(FilesDropped))]
 [JsonSerializable(typeof(FontUse))]
 [JsonSerializable(typeof(GradientPaint))]
+[JsonSerializable(typeof(GradientRequest))]
 [JsonSerializable(typeof(GradientStop))]
 [JsonSerializable(typeof(HistoryState))]
 [JsonSerializable(typeof(KeyboardShortcut))]

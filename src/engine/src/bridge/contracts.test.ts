@@ -370,6 +370,22 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "command",
+    id: "c28",
+    name: "selection.setGradient",
+    payload: {
+      documentId: "d1",
+      property: "fill",
+      kind: "radial",
+      stops: [
+        { offset: 0, color: "#ff0000", opacity: 1 },
+        { offset: 1, color: "#ff0000", opacity: 0 },
+      ],
+      spread: "reflect",
+    },
+  },
+  {
+    ...base,
+    kind: "command",
     id: "c27",
     name: "path.cornerRadius",
     payload: { documentId: "d1", radius: 4.5 },
@@ -434,6 +450,7 @@ function summarize(message: BridgeMessage): string {
       case "selection.duplicate":
       case "selection.delete":
       case "selection.setStyle":
+      case "selection.setGradient":
       case "selection.setShape":
         return `cambió: ${String(message.payload.changed)}`;
       case "clipboard.copy":
@@ -474,6 +491,8 @@ function summarize(message: BridgeMessage): string {
         return `nodos ${message.payload.action}`;
       case "path.operation":
         return `trazado ${message.payload.operation}`;
+      case "selection.setGradient":
+        return `degradado ${message.payload.property} ${String(message.payload.kind)} ${String(message.payload.stops?.length)}`;
       case "path.cornerRadius":
         return `radio ${String(message.payload.radius)}`;
       case "selection.setText":
@@ -590,6 +609,7 @@ describe("contrato del puente", () => {
       "nodos smooth",
       "trazado combine",
       "texto Georgia middle",
+      "degradado fill radial 2",
       "radio 4.5",
       "texto bloqueado: text-path",
       "2 nodos mixed",

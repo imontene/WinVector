@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WinVector.App.Controls.GradientEditor"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Editor del degradado del relleno o del trazo (issue #109): el modo (color, lineal o radial) y,
+        con un degradado, la barra de paradas (arrastrarlas las mueve; un clic en la barra añade una),
+        la parada elegida, su posición, añadir, quitar e invertir, y la repetición. El color de la
+        parada elegida se cambia con el selector de color de la ventana desplegable.
+    -->
+    <StackPanel Spacing="8">
+        <RadioButtons
+            x:Name="ModeButtons"
+            x:Uid="GradientMode"
+            MaxColumns="3"
+            SelectionChanged="OnModeChanged">
+            <RadioButton x:Name="ModeColor" x:Uid="GradientModeColor" />
+            <RadioButton x:Name="ModeLinear" x:Uid="GradientModeLinear" />
+            <RadioButton x:Name="ModeRadial" x:Uid="GradientModeRadial" />
+        </RadioButtons>
+
+        <StackPanel
+            x:Name="GradientPanel"
+            Spacing="8"
+            Visibility="Collapsed">
+            <Grid
+                x:Name="StopBar"
+                x:Uid="GradientStopBar"
+                Height="32"
+                Background="Transparent"
+                PointerCaptureLost="OnBarPointerReleased"
+                PointerMoved="OnBarPointerMoved"
+                PointerPressed="OnBarPointerPressed"
+                PointerReleased="OnBarPointerReleased"
+                SizeChanged="OnBarSizeChanged">
+                <Border
+                    x:Name="Preview"
+                    Height="16"
+                    Margin="6,8,6,0"
+                    VerticalAlignment="Top"
+                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="3" />
+                <Canvas x:Name="Thumbs" Margin="6,0" />
+            </Grid>
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ComboBox
+                    x:Name="StopBox"
+                    x:Uid="GradientStopBox"
+                    Grid.Column="0"
+                    HorizontalAlignment="Stretch"
+                    SelectionChanged="OnStopSelected" />
+                <NumberBox
+                    x:Name="OffsetBox"
+                    x:Uid="GradientOffsetBox"
+                    Grid.Column="1"
+                    LargeChange="10"
+                    Maximum="100"
+                    Minimum="0"
+                    SmallChange="1"
+                    SpinButtonPlacementMode="Compact"
+                    ValueChanged="OnOffsetChanged" />
+            </Grid>
+            <Grid ColumnSpacing="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button
+                    x:Name="AddStopButton"
+                    x:Uid="GradientAddStop"
+                    Grid.Column="0"
+                    HorizontalAlignment="Stretch"
+                    Click="OnAddStopClick" />
+                <Button
+                    x:Name="RemoveStopButton"
+                    x:Uid="GradientRemoveStop"
+                    Grid.Column="1"
+                    HorizontalAlignment="Stretch"
+                    Click="OnRemoveStopClick" />
+                <Button
+                    x:Name="InvertButton"
+                    x:Uid="GradientInvert"
+                    Grid.Column="2"
+                    HorizontalAlignment="Stretch"
+                    Click="OnInvertClick" />
+            </Grid>
+            <ComboBox
+                x:Name="SpreadBox"
+                x:Uid="GradientSpreadBox"
+                HorizontalAlignment="Stretch"
+                SelectionChanged="OnSpreadChanged">
+                <ComboBoxItem x:Name="SpreadPad" x:Uid="GradientSpreadPad" />
+                <ComboBoxItem x:Name="SpreadReflect" x:Uid="GradientSpreadReflect" />
+                <ComboBoxItem x:Name="SpreadRepeat" x:Uid="GradientSpreadRepeat" />
+            </ComboBox>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

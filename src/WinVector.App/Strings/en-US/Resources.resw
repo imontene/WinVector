@@ -544,6 +544,66 @@ Licensed under the Apache License 2.0.</value>
   <data name="PaintServer" xml:space="preserve">
     <value>Gradient or pattern</value>
   </data>
+  <data name="PaintLinearGradient" xml:space="preserve">
+    <value>Linear gradient</value>
+  </data>
+  <data name="PaintRadialGradient" xml:space="preserve">
+    <value>Radial gradient</value>
+  </data>
+  <data name="GradientMode.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Paint type</value>
+  </data>
+  <data name="GradientModeColor.Content" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="GradientModeLinear.Content" xml:space="preserve">
+    <value>Linear</value>
+  </data>
+  <data name="GradientModeRadial.Content" xml:space="preserve">
+    <value>Radial</value>
+  </data>
+  <data name="GradientStopBar.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Gradient stops</value>
+  </data>
+  <data name="GradientStopBox.Header" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="GradientStopCount" xml:space="preserve">
+    <value>{0} stops</value>
+  </data>
+  <data name="GradientOffsetBox.Header" xml:space="preserve">
+    <value>Position (%)</value>
+  </data>
+  <data name="GradientAddStop.Content" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="GradientAddStop.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Add a stop</value>
+  </data>
+  <data name="GradientRemoveStop.Content" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="GradientRemoveStop.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Remove the stop</value>
+  </data>
+  <data name="GradientInvert.Content" xml:space="preserve">
+    <value>Reverse</value>
+  </data>
+  <data name="GradientInvert.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Reverse the gradient</value>
+  </data>
+  <data name="GradientSpreadBox.Header" xml:space="preserve">
+    <value>Outside the gradient</value>
+  </data>
+  <data name="GradientSpreadPad.Content" xml:space="preserve">
+    <value>Extend the ends</value>
+  </data>
+  <data name="GradientSpreadReflect.Content" xml:space="preserve">
+    <value>Reflect</value>
+  </data>
+  <data name="GradientSpreadRepeat.Content" xml:space="preserve">
+    <value>Repeat</value>
+  </data>
   <data name="ToolEyedropper.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Eyedropper (I): click to give its color to the selection; with Shift, to the stroke</value>
   </data>

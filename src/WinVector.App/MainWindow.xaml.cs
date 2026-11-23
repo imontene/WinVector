@@ -118,6 +118,10 @@ public sealed partial class MainWindow : Window
         RootGrid.KeyboardAccelerators.Add(palette);
         ViewModel.CommandPaletteRequested += (_, _) => OpenCommandPalette();
         ViewModel.CornerRadiusRequested += (_, _) => FocusCornerRadius();
+        FillGradientEditor.Editor = ViewModel.FillGradient;
+        StrokeGradientEditor.Editor = ViewModel.StrokeGradient;
+        FillGradientEditor.SelectedStopChanged += (_, _) => ShowPickerColor(fill: true);
+        StrokeGradientEditor.SelectedStopChanged += (_, _) => ShowPickerColor(fill: false);
         ViewModel.ContextMenuRequested += OnContextMenuRequested;
 
         // Ctrl++ y Ctrl+- (en el teclado principal y en el numérico) no tienen nombre en VirtualKey.
@@ -221,28 +225,56 @@ public sealed partial class MainWindow : Window
         entry.Execute();
     }
 
-    /// <summary>Texto de una pintura en el panel: el color, "Ninguno", "Varios" o "Degradado o patrón".</summary>
-    private string PaintText(string? paint) => paint switch
+    /// <summary>
+    /// Texto de una pintura en el panel: el color, "Ninguno", "Varios", "Degradado lineal",
+    /// "Degradado radial" o "Degradado o patrón".
+    /// </summary>
+    private string PaintText(string? paint, PaintMode? mode) => (paint, mode) switch
     {
-        null => _resources.GetString("PaintMixed"),
-        "none" => _resources.GetString("PaintNone"),
-        "url" => _resources.GetString("PaintServer"),
-        _ => paint.ToUpperInvariant(),
+        (null, _) => _resources.GetString("PaintMixed"),
+        ("none", _) => _resources.GetString("PaintNone"),
+        ("url", PaintMode.Linear) => _resources.GetString("PaintLinearGradient"),
+        ("url", PaintMode.Radial) => _resources.GetString("PaintRadialGradient"),
+        ("url", _) => _resources.GetString("PaintServer"),
+        ({ } color, _) => color.ToUpperInvariant(),
     };
 
     private void OnPaintFlyoutOpening(object sender, object e)
     {
-        var fill = ReferenceEquals(sender, FillFlyout);
-        var picker = fill ? FillPicker : StrokePicker;
-        _preparingPicker = true;
-        if (BindingFunctions.TryParseColor(fill ? ViewModel.SelectionFill : ViewModel.SelectionStroke, out var color))
-        {
-            picker.Color = color;
-        }
-
-        _preparingPicker = false;
+        ShowPickerColor(ReferenceEquals(sender, FillFlyout));
         _pickedColor = null;
         RebuildRecentColors();
+    }
+
+    /// <summary>
+    /// Pone en el selector de color el de la pintura o, con un degradado, el de su parada elegida
+    /// (con su opacidad), sin que cuente como un cambio.
+    /// </summary>
+    private void ShowPickerColor(bool fill)
+    {
+        var picker = fill ? FillPicker : StrokePicker;
+        var gradient = fill ? ViewModel.FillGradient : ViewModel.StrokeGradient;
+        _preparingPicker = true;
+        try
+        {
+            picker.IsAlphaEnabled = gradient.IsGradient;
+            if (gradient.IsGradient)
+            {
+                if (gradient.SelectedStop is { } stop && BindingFunctions.TryParseColor(stop.Color, out var stopColor))
+                {
+                    stopColor.A = (byte)Math.Round(Math.Clamp(stop.Opacity, 0, 1) * 255);
+                    picker.Color = stopColor;
+                }
+            }
+            else if (BindingFunctions.TryParseColor(fill ? ViewModel.SelectionFill : ViewModel.SelectionStroke, out var color))
+            {
+                picker.Color = color;
+            }
+        }
+        finally
+        {
+            _preparingPicker = false;
+        }
     }
 
     private void OnPaintColorChanged(ColorPicker sender, ColorChangedEventArgs args)
@@ -254,6 +286,14 @@ public sealed partial class MainWindow : Window
 
         var hex = BindingFunctions.ToHex(args.NewColor);
         _pickedColor = hex;
+        var gradient = ReferenceEquals(sender, FillPicker) ? ViewModel.FillGradient : ViewModel.StrokeGradient;
+        if (gradient.IsGradient)
+        {
+            // Con un degradado, el selector cambia la parada elegida (issue #109).
+            gradient.SetSelectedColor(hex, args.NewColor.A / 255.0);
+            return;
+        }
+
         if (ReferenceEquals(sender, FillPicker))
         {
             ViewModel.SetSelectionFill(hex);

@@ -1,0 +1,183 @@
+import { expect, test, type Page } from "@playwright/test";
+import { command, hostSend, openWithFakeHost, sample, sent } from "./host";
+
+/** Degradados desde el panel (issue #109) sobre el SVG de ejemplo. */
+
+test.beforeEach(async ({ page }) => {
+  await openWithFakeHost(page);
+});
+
+interface Stop {
+  offset: number;
+  color: string;
+  opacity: number;
+}
+
+const lastStyle = async (page: Page) =>
+  (
+    (await sent(page)).filter((m) => m.name === "selection.changed").at(-1)?.payload as
+      | {
+          style?: {
+            fill: string | null;
+            fillGradient?: {
+              id: string;
+              kind: string;
+              spread: string;
+              stops: Stop[];
+              users: number;
+            };
+            strokeGradient?: { id: string };
+          };
+        }
+      | undefined
+  )?.style;
+
+let counter = 0;
+
+async function send(page: Page, name: string, payload: object) {
+  const id = `c-g${String(++counter)}`;
+  await hostSend(page, command(id, name, { documentId: "d1", ...payload }));
+  await expect.poll(async () => (await sent(page)).find((m) => m.id === id)).toBeTruthy();
+  return (await sent(page)).find((m) => m.id === id);
+}
+
+const lastHistory = async (page: Page) =>
+  (await sent(page)).filter((m) => m.name === "history.changed").at(-1)?.payload as
+    { undoAction: string | null; canUndo: boolean } | undefined;
+
+const serialize = async (page: Page) =>
+  ((await send(page, "document.serialize", {}))?.payload as { svg: string }).svg;
+
+const sol = (page: Page) => page.locator("#workspace #sol");
+
+test("un degradado lineal nuevo va del color del objeto a transparente y lo cubre", async ({
+  page,
+}) => {
+  await sol(page).dblclick();
+  const result = await send(page, "selection.setGradient", { property: "fill", kind: "linear" });
+  expect(result).toMatchObject({ ok: true, payload: { changed: true } });
+
+  // El sol: círculo de centro (300, 96) y radio 52, en coordenadas del documento (ADR 0009).
+  const gradient = page.locator("#workspace defs #degradado");
+  await expect(gradient).toHaveCount(1);
+  expect(await gradient.evaluate((g) => g.localName)).toBe("linearGradient");
+  expect(
+    await gradient.evaluate((g) =>
+      ["gradientUnits", "x1", "y1", "x2", "y2"].map((name) => g.getAttribute(name)),
+    ),
+  ).toEqual(["userSpaceOnUse", "248", "96", "352", "96"]);
+  expect(await sol(page).getAttribute("fill")).toBe("url(#degradado)");
+  await expect
+    .poll(() => lastStyle(page))
+    .toMatchObject({
+      fill: "url",
+      fillGradient: {
+        id: "degradado",
+        kind: "linear",
+        spread: "pad",
+        stops: [
+          { offset: 0, color: "#ffb547", opacity: 1 },
+          { offset: 1, color: "#ffb547", opacity: 0 },
+        ],
+        users: 1,
+      },
+    });
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "gradient" });
+
+  // Deshacer deja el archivo como estaba.
+  await send(page, "history.undo", {});
+  expect(await serialize(page)).toBe(sample);
+});
+
+test("pasar a radial conserva el id y las paradas; la repetición se escribe", async ({ page }) => {
+  await sol(page).dblclick();
+  await send(page, "selection.setGradient", { property: "fill", kind: "linear" });
+  await send(page, "selection.setGradient", {
+    property: "fill",
+    kind: "radial",
+    spread: "reflect",
+  });
+  const gradient = page.locator("#workspace defs #degradado");
+  expect(await gradient.evaluate((g) => g.localName)).toBe("radialGradient");
+  expect(
+    await gradient.evaluate((g) =>
+      ["cx", "cy", "r", "x1", "spreadMethod"].map((name) => g.getAttribute(name)),
+    ),
+  ).toEqual(["300", "96", "52", null, "reflect"]);
+  await expect
+    .poll(() => lastStyle(page))
+    .toMatchObject({ fillGradient: { kind: "radial", spread: "reflect" } });
+  expect(await gradient.locator("stop").count()).toBe(2);
+});
+
+test("mover paradas seguidas es un paso; añadir una es otro", async ({ page }) => {
+  await sol(page).dblclick();
+  await send(page, "selection.setGradient", {
+    property: "fill",
+    stops: [
+      { offset: 0, color: "#ff0000", opacity: 1 },
+      { offset: 1, color: "#0000ff", opacity: 1 },
+    ],
+  });
+  for (const offset of [0.2, 0.3, 0.4]) {
+    await send(page, "selection.setGradient", {
+      property: "fill",
+      stops: [
+        { offset, color: "#ff0000", opacity: 1 },
+        { offset: 1, color: "#0000ff", opacity: 1 },
+      ],
+    });
+  }
+  await send(page, "selection.setGradient", {
+    property: "fill",
+    stops: [
+      { offset: 0.4, color: "#ff0000", opacity: 1 },
+      { offset: 0.7, color: "#00ff00", opacity: 1 },
+      { offset: 1, color: "#0000ff", opacity: 1 },
+    ],
+  });
+  await expect.poll(async () => (await lastStyle(page))?.fillGradient?.stops.length).toBe(3);
+
+  await send(page, "history.undo", {});
+  await expect
+    .poll(async () => (await lastStyle(page))?.fillGradient?.stops.map((s) => s.offset))
+    .toEqual([0.4, 1]);
+  await send(page, "history.undo", {});
+  await expect
+    .poll(async () => (await lastStyle(page))?.fillGradient?.stops.map((s) => s.offset))
+    .toEqual([0, 1]);
+});
+
+test("cambiar un degradado compartido solo cambia el objeto seleccionado", async ({ page }) => {
+  // El cielo de fondo usa #cielo; se le da también al sol.
+  await page.locator("#workspace #sol").evaluate((e) => {
+    e.setAttribute("fill", "url(#cielo)");
+  });
+  await sol(page).dblclick();
+  await expect.poll(async () => (await lastStyle(page))?.fillGradient?.users).toBe(2);
+  await send(page, "selection.setGradient", {
+    property: "fill",
+    stops: [
+      { offset: 0, color: "#000000", opacity: 1 },
+      { offset: 1, color: "#ffffff", opacity: 1 },
+    ],
+  });
+  expect(await sol(page).getAttribute("fill")).toBe("url(#cielo-2)");
+  expect(await page.locator("#workspace #cielo-fondo").getAttribute("fill")).toBe("url(#cielo)");
+  expect(
+    await page
+      .locator("#workspace #cielo stop")
+      .evaluateAll((stops) => stops.map((s) => s.getAttribute("stop-color"))),
+  ).toEqual(["#eaf3ff", "#fbfcfe"]);
+  await expect
+    .poll(() => lastStyle(page))
+    .toMatchObject({ fillGradient: { id: "cielo-2", users: 1 } });
+});
+
+test("el trazo tiene su propio degradado", async ({ page }) => {
+  await page.locator("#workspace #tarjeta").dblclick();
+  await send(page, "selection.setGradient", { property: "stroke", kind: "linear" });
+  expect(await page.locator("#workspace #tarjeta").getAttribute("stroke")).toBe("url(#degradado)");
+  expect(await page.locator("#workspace #tarjeta").getAttribute("fill")).toBe("#ffffff");
+  await expect.poll(async () => (await lastStyle(page))?.strokeGradient?.id).toBe("degradado");
+});
