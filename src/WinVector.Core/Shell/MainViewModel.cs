@@ -124,6 +124,7 @@ public sealed partial class MainViewModel : ObservableObject
         Add("tool-vertex", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Vertex)));
         Add("tool-pen", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Pen)));
         Add("tool-text", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Text)));
+        Add("tool-gradient", new AsyncRelayCommand(() => SelectToolAsync(ToolName.Gradient)));
         Add("text-bold", ToggleBoldCommand);
         Add("text-italic", ToggleItalicCommand);
         Add("text-align-start", AlignTextStartCommand);

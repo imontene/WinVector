@@ -196,7 +196,7 @@
     <value>Text</value>
   </data>
   <data name="ToolGradient.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Gradient (G)</value>
+    <value>Gradient (D)</value>
   </data>
   <data name="ToolGradient.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Gradient</value>
@@ -1328,6 +1328,12 @@ Licensed under the Apache License 2.0.</value>
   </data>
   <data name="PaletteShortcutToolText" xml:space="preserve">
     <value>T</value>
+  </data>
+  <data name="PaletteNameToolGradient" xml:space="preserve">
+    <value>Gradient tool</value>
+  </data>
+  <data name="PaletteShortcutToolGradient" xml:space="preserve">
+    <value>D</value>
   </data>
   <data name="HistoryActionEditText" xml:space="preserve">
     <value>edit text</value>

@@ -494,8 +494,9 @@ export function installGradientTool(target: Window, host: GradientToolHost) {
         if (!own) return;
         const stops = own.read.stops.filter((_, i) => i !== chosen.index);
         writeGradient(own.gradient, editing.document.root, { stops });
+        // Queda elegida la vecina: Supr seguido sigue borrando paradas (nunca el objeto).
+        selected = { ...chosen, index: Math.min(chosen.index, stops.length - 1) };
       });
-      selected = null;
       host.changed();
     }
   };
