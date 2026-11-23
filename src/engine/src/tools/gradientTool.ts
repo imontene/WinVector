@@ -380,9 +380,15 @@ export function installGradientTool(target: Window, host: GradientToolHost) {
       return;
     }
     // Otro objeto: se selecciona, y arrastrando se le pone un degradado.
-    const pick = pickAt(event.composedPath()[0] ?? null, active.document.root, {
-      scope: active.selection.scope,
-    });
+    const root = active.document.root;
+    let touched = event.composedPath()[0] ?? null;
+    // Con el puntero aún capturado, el evento puede llegar a la página entera: lo que se pulsó es lo
+    // que hay bajo el puntero.
+    if (!(touched instanceof Node && root.contains(touched))) {
+      const owner = root.getRootNode() as Document | ShadowRoot;
+      touched = owner.elementFromPoint(event.clientX, event.clientY);
+    }
+    const pick = pickAt(touched, root, { scope: active.selection.scope });
     if (!pick) {
       active.selection.set([], active.selection.scope);
       selected = null;
