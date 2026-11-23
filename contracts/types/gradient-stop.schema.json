@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GradientStop",
+  "description": "Parada de un degradado, como se dibuja.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "offset",
+    "color",
+    "opacity"
+  ],
+  "properties": {
+    "offset": {
+      "type": "number",
+      "description": "Posición de 0 a 1, nunca menor que la de la parada anterior."
+    },
+    "color": {
+      "type": "string",
+      "description": "Color \"#rrggbb\"."
+    },
+    "opacity": {
+      "type": "number",
+      "description": "Opacidad de 0 a 1."
+    }
+  }
+}

@@ -188,6 +188,31 @@ export interface FontUse {
   readonly families: readonly string[];
 }
 
+/** Tipo de degradado: lineal o radial. */
+export type GradientKind = "linear" | "radial";
+
+/** Degradado con el que se pinta el relleno o el trazo, con lo heredado por href ya resuelto (ADR 0009). */
+export interface GradientPaint {
+  /** Identificador del degradado en el documento. */
+  readonly id: string;
+  readonly kind: GradientKind;
+  readonly spread: SpreadMethod;
+  /** Paradas en orden. Vacío si el degradado no tiene ninguna (no se dibuja). */
+  readonly stops: readonly GradientStop[];
+  /** Cuántas pinturas de objetos usan este degradado directamente. Con más de una, cambiarlo para un objeto le crea una copia propia. */
+  readonly users: number;
+}
+
+/** Parada de un degradado, como se dibuja. */
+export interface GradientStop {
+  /** Posición de 0 a 1, nunca menor que la de la parada anterior. */
+  readonly offset: number;
+  /** Color "#rrggbb". */
+  readonly color: string;
+  /** Opacidad de 0 a 1. */
+  readonly opacity: number;
+}
+
 /** Estado del historial de deshacer de un documento. */
 export interface HistoryState {
   /** Identificador del documento, asignado por la aplicación. */
@@ -351,6 +376,10 @@ export interface SelectionStyle {
   readonly opacity: number | null;
   /** Regla de relleno común de la selección; ausente si los objetos tienen reglas distintas o no hay formas. */
   readonly fillRule?: FillRule;
+  /** Degradado del relleno, si todos los objetos pintan su relleno con el mismo (issue #108). */
+  readonly fillGradient?: GradientPaint;
+  /** Degradado del trazo, si todos los objetos pintan su trazo con el mismo. */
+  readonly strokeGradient?: GradientPaint;
 }
 
 /** Cambio de propiedades propias de la forma seleccionada. Solo cambian las que se indican; las que no son de su tipo se ignoran. */
@@ -447,6 +476,9 @@ export interface ShapeProperties {
 
 /** Tipo de forma con propiedades propias en el panel. */
 export type ShapeType = "rect" | "ellipse" | "circle" | "line" | "polygon" | "star";
+
+/** Qué hay fuera del degradado (spreadMethod): pad prolonga el color de los extremos, reflect lo repite en espejo y repeat lo repite. */
+export type SpreadMethod = "pad" | "reflect" | "repeat";
 
 /** Cambio de estilo de la selección. Un campo null no cambia. */
 export interface StyleChange {

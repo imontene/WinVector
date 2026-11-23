@@ -1,6 +1,7 @@
 import type { History } from "../history";
 import { isContainer } from "../selection";
 import { outermost } from "../transform";
+import { commonGradient, type GradientSummary } from "../paint/gradient";
 import { declaresProperty, setDeclaration } from "./declarations";
 
 /**
@@ -17,6 +18,9 @@ export interface StyleSummary {
   readonly opacity: number | null;
   /** Regla de relleno común; ausente si son distintas o no hay formas (issue #79). */
   readonly fillRule?: FillRule;
+  /** Degradado común del relleno y del trazo (issue #108). */
+  readonly fillGradient?: GradientSummary;
+  readonly strokeGradient?: GradientSummary;
 }
 
 export type FillRule = "nonzero" | "evenodd";
@@ -75,9 +79,11 @@ export function readStyle(items: readonly Element[]): StyleSummary {
   const targets = outer.flatMap(paintTargets);
   const computed = targets.map((target) => getComputedStyle(target));
   const fillRule = common(computed.map((style) => style.fillRule));
+  const fill = common(computed.map((style) => paintOf(style.fill)));
+  const stroke = common(computed.map((style) => paintOf(style.stroke)));
   return {
-    fill: common(computed.map((style) => paintOf(style.fill))),
-    stroke: common(computed.map((style) => paintOf(style.stroke))),
+    fill,
+    stroke,
     strokeWidth: common(
       computed.map((style) => Math.round(Number.parseFloat(style.strokeWidth) * 1e4) / 1e4),
     ),
@@ -87,6 +93,17 @@ export function readStyle(items: readonly Element[]): StyleSummary {
       ),
     ),
     ...(fillRule !== null && isFillRule(fillRule) ? { fillRule } : {}),
+    ...gradients(targets, fill, stroke),
+  };
+}
+
+/** Degradados comunes del relleno y del trazo, si los hay (solo se buscan si pintan con `url`). */
+function gradients(targets: readonly Element[], fill: Paint | null, stroke: Paint | null) {
+  const fillGradient = fill === "url" ? commonGradient(targets, "fill") : null;
+  const strokeGradient = stroke === "url" ? commonGradient(targets, "stroke") : null;
+  return {
+    ...(fillGradient ? { fillGradient } : {}),
+    ...(strokeGradient ? { strokeGradient } : {}),
   };
 }
 

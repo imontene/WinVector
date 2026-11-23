@@ -42,6 +42,14 @@
     "fillRule": {
       "$ref": "./fill-rule.schema.json",
       "description": "Regla de relleno común de la selección; ausente si los objetos tienen reglas distintas o no hay formas."
+    },
+    "fillGradient": {
+      "$ref": "./gradient-paint.schema.json",
+      "description": "Degradado del relleno, si todos los objetos pintan su relleno con el mismo (issue #108)."
+    },
+    "strokeGradient": {
+      "$ref": "./gradient-paint.schema.json",
+      "description": "Degradado del trazo, si todos los objetos pintan su trazo con el mismo."
     }
   }
 }

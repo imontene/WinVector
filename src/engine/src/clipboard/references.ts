@@ -25,6 +25,19 @@ function ownReferences(element: Element): string[] {
   return ids;
 }
 
+/**
+ * Cuántas veces se hace referencia a un identificador en `root`: cada `url(#id)` o `href="#id"` de
+ * cada elemento (salvo `except`) cuenta una vez, también en las hojas de estilos.
+ */
+export function countReferences(root: Element, id: string, except?: Element): number {
+  let count = 0;
+  for (const node of subtree(root)) {
+    if (node === except) continue;
+    for (const found of ownReferences(node)) if (found === id) count += 1;
+  }
+  return count;
+}
+
 /** Identificadores a los que se refieren los elementos o sus descendientes. */
 export function referencedIds(elements: Iterable<Element>): Set<string> {
   const ids = new Set<string>();
