@@ -19,3 +19,4 @@ export {
   sameArtboard,
   type ArtboardSettings,
 } from "./artboard";
+export * from "./collect";

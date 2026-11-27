@@ -101,6 +101,7 @@ public sealed partial class MainViewModel : ObservableObject
         Add("path-combine", CombinePathsCommand);
         Add("path-separate", SeparatePathCommand);
         Add("path-round-corners", RoundCornersCommand);
+        Add("clean-definitions", CleanDefinitionsCommand);
         Add("bring-to-front", BringToFrontCommand);
         Add("bring-forward", BringForwardCommand);
         Add("send-backward", SendBackwardCommand);
@@ -1490,6 +1491,7 @@ public sealed partial class MainViewModel : ObservableObject
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         SelectAllCommand.NotifyCanExecuteChanged();
+        CleanDefinitionsCommand.NotifyCanExecuteChanged();
         PasteCommand.NotifyCanExecuteChanged();
         ZoomInCommand.NotifyCanExecuteChanged();
         ZoomOutCommand.NotifyCanExecuteChanged();

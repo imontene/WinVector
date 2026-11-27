@@ -1,3 +1,4 @@
+import { COLLECT_ATTRIBUTE } from "../document/collect";
 import { countReferences } from "../clipboard/references";
 import { declaresProperty, setDeclaration } from "../style/declarations";
 import { paintOf } from "../style/style";
@@ -349,6 +350,8 @@ export function ownGradient(
   if (gradient.id && isPrivate(gradient.id, target, property, root)) return gradient;
   const copy = gradient.cloneNode(false) as SVGGradientElement;
   copy.id = freeId(root, gradient.id || "degradado");
+  // La copia es de WinVector: se borrará sola cuando nada la use (issue #113).
+  copy.setAttribute(COLLECT_ATTRIBUTE, "always");
   for (const stop of ownStops(gradient)) {
     const clone = stop.cloneNode(true) as Element;
     clone.removeAttribute("id");

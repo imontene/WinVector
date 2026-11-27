@@ -47,6 +47,12 @@ Los degradados en `objectBoundingBox` siguen a la caja del objeto sin tocarlos. 
 - Duplicar da al objeto una copia de las paradas.
 - Los predefinidos crean un degradado nuevo con sus paradas.
 
+**Limpieza** (#113). Los degradados que crea WinVector llevan `data-winvector-collect="always"`, como el `inkscape:collect="always"` de Inkscape. Son los nuevos, las copias al editar y los colocados de la biblioteca.
+
+- Al cerrar cada paso del historial se borran los que ya nada usa, también los que solo usaban otros que se borran. Lo hace un último cambio de la acción (`beforeCommit`), así que van en el mismo paso y deshacer los devuelve.
+- Los degradados y demás definiciones de otros programas no se tocan aunque nadie los use.
+- La orden «Limpiar definiciones sin usar» (`document.cleanDefinitions`) quita de `<defs>` todo lo que no alcanza el contenido del documento. Sigue los `href`, los `url(#…)` de atributos y estilos, las hojas de estilos y los `<use>`.
+
 **Contrato.** `selection-changed` describe el degradado común del relleno y del trazo (`fillGradient`, `strokeGradient`): id, tipo, repetición, paradas y cuántas pinturas de objetos lo usan directamente. La geometría no viaja por el puente, porque solo la usa el motor (manejadores del lienzo). El relleno y el trazo siguen valiendo `"url"` cuando son un degradado.
 
 ## Consecuencias

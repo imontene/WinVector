@@ -1,3 +1,4 @@
+import { COLLECT_ATTRIBUTE } from "../document/collect";
 import type { SvgDocument } from "../document";
 import type { History } from "../history";
 import { paintOf, paintTargets } from "../style/style";
@@ -126,6 +127,8 @@ function createGradient(
     TAG[kind],
   ) as SVGGradientElement;
   gradient.id = newGradientId(document.root);
+  // Se borrará solo cuando nada lo use (issue #113).
+  gradient.setAttribute(COLLECT_ATTRIBUTE, "always");
   gradient.setAttribute("gradientUnits", "userSpaceOnUse");
   writeGeometry(gradient, coveringGeometry(target, kind, false));
   if (request.spread && request.spread !== "pad")

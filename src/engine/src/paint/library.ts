@@ -1,3 +1,4 @@
+import { COLLECT_ATTRIBUTE } from "../document/collect";
 import type { SvgDocument } from "../document";
 import type { History } from "../history";
 import { paintTargets } from "../style/style";
@@ -64,6 +65,7 @@ export interface UseGradientRequest {
 function copyOf(gradient: SVGGradientElement, root: ParentNode): SVGGradientElement {
   const copy = gradient.cloneNode(true) as SVGGradientElement;
   copy.id = freeId(root, gradient.id);
+  copy.setAttribute(COLLECT_ATTRIBUTE, "always");
   for (const stop of ownStops(copy)) stop.removeAttribute("id");
   gradient.after(copy);
   return copy;
@@ -98,6 +100,7 @@ export function useGradient(
         read.kind === "radial" ? "radialGradient" : "linearGradient",
       );
       placed.id = newGradientId(root);
+      placed.setAttribute(COLLECT_ATTRIBUTE, "always");
       placed.setAttribute("href", `#${library.id}`);
       placed.setAttribute("gradientUnits", "userSpaceOnUse");
       writeGeometry(placed, coveringGeometry(target, read.kind, false));

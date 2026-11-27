@@ -123,6 +123,13 @@ public sealed record CornerRadiusChange(
     [property: JsonPropertyName("radius")] double Radius,
     [property: JsonPropertyName("all"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? All = null);
 
+/// <summary>Resultado de limpiar las definiciones sin usar de un documento (issue #113).</summary>
+/// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
+/// <param name="Removed">Cuántas definiciones se han quitado (0 si no había ninguna sin usar).</param>
+public sealed record DefinitionsCleaned(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("removed")] int Removed);
+
 /// <summary>Texto de un documento para guardarlo.</summary>
 /// <param name="DocumentId">Identificador del documento, asignado por la aplicación.</param>
 /// <param name="Svg">Texto completo del SVG.</param>
@@ -794,6 +801,9 @@ public static class BridgeCommands
     /// <summary>Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno.</summary>
     public static readonly BridgeCommand<DocumentRef, DocumentRef> SelectionSelectAll = new("selection.selectAll");
 
+    /// <summary>Quita de &lt;defs&gt; las definiciones a las que no llega nada del documento, tampoco a través de otras definiciones (degradados, patrones, recortes, símbolos…). Es un paso del historial; sin nada que quitar, no hay paso.</summary>
+    public static readonly BridgeCommand<DocumentRef, DefinitionsCleaned> DocumentCleanDefinitions = new("document.cleanDefinitions");
+
     /// <summary>Mueve, redimensiona o gira la selección hasta los valores del panel de propiedades, en un paso que se puede deshacer.</summary>
     public static readonly BridgeCommand<SelectionGeometry, DocumentRef> SelectionSetGeometry = new("selection.setGeometry");
 
@@ -945,6 +955,7 @@ public static class BridgeEvents
 [JsonSerializable(typeof(ClipboardPasteResult))]
 [JsonSerializable(typeof(ContextMenuRequest))]
 [JsonSerializable(typeof(CornerRadiusChange))]
+[JsonSerializable(typeof(DefinitionsCleaned))]
 [JsonSerializable(typeof(DocumentContent))]
 [JsonSerializable(typeof(DocumentFonts))]
 [JsonSerializable(typeof(DocumentGradients))]

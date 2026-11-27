@@ -99,6 +99,14 @@ export interface CornerRadiusChange {
   readonly all?: boolean;
 }
 
+/** Resultado de limpiar las definiciones sin usar de un documento (issue #113). */
+export interface DefinitionsCleaned {
+  /** Identificador del documento, asignado por la aplicación. */
+  readonly documentId: string;
+  /** Cuántas definiciones se han quitado (0 si no había ninguna sin usar). */
+  readonly removed: number;
+}
+
 /** Texto de un documento para guardarlo. */
 export interface DocumentContent {
   /** Identificador del documento, asignado por la aplicación. */
@@ -642,6 +650,11 @@ export interface BridgeCommands {
   readonly "app.ping": { readonly payload: AppPing; readonly response: AppPong };
   /** Selecciona todos los objetos del grupo en el que está el usuario, o del documento si no ha entrado en ninguno. */
   readonly "selection.selectAll": { readonly payload: DocumentRef; readonly response: DocumentRef };
+  /** Quita de <defs> las definiciones a las que no llega nada del documento, tampoco a través de otras definiciones (degradados, patrones, recortes, símbolos…). Es un paso del historial; sin nada que quitar, no hay paso. */
+  readonly "document.cleanDefinitions": {
+    readonly payload: DocumentRef;
+    readonly response: DefinitionsCleaned;
+  };
   /** Mueve, redimensiona o gira la selección hasta los valores del panel de propiedades, en un paso que se puede deshacer. */
   readonly "selection.setGeometry": {
     readonly payload: SelectionGeometry;
@@ -764,6 +777,7 @@ export type BridgeEventName = keyof BridgeEvents;
 export const BRIDGE_COMMAND_NAMES: readonly BridgeCommandName[] = [
   "app.ping",
   "selection.selectAll",
+  "document.cleanDefinitions",
   "selection.setGeometry",
   "selection.setStyle",
   "selection.setGradient",

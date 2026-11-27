@@ -82,6 +82,18 @@
   <data name="MenuEditSelectAll.Text" xml:space="preserve">
     <value>Seleccionar todo</value>
   </data>
+  <data name="MenuEditCleanDefinitions.Text" xml:space="preserve">
+    <value>Limpiar definiciones sin usar</value>
+  </data>
+  <data name="PaletteNameCleanDefinitions" xml:space="preserve">
+    <value>Limpiar definiciones sin usar</value>
+  </data>
+  <data name="DefinitionsCleaned" xml:space="preserve">
+    <value>Se han quitado {0} definiciones sin usar.</value>
+  </data>
+  <data name="DefinitionsCleanedNone" xml:space="preserve">
+    <value>No hay definiciones sin usar.</value>
+  </data>
   <data name="MenuObject.Title" xml:space="preserve">
     <value>Objeto</value>
   </data>

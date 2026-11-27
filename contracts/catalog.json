@@ -64,6 +64,13 @@
       "response": "DocumentRef"
     },
     {
+      "name": "document.cleanDefinitions",
+      "kind": "command",
+      "description": "Quita de <defs> las definiciones a las que no llega nada del documento, tampoco a través de otras definiciones (degradados, patrones, recortes, símbolos…). Es un paso del historial; sin nada que quitar, no hay paso.",
+      "payload": "DocumentRef",
+      "response": "DefinitionsCleaned"
+    },
+    {
       "name": "selection.setGeometry",
       "kind": "command",
       "description": "Mueve, redimensiona o gira la selección hasta los valores del panel de propiedades, en un paso que se puede deshacer.",

@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using WinVector.Core.Bridge;
 
 namespace WinVector.Core.Shell;
@@ -16,6 +17,29 @@ public sealed partial class MainViewModel
     /// <summary>Editor del degradado del trazo de la selección.</summary>
     public GradientEditorViewModel StrokeGradient =>
         _strokeGradient ??= new GradientEditorViewModel(PaintProperty.Stroke, SendGradient, SetSelectionStroke, UseGradient);
+
+    /// <summary>
+    /// Quita las definiciones que nada usa (issue #113) y dice cuántas en la barra de estado. Es un
+    /// paso del historial.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSelectAll))]
+    public async Task CleanDefinitionsAsync()
+    {
+        if (SelectedDocument is not { IsLoaded: true } document)
+        {
+            return;
+        }
+
+        DefinitionsCleaned? result = null;
+        Enqueue(async () => result = await SendAsync(BridgeCommands.DocumentCleanDefinitions, new DocumentRef(document.DocumentId)));
+        await _engineWork;
+        if (result is { } cleaned)
+        {
+            // Vacío antes: el mismo aviso dos veces seguidas también se muestra.
+            CanvasNotice = string.Empty;
+            CanvasNotice = _texts.DefinitionsCleaned(cleaned.Removed);
+        }
+    }
 
     private bool SendGradient(GradientRequestChange change)
     {
