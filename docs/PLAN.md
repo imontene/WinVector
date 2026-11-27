@@ -4,7 +4,7 @@ Editor gráfico de SVG para Windows 11, nativo y moderno.
 
 | | |
 |---|---|
-| Estado | Fases 0 a 4 terminadas. Siguiente: Fase 5 (degradados) |
+| Estado | Fases 0 a 5 terminadas. Siguiente: Fase 6 (estabilización y publicación de `v0.1.0`) |
 | Versión objetivo | MVP 1 → `v0.1.0` |
 | Licencia | Apache 2.0 |
 | Repositorio | Público en GitHub |
@@ -258,9 +258,18 @@ Las fases son secuenciales; cada una termina con algo funcionando y probado. El 
 - Edición con cursor y selección propios sobre el SVG y un `textarea` invisible para la entrada ([ADR 0006](adr/0006-edicion-de-texto.md)).
 - **Conseguido:** herramienta Texto (`T`) con edición en el lienzo: tildes, IME, portapapeles y deshacer del sistema, varias líneas, selección con el teclado y el ratón (palabra y línea), y cursor entre grafemas (también en textos girados y de derecha a izquierda). Toda la edición es un paso del historial. Los textos de otros programas que no se pueden editar (sobre un trazado, con letras colocadas sueltas…) se explican. Panel *Texto* y menú Texto: fuente con su familia de reserva, tamaño, peso, cursiva, alineación e interlineado. Aviso de las fuentes que faltan. Escalar un texto en proporción cambia su tamaño de fuente. Pruebas de interfaz de punta a punta y medida de escribir en [rendimiento.md](rendimiento.md). Los tramos con estilos distintos pasan a la MVP 4 (#96).
 
-### Fase 5 · Degradados (M)
+### Fase 5 · Degradados (M) ✅ Terminada
 - Degradados lineales y radiales, editor de paradas, manejadores en el lienzo, biblioteca y limpieza de `defs`.
 - Redondear a la vez todas las esquinas de una o varias figuras (#114), que amplía el redondeo de vértices de la Fase 3.
+- **Conseguido:**
+  - **Modelo** ([ADR 0009](adr/0009-modelo-de-degradados.md)): degradados lineales y radiales de cualquier programa, con sus cadenas `href`. Editar uno compartido le da al objeto una copia propia. Los nuevos van en `userSpaceOnUse`.
+  - **Panel:** en Relleno y Trazo se elige entre color, lineal o radial. Barra de paradas que se arrastran, posición exacta, añadir, quitar, invertir y repetición. El selector de color cambia la parada elegida, con su opacidad.
+  - **Herramienta Degradado (`D`):** inicio y fin, o centro, radio y foco, sobre el lienzo. Paradas sobre la línea; crear un degradado arrastrando; con `Alt`, el del trazo.
+  - **Transformar:** el degradado acompaña al objeto al moverlo, escalarlo, duplicarlo o pegarlo.
+  - **Biblioteca:** los degradados del documento y siete predefinidos. Las paradas se comparten, como en Inkscape, y se pueden cambiar para todos o duplicar.
+  - **Limpieza:** los degradados de WinVector que nada usa se borran solos en el mismo paso. La orden «Limpiar definiciones sin usar» quita el resto.
+  - **Esquinas:** «Radio de las esquinas» redondea todas las de una o varias figuras.
+  - **Pruebas:** de interfaz de punta a punta, y medida de mover un degradado en [rendimiento.md](rendimiento.md).
 
 ### Fase 6 · Estabilización y publicación de `v0.1.0` (M)
 - Pruebas de rendimiento y accesibilidad, corrección de errores.

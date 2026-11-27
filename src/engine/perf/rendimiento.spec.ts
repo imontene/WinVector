@@ -5,8 +5,8 @@ import { generateDocument } from "./generate";
 
 /**
  * Medición de rendimiento del motor (issue #34) con documentos de 500, 2.000 y 10.000 objetos:
- * tiempo de carga y fotogramas por segundo al arrastrar, escribir en un texto, hacer zoom y
- * desplazar.
+ * tiempo de carga y fotogramas por segundo al arrastrar, escribir en un texto, mover el extremo de
+ * un degradado, hacer zoom y desplazar.
  *
  * No es una prueba de aciertos y fallos: escribe los resultados en perf/resultados/motor.json y
  * `npm run perf:compare` los compara con la referencia (perf/referencia.json).
@@ -32,6 +32,8 @@ interface Result {
   readonly pan: FrameStats;
   /** Escribir en un texto con la herramienta Texto (issue #99): cada letra reescribe el texto. */
   readonly type: FrameStats;
+  /** Arrastrar el extremo de un degradado con la herramienta Degradado (issue #115). */
+  readonly gradient: FrameStats;
 }
 
 const results: Result[] = [];
@@ -146,6 +148,24 @@ for (const objects of SIZES) {
     const after = await page.locator("#o0").boundingBox();
     expect(after?.x, "el arrastre debe mover el objeto").not.toBe(before?.x);
 
+    // Mover el extremo de un degradado con la herramienta Degradado. El primer objeto, que sigue
+    // seleccionado tras arrastrarlo, tiene uno compartido con otros: al empezar se copia para él.
+    await page.keyboard.press("d");
+    const end = await page.locator(".overlay .overlay-gradient-end").boundingBox();
+    if (!end) throw new Error("No se ve el extremo del degradado");
+    const handle = { x: end.x + end.width / 2, y: end.y + end.height / 2 };
+    await page.mouse.move(handle.x, handle.y);
+    await page.mouse.down();
+    const gradient = await measure(page, (step) =>
+      page.mouse.move(handle.x + step, handle.y + step / 2),
+    );
+    await page.mouse.up();
+    expect(
+      await page.locator("#o0").getAttribute("fill"),
+      "mover el extremo debe dar al objeto su propio degradado",
+    ).not.toBe("url(#degradado)");
+    await page.keyboard.press("v");
+
     // Escribir en un texto: con la herramienta Texto, clic en el primero y una letra por fotograma.
     // Los textos del documento generado (el de ejemplo, en otra pestaña, también tiene uno).
     const text = page.locator(`text[id^="o"]`).first();
@@ -171,7 +191,7 @@ for (const objects of SIZES) {
     // Desplazar con la rueda.
     const pan = await measure(page, (step) => page.mouse.wheel(step % 2 === 0 ? 30 : 0, 30));
 
-    const result = { objects, loadMs, drag, type, zoom, pan };
+    const result = { objects, loadMs, drag, type, gradient, zoom, pan };
     results.push(result);
     test.info().annotations.push({ type: "rendimiento", description: JSON.stringify(result) });
     console.log(JSON.stringify(result));
