@@ -587,7 +587,8 @@ export type ToolName =
   | "star"
   | "vertex"
   | "pen"
-  | "text";
+  | "text"
+  | "gradient";
 
 /** Herramienta activa del lienzo. */
 export interface ToolState {

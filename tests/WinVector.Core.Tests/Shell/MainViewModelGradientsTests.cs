@@ -218,6 +218,16 @@ public sealed class MainViewModelGradientsTests : IDisposable
     }
 
     [TestMethod]
+    public async Task LaHerramientaDegradadoEstaEnLaPaletaYSeElige()
+    {
+        await ReadyAsync();
+        var entry = _viewModel.Commands.All.Single(c => c.Id == "tool-gradient");
+        entry.Execute();
+        await _viewModel.EngineWork;
+        Assert.AreEqual(ToolName.Gradient, _viewModel.ActiveTool);
+    }
+
+    [TestMethod]
     public void LosPredefinidosTienenAlMenosDosParadasOrdenadas()
     {
         foreach (var preset in GradientPreset.All)

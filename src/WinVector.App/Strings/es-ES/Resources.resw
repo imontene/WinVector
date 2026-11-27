@@ -197,7 +197,7 @@
     <value>Texto</value>
   </data>
   <data name="ToolGradient.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
-    <value>Degradado (G)</value>
+    <value>Degradado (D)</value>
   </data>
   <data name="ToolGradient.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Degradado</value>
@@ -1330,6 +1330,12 @@ Distribuido bajo la licencia Apache 2.0.</value>
   </data>
   <data name="PaletteShortcutToolText" xml:space="preserve">
     <value>T</value>
+  </data>
+  <data name="PaletteNameToolGradient" xml:space="preserve">
+    <value>Herramienta Degradado</value>
+  </data>
+  <data name="PaletteShortcutToolGradient" xml:space="preserve">
+    <value>D</value>
   </data>
   <data name="HistoryActionEditText" xml:space="preserve">
     <value>editar el texto</value>

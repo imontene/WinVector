@@ -565,8 +565,10 @@
                     </ToggleButton>
                     <ToggleButton
                         x:Uid="ToolGradient"
+                        AutomationProperties.AutomationId="ToolGradient"
                         Click="OnToolClick"
-                        Style="{StaticResource ToolButtonStyle}">
+                        Style="{StaticResource ToolButtonStyle}"
+                        Tag="gradient">
                         <PathIcon Data="M2,2 L14,2 L14,14 L2,14 Z M3.5,3.5 L3.5,12.5 L12.5,3.5 Z" />
                     </ToggleButton>
                     <ToggleButton

@@ -102,6 +102,9 @@ public sealed partial class TextTests
     /// <summary>Guarda con Ctrl+S y devuelve el texto del archivo.</summary>
     private string Save()
     {
+        // El teclado sale de la lista de fuentes (editable): con el foco en ella, Ctrl+S puede no
+        // llegar a la ventana.
+        Session.FindById("ToolSelect")?.Focus();
         var before = File.GetLastWriteTimeUtc(_file);
         // Justo después de usar un menú, Ctrl+S puede llegar a su ventana emergente mientras se cierra
         // y perderse: se vuelve a pulsar. Guardar dos veces no cambia el archivo.

@@ -203,6 +203,67 @@ public sealed partial class GradientTests
         StringAssert.Contains(svg, "fill=\"url(#degradado)\"");
     }
 
+    private Point At(double x, double y) => AppSession.SamplePoint(Session.GetById("EngineCanvas").BoundingRectangle, x, y);
+
+    /// <summary>Elige una herramienta con su atajo, con el lienzo enfocado.</summary>
+    private void UseShortcut(VirtualKeyShort key, string tool)
+    {
+        var canvas = Session.GetById("EngineCanvas").BoundingRectangle;
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            Mouse.Click(new Point(canvas.X + 4, canvas.Y + 4));
+            Thread.Sleep(200);
+            Keyboard.Type(key);
+            if (Retry.WhileFalse(
+                () => Session.FindById(tool)?.Patterns.Toggle.PatternOrDefault?.ToggleState.ValueOrDefault == FlaUI.Core.Definitions.ToggleState.On,
+                TimeSpan.FromSeconds(5)).Result)
+            {
+                return;
+            }
+        }
+
+        Assert.Fail($"El atajo no eligió la herramienta {tool}.");
+    }
+
+    /// <summary>Un atributo numérico del degradado nuevo del archivo.</summary>
+    private static double GradientNumber(string svg, string name)
+    {
+        var gradient = NewLinearGradient().Match(svg);
+        Assert.IsTrue(gradient.Success, "No hay un degradado lineal nuevo.");
+        var value = Regex.Match(gradient.Value, $"\\b{name}=\"([^\"]+)\"");
+        Assert.IsTrue(value.Success, $"El degradado no tiene {name}.");
+        return double.Parse(value.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    [TestMethod]
+    public void LaHerramientaDegradadoCreaUnoArrastrandoYMueveSuExtremo()
+    {
+        Launch();
+        // La tarjeta del ejemplo va de (48, 58) a (198, 146).
+        UseShortcut(VirtualKeyShort.KEY_D, "ToolGradient");
+        Mouse.Drag(At(60, 100), At(180, 100));
+        var created = Retry.WhileNull(() => SaveContaining("<linearGradient id=\"degradado\""), EngineTimeout, TimeSpan.FromSeconds(1)).Result
+            ?? throw new AssertFailedException(
+                "Arrastrar sobre la tarjeta no le puso un degradado. Selección: '"
+                + (Session.FindById("SelectionStatus")?.Name ?? "?") + "'. Tarjeta: "
+                + Regex.Match(File.ReadAllText(_file), "<rect id=\"tarjeta\"[^>]*>").Value);
+        StringAssert.Contains(created, "fill=\"url(#degradado)\"");
+        Assert.AreEqual(60, GradientNumber(created, "x1"), 2);
+        Assert.AreEqual(180, GradientNumber(created, "x2"), 2);
+
+        // El extremo se arrastra hasta (150, 130).
+        Mouse.Drag(At(180, 100), At(150, 130));
+        var moved = Retry.WhileNull(
+            () => Save() is { } svg && Math.Abs(GradientNumber(svg, "x2") - 150) < 2 ? svg : null,
+            EngineTimeout,
+            TimeSpan.FromSeconds(1)).Result
+            ?? throw new AssertFailedException("Arrastrar el extremo no lo movió.");
+        Assert.AreEqual(130, GradientNumber(moved, "y2"), 2);
+    }
+
+    [GeneratedRegex("<linearGradient id=\"degradado\"[^>]*>")]
+    private static partial Regex NewLinearGradient();
+
     [GeneratedRegex("<radialGradient id=\"([^\"]+)\"[\\s\\S]*?</radialGradient>")]
     private static partial Regex RadialGradient();
 }

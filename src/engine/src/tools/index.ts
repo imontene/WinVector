@@ -26,3 +26,4 @@ export * from "./penTool";
 export * from "./textTool";
 export * from "./contextMenu";
 export * from "./objectCorners";
+export * from "./gradientTool";
