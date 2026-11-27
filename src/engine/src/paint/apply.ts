@@ -14,6 +14,7 @@ import {
   readGradient,
   setPaintReference,
   type SpreadMethod,
+  stopsOwner,
   writeGradient,
 } from "./gradient";
 
@@ -31,6 +32,11 @@ export interface GradientRequest {
   readonly kind?: GradientKind;
   readonly stops?: readonly GradientStop[];
   readonly spread?: SpreadMethod;
+  /**
+   * Cambiar las paradas y la repetición donde están, para todos los objetos que las comparten
+   * (biblioteca, issue #112), en lugar de en un degradado propio del objeto.
+   */
+  readonly shared?: boolean;
 }
 
 const TAG: Readonly<Record<GradientKind, string>> = {
@@ -42,7 +48,7 @@ const LINEAR_ATTRIBUTES = ["x1", "y1", "x2", "y2"];
 const RADIAL_ATTRIBUTES = ["cx", "cy", "r", "fx", "fy", "fr"];
 
 /** Identificador nuevo: `degradado`, o `degradado-2`, `degradado-3`… si ya existe. */
-function newId(root: ParentNode): string {
+export function newGradientId(root: ParentNode): string {
   if (!byId(root, "degradado")) return "degradado";
   for (let n = 2; ; n++) {
     const candidate = `degradado-${String(n)}`;
@@ -64,7 +70,7 @@ function boxOf(target: Element): DOMRect {
  * desde el centro hasta el lado más lejano. En fracciones de la caja si el degradado usa
  * `objectBoundingBox`.
  */
-function coveringGeometry(
+export function coveringGeometry(
   target: Element,
   kind: GradientKind,
   boundingBox: boolean,
@@ -82,7 +88,7 @@ function coveringGeometry(
     : { cx, cy, r: Math.max(box.width, box.height) / 2, fx: cx, fy: cy, fr: 0 };
 }
 
-function writeGeometry(element: Element, geometry: LinearGeometry | RadialGeometry): void {
+export function writeGeometry(element: Element, geometry: LinearGeometry | RadialGeometry): void {
   for (const [name, value] of Object.entries(geometry)) {
     // El foco en el centro y sin radio propio son los valores por defecto: no se escriben.
     if ((name === "fx" || name === "fy" || name === "fr") && "cx" in geometry) {
@@ -119,7 +125,7 @@ function createGradient(
     SVG_NS,
     TAG[kind],
   ) as SVGGradientElement;
-  gradient.id = newId(document.root);
+  gradient.id = newGradientId(document.root);
   gradient.setAttribute("gradientUnits", "userSpaceOnUse");
   writeGeometry(gradient, coveringGeometry(target, kind, false));
   if (request.spread && request.spread !== "pad")
@@ -176,6 +182,30 @@ function applyToTarget(document: SvgDocument, target: Element, request: Gradient
   return gradient !== before || gradient.outerHTML !== snapshot;
 }
 
+/** Cambia las paradas y la repetición en el degradado que las tiene, compartido por varios objetos. */
+function applyShared(
+  root: Element,
+  targets: readonly Element[],
+  request: GradientRequest,
+): boolean {
+  const owners = new Set<SVGGradientElement>();
+  for (const target of targets) {
+    const gradient = paintGradient(target, request.property, root);
+    const owner = gradient ? (stopsOwner(gradient, root) ?? gradient) : null;
+    if (owner) owners.add(owner);
+  }
+  let changed = false;
+  for (const owner of owners) {
+    const before = owner.outerHTML;
+    writeGradient(owner, root, {
+      ...(request.stops ? { stops: request.stops } : {}),
+      ...(request.spread ? { spread: request.spread } : {}),
+    });
+    changed = changed || owner.outerHTML !== before;
+  }
+  return changed;
+}
+
 /**
  * Aplica un degradado a la pintura de los objetos seleccionados (o de las formas de los grupos), en
  * un paso del historial. Mover o recolorear las mismas paradas seguidas (al arrastrar) es un paso.
@@ -201,6 +231,7 @@ export function applyGradient(
   return history.transact(
     "gradient",
     () => {
+      if (request.shared) return applyShared(document.root, targets, request);
       let changed = false;
       for (const target of targets) changed = applyToTarget(document, target, request) || changed;
       return changed;

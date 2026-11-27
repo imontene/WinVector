@@ -19,7 +19,7 @@ import {
   type ArtboardSettings,
 } from "./document";
 import type { Rect } from "./geometry";
-import { applyGradient } from "./paint";
+import { applyGradient, documentGradients, useGradient } from "./paint";
 import { EMPTY_SCENE, Overlay } from "./overlay";
 import sampleSvg from "./sample.svg?raw";
 import type { History } from "./history";
@@ -145,6 +145,8 @@ function announceArtboard(documentId: string): void {
 
 /** Fuentes anunciadas de cada documento, para no repetirlas. */
 const announcedFonts = new Map<string, string>();
+/** Biblioteca de degradados anunciada de cada documento, para no repetirla. */
+const announcedGradients = new Map<string, string>();
 const fontTimers = new Map<string, number>();
 
 /**
@@ -158,11 +160,19 @@ function scheduleFonts(documentId: string, delay = 300): void {
     window.setTimeout(() => {
       fontTimers.delete(documentId);
       if (!documents.ids.includes(documentId)) return;
-      const fonts = documentFonts(documents.get(documentId).root).map((families) => ({ families }));
+      const root = documents.get(documentId).root;
+      const fonts = documentFonts(root).map((families) => ({ families }));
       const key = JSON.stringify(fonts);
-      if (announcedFonts.get(documentId) === key) return;
-      announcedFonts.set(documentId, key);
-      bridge.emit("document.fonts", { documentId, fonts });
+      if (announcedFonts.get(documentId) !== key) {
+        announcedFonts.set(documentId, key);
+        bridge.emit("document.fonts", { documentId, fonts });
+      }
+      // La biblioteca de degradados (issue #112), con la misma espera.
+      const gradients = documentGradients(root);
+      const gradientsKey = JSON.stringify(gradients);
+      if (announcedGradients.get(documentId) === gradientsKey) return;
+      announcedGradients.set(documentId, gradientsKey);
+      bridge.emit("document.gradients", { documentId, gradients });
     }, delay),
   );
 }
@@ -268,6 +278,7 @@ bridge.handle("document.load", ({ documentId, name, svg }) => {
     announcedZoom.delete(documentId);
     announceArtboard(documentId);
     announcedFonts.delete(documentId);
+    announcedGradients.delete(documentId);
     scheduleFonts(documentId, 0);
     return {
       documentId,
@@ -316,6 +327,7 @@ bridge.handle("document.close", ({ documentId }) =>
     announcedZoom.delete(documentId);
     announcedArtboard.delete(documentId);
     announcedFonts.delete(documentId);
+    announcedGradients.delete(documentId);
     refreshOverlay();
     return { documentId };
   }),
@@ -472,6 +484,14 @@ bridge.handle("selection.setGradient", ({ documentId, ...request }) =>
   withDocumentErrors(() => {
     const { document: target, selection } = documents.open(documentId);
     const changed = applyGradient(target, selection.items, request, target.history);
+    return { documentId, changed };
+  }),
+);
+
+bridge.handle("selection.useGradient", ({ documentId, ...request }) =>
+  withDocumentErrors(() => {
+    const { document: target, selection } = documents.open(documentId);
+    const changed = useGradient(target, selection.items, request, target.history);
     return { documentId, changed };
   }),
 );

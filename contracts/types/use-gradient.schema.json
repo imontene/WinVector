@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UseGradient",
+  "description": "Pintar el relleno o el trazo de la selección con un degradado de la biblioteca del documento (issue #112). Cada objeto recibe uno colocado sobre él que hereda sus paradas; si es en objectBoundingBox, lo usa tal cual.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "property",
+    "id"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "property": {
+      "$ref": "./paint-property.schema.json"
+    },
+    "id": {
+      "type": "string",
+      "description": "Degradado de la biblioteca."
+    },
+    "copy": {
+      "type": "boolean",
+      "description": "True: usa una copia de sus paradas, para cambiarla sin tocar a los demás objetos."
+    }
+  }
+}

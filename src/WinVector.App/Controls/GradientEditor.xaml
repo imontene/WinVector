@@ -101,6 +101,47 @@
                 <ComboBoxItem x:Name="SpreadReflect" x:Uid="GradientSpreadReflect" />
                 <ComboBoxItem x:Name="SpreadRepeat" x:Uid="GradientSpreadRepeat" />
             </ComboBox>
+            <!-- Paradas compartidas con otros objetos (issue #112): cambiarlas para todos o duplicarlas. -->
+            <Grid
+                x:Name="SharedPanel"
+                ColumnSpacing="8"
+                Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <CheckBox
+                    x:Name="EditSharedBox"
+                    x:Uid="GradientEditShared"
+                    Grid.Column="0"
+                    Click="OnEditSharedClick" />
+                <Button
+                    x:Name="DuplicateButton"
+                    x:Uid="GradientDuplicate"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Click="OnDuplicateClick" />
+            </Grid>
         </StackPanel>
+
+        <!-- Biblioteca (issue #112): los degradados del documento y unos predefinidos. -->
+        <TextBlock
+            x:Name="LibraryTitle"
+            x:Uid="GradientLibraryTitle"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Visibility="Collapsed" />
+        <VariableSizedWrapGrid
+            x:Name="LibraryPanel"
+            ItemHeight="28"
+            ItemWidth="38"
+            MaximumRowsOrColumns="7"
+            Orientation="Horizontal" />
+        <TextBlock x:Uid="GradientPresetsTitle" Style="{StaticResource CaptionTextBlockStyle}" />
+        <VariableSizedWrapGrid
+            x:Name="PresetPanel"
+            ItemHeight="28"
+            ItemWidth="38"
+            MaximumRowsOrColumns="7"
+            Orientation="Horizontal" />
     </StackPanel>
 </UserControl>

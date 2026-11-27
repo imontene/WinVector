@@ -386,6 +386,31 @@ const examples: readonly BridgeMessage[] = [
   {
     ...base,
     kind: "command",
+    id: "c29",
+    name: "selection.useGradient",
+    payload: { documentId: "d1", property: "stroke", id: "cielo", copy: true },
+  },
+  {
+    ...base,
+    kind: "event",
+    id: "e9",
+    name: "document.gradients",
+    payload: {
+      documentId: "d1",
+      gradients: [
+        {
+          id: "cielo",
+          kind: "linear",
+          spread: "pad",
+          stops: [{ offset: 0, color: "#eaf3ff", opacity: 1 }],
+          users: 1,
+        },
+      ],
+    },
+  },
+  {
+    ...base,
+    kind: "command",
     id: "c27",
     name: "path.cornerRadius",
     payload: { documentId: "d1", radius: 4.5 },
@@ -451,6 +476,7 @@ function summarize(message: BridgeMessage): string {
       case "selection.delete":
       case "selection.setStyle":
       case "selection.setGradient":
+      case "selection.useGradient":
       case "selection.setShape":
         return `cambió: ${String(message.payload.changed)}`;
       case "clipboard.copy":
@@ -493,6 +519,8 @@ function summarize(message: BridgeMessage): string {
         return `trazado ${message.payload.operation}`;
       case "selection.setGradient":
         return `degradado ${message.payload.property} ${String(message.payload.kind)} ${String(message.payload.stops?.length)}`;
+      case "selection.useGradient":
+        return `usar ${message.payload.id} en ${message.payload.property}`;
       case "path.cornerRadius":
         return `radio ${String(message.payload.radius)}`;
       case "selection.setText":
@@ -529,6 +557,8 @@ function summarize(message: BridgeMessage): string {
       return `fuentes: ${message.payload.fonts.map((f) => f.families[0] ?? "").join(", ")}`;
     case "text.locked":
       return `texto bloqueado: ${message.payload.reason}`;
+    case "document.gradients":
+      return `biblioteca: ${message.payload.gradients.map((g) => g.id).join(", ")}`;
     case "nodes.changed":
       return `${String(message.payload.count)} nodos ${String(message.payload.kind)}`;
     case "canvas.contextMenu":
@@ -610,6 +640,8 @@ describe("contrato del puente", () => {
       "trazado combine",
       "texto Georgia middle",
       "degradado fill radial 2",
+      "usar cielo en stroke",
+      "biblioteca: cielo",
       "radio 4.5",
       "texto bloqueado: text-path",
       "2 nodos mixed",

@@ -32,6 +32,7 @@ public sealed partial class GradientEditor : UserControl
     public GradientEditor()
     {
         InitializeComponent();
+        RebuildPresets();
     }
 
     /// <summary>Se produce al cambiar la parada elegida o el modo, para poner su color en el selector.</summary>
@@ -55,6 +56,7 @@ public sealed partial class GradientEditor : UserControl
             }
 
             Refresh();
+            RebuildLibrary();
         }
     }
 
@@ -81,15 +83,25 @@ public sealed partial class GradientEditor : UserControl
                 (SpreadPad, "GradientSpreadPad"),
                 (SpreadReflect, "GradientSpreadReflect"),
                 (SpreadRepeat, "GradientSpreadRepeat"),
+                (EditSharedBox, "GradientEditShared"),
+                (DuplicateButton, "GradientDuplicate"),
             })
             {
                 AutomationProperties.SetAutomationId(element, value + name);
             }
+
+            RebuildPresets();
+            RebuildLibrary();
         }
     }
 
     private void OnEditorChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(GradientEditorViewModel.Library))
+        {
+            RebuildLibrary();
+        }
+
         Refresh();
         if (e.PropertyName is nameof(GradientEditorViewModel.SelectedIndex) or nameof(GradientEditorViewModel.Mode))
         {
@@ -125,6 +137,8 @@ public sealed partial class GradientEditor : UserControl
             SpreadBox.SelectedIndex = editor?.SpreadIndex ?? 0;
             RemoveStopButton.IsEnabled = editor?.CanRemoveStop == true;
             Preview.Background = BindingFunctions.GradientBrush(editor?.Stops);
+            SharedPanel.Visibility = editor?.CanEditShared == true ? Visibility.Visible : Visibility.Collapsed;
+            EditSharedBox.IsChecked = editor?.EditShared == true;
             RebuildThumbs();
         }
         finally
@@ -132,6 +146,64 @@ public sealed partial class GradientEditor : UserControl
             _updating = false;
         }
     }
+
+    /// <summary>Muestra de un degradado de la biblioteca: un botón con sus paradas.</summary>
+    private static Button Swatch(IReadOnlyList<WinVector.Core.Bridge.GradientStop> stops, string name, string automationId, Action apply)
+    {
+        var button = new Button
+        {
+            Width = 34,
+            Height = 24,
+            Padding = new Thickness(2),
+            Content = new Border
+            {
+                CornerRadius = new CornerRadius(2),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Background = BindingFunctions.GradientBrush(stops),
+            },
+        };
+        ToolTipService.SetToolTip(button, name);
+        AutomationProperties.SetName(button, name);
+        AutomationProperties.SetAutomationId(button, automationId);
+        button.Click += (_, _) => apply();
+        return button;
+    }
+
+    /// <summary>Los degradados del documento (con paradas propias), por su id.</summary>
+    private void RebuildLibrary()
+    {
+        LibraryPanel.Children.Clear();
+        var library = _editor?.Library ?? [];
+        foreach (var gradient in library)
+        {
+            var id = gradient.Id;
+            LibraryPanel.Children.Add(Swatch(gradient.Stops, id, $"{_automationPrefix}GradientLibrary_{id}", () => _editor?.ApplyLibrary(id)));
+        }
+
+        LibraryTitle.Visibility = library.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>Los degradados predefinidos, con su nombre traducido.</summary>
+    private void RebuildPresets()
+    {
+        PresetPanel.Children.Clear();
+        foreach (var preset in GradientPreset.All)
+        {
+            var name = _resources.GetString("GradientPreset" + preset.Key);
+            PresetPanel.Children.Add(Swatch(preset.Stops, name.Length > 0 ? name : preset.Key, $"{_automationPrefix}GradientPreset_{preset.Key}", () => _editor?.ApplyPreset(preset)));
+        }
+    }
+
+    private void OnEditSharedClick(object sender, RoutedEventArgs e)
+    {
+        if (_editor is { } editor)
+        {
+            editor.EditShared = EditSharedBox.IsChecked == true;
+        }
+    }
+
+    private void OnDuplicateClick(object sender, RoutedEventArgs e) => _editor?.DuplicateCommand.Execute(null);
 
     /// <summary>Una marca por parada, con su color, en su posición de la barra.</summary>
     private void RebuildThumbs()

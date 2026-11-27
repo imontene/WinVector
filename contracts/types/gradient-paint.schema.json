@@ -32,6 +32,14 @@
     "users": {
       "type": "integer",
       "description": "Cuántas pinturas de objetos usan este degradado directamente. Con más de una, cambiarlo para un objeto le crea una copia propia."
+    },
+    "stopsId": {
+      "type": "string",
+      "description": "Degradado de la biblioteca que tiene sus paradas: él mismo o uno del que las hereda por href (issue #112). Ausente si no tiene paradas."
+    },
+    "stopsUsers": {
+      "type": "integer",
+      "description": "Cuántas pinturas de objetos comparten esas paradas. Con más de una, se pueden cambiar para todos a la vez (shared en selection.setGradient)."
     }
   }
 }

@@ -182,6 +182,27 @@ public sealed partial class GradientTests
         WaitForStops(3);
     }
 
+    [TestMethod]
+    public void UnPredefinidoDeLaBibliotecaSeAplicaYApareceEnLaDelDocumento()
+    {
+        Launch();
+        SelectSun();
+        OpenFill();
+
+        // Atardecer: un degradado nuevo con sus paradas (issue #112).
+        InFlyout("FillGradientPreset_Sunset").Patterns.Invoke.Pattern.Invoke();
+        WaitForStops(2);
+        // El documento ya tenía #cielo; ahora también el nuevo.
+        Assert.IsNotNull(
+            Retry.WhileNull(() => Session.FindInApp("FillGradientLibrary_degradado"), EngineTimeout, TimeSpan.FromMilliseconds(250)).Result,
+            "El degradado nuevo no aparece en la biblioteca del documento.");
+        Keyboard.Type(VirtualKeyShort.ESCAPE);
+
+        var svg = Retry.WhileNull(() => SaveContaining("#ff7e5f"), EngineTimeout, TimeSpan.FromSeconds(1)).Result
+            ?? throw new AssertFailedException("El predefinido no se guardó.");
+        StringAssert.Contains(svg, "fill=\"url(#degradado)\"");
+    }
+
     [GeneratedRegex("<radialGradient id=\"([^\"]+)\"[\\s\\S]*?</radialGradient>")]
     private static partial Regex RadialGradient();
 }

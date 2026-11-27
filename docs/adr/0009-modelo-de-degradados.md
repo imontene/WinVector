@@ -40,6 +40,13 @@ Cambiar un degradado para todos los objetos que lo usan es una acción explícit
 
 Los degradados en `objectBoundingBox` siguen a la caja del objeto sin tocarlos. Desagrupar pasa la transformación del grupo al `transform` de cada objeto, así que también se ven igual.
 
+**Biblioteca** (#112). Como en Inkscape, las paradas se comparten y la posición es de cada objeto. La biblioteca del documento son los degradados con paradas propias, y se anuncia a la aplicación con `document.gradients`.
+
+- Usar uno en un objeto le crea un degradado propio, en `userSpaceOnUse` y colocado sobre él, que hereda sus paradas por `href`. Si el de la biblioteca es en `objectBoundingBox` sin transformación, el objeto lo usa tal cual.
+- Cambiar las paradas «para todos» (`shared`) las escribe en el degradado que las tiene, sin copiarlo.
+- Duplicar da al objeto una copia de las paradas.
+- Los predefinidos crean un degradado nuevo con sus paradas.
+
 **Contrato.** `selection-changed` describe el degradado común del relleno y del trazo (`fillGradient`, `strokeGradient`): id, tipo, repetición, paradas y cuántas pinturas de objetos lo usan directamente. La geometría no viaja por el puente, porque solo la usa el motor (manejadores del lienzo). El relleno y el trazo siguen valiendo `"url"` cuando son un degradado.
 
 ## Consecuencias

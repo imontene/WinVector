@@ -606,6 +606,42 @@ Distribuido bajo la licencia Apache 2.0.</value>
   <data name="GradientSpreadRepeat.Content" xml:space="preserve">
     <value>Repetir</value>
   </data>
+  <data name="GradientEditShared.Content" xml:space="preserve">
+    <value>Cambiar en todos los que lo usan</value>
+  </data>
+  <data name="GradientDuplicate.Content" xml:space="preserve">
+    <value>Duplicar</value>
+  </data>
+  <data name="GradientDuplicate.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Duplicar las paradas para este objeto</value>
+  </data>
+  <data name="GradientLibraryTitle.Text" xml:space="preserve">
+    <value>Degradados del documento</value>
+  </data>
+  <data name="GradientPresetsTitle.Text" xml:space="preserve">
+    <value>Predefinidos</value>
+  </data>
+  <data name="GradientPresetFade" xml:space="preserve">
+    <value>Blanco a transparente</value>
+  </data>
+  <data name="GradientPresetBlackWhite" xml:space="preserve">
+    <value>Negro a blanco</value>
+  </data>
+  <data name="GradientPresetSunset" xml:space="preserve">
+    <value>Atardecer</value>
+  </data>
+  <data name="GradientPresetOcean" xml:space="preserve">
+    <value>Océano</value>
+  </data>
+  <data name="GradientPresetForest" xml:space="preserve">
+    <value>Bosque</value>
+  </data>
+  <data name="GradientPresetMetal" xml:space="preserve">
+    <value>Metal</value>
+  </data>
+  <data name="GradientPresetRainbow" xml:space="preserve">
+    <value>Arcoíris</value>
+  </data>
   <data name="ToolEyedropper.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Cuentagotas (I): clic para dar el color a la selección; con Mayús, al trazo</value>
   </data>
