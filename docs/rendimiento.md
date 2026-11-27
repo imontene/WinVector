@@ -13,7 +13,12 @@ Mediciones de los objetivos de rendimiento del MVP 1 (PLAN.md, sección 4.6) y c
 
 - **Documentos generados** (`src/engine/perf/generate.ts`) de 500, 2.000 y 10.000 objetos: rectángulos, círculos, trazados con curvas y textos, algunos con degradado, en grupos de 50. El mismo tamaño da siempre el mismo documento.
 - **Carga:** desde que la aplicación envía `document.load` hasta que el documento está activo y pintado.
-- **Arrastrar, escribir, zoom y desplazar:** 60 movimientos o pulsaciones separados por un fotograma (Ctrl+clic y arrastre de un objeto; con la herramienta Texto, una letra por fotograma en un texto del documento, que se reescribe con cada pulsación; Ctrl+rueda; rueda). Durante el gesto se anota cada fotograma con `requestAnimationFrame`; el resultado son los fotogramas por segundo y el percentil 95 del tiempo entre fotogramas.
+- **Arrastrar, mover un degradado, escribir, zoom y desplazar:** 60 movimientos o pulsaciones separados por un fotograma:
+  - Arrastrar: Ctrl+clic y arrastre de un objeto.
+  - Mover un degradado: con la herramienta Degradado, arrastrar el extremo del degradado del objeto arrastrado. Lo comparte con otros, así que al empezar se le copia.
+  - Escribir: con la herramienta Texto, una letra por fotograma en un texto del documento, que se reescribe con cada pulsación.
+  - Zoom: Ctrl+rueda. Desplazar: rueda.
+  - Durante el gesto se anota cada fotograma con `requestAnimationFrame`; el resultado son los fotogramas por segundo y el percentil 95 del tiempo entre fotogramas.
 - Se ejecuta con la configuración `playwright.perf.config.ts`: un solo proceso, sin reintentos, ventana de 1280×720. Los resultados quedan en `src/engine/perf/resultados/motor.json`.
 
 ### Aplicación (`StartupTests`, categoría `Rendimiento`)
@@ -39,11 +44,13 @@ Medidos en la CI de GitHub Actions el 2026-11-20: el motor en `ubuntu-latest` co
 
 ### Motor
 
-| Objetos | Carga | Arrastrar | Zoom | Desplazar |
-| --- | --- | --- | --- | --- |
-| 500 | 44 ms | 60 fps | 60 fps | 60 fps |
-| **2.000** | **85 ms** | **60 fps** | **59,5 fps** | **60 fps** |
-| 10.000 | 362 ms | 60 fps | 34–40 fps | 48–55 fps |
+| Objetos | Carga | Arrastrar | Escribir | Mover un degradado | Zoom | Desplazar |
+| --- | --- | --- | --- | --- | --- | --- |
+| 500 | 44 ms | 60 fps | 60 fps | 60 fps | 60 fps | 60 fps |
+| **2.000** | **85 ms** | **60 fps** | **60 fps** | **60 fps** | **59,5 fps** | **60 fps** |
+| 10.000 | 362 ms | 60 fps | 60 fps | 60 fps | 34–40 fps | 48–55 fps |
+
+Escribir y mover un degradado se midieron después, el 2026-11-27, con los documentos y la máquina de la CI de siempre.
 
 **Con 2.000 objetos se cumple el objetivo de 60 fps.** Con 10.000, arrastrar sigue a 60 fps (solo cambia el objeto movido), pero el zoom y el desplazamiento bajan: cada fotograma vuelve a pintar el documento entero con la nueva vista. Si hace falta, se puede mejorar más adelante (por ejemplo, pintar una imagen del documento durante el gesto y redibujarlo al terminar), pero queda fuera del objetivo del MVP 1.
 
@@ -63,4 +70,3 @@ Medidos en la CI de GitHub Actions el 2026-11-20: el motor en `ubuntu-latest` co
 ## Pendiente
 
 - Medir el arranque en frío en un equipo de gama media real y ajustar el objetivo de 2 s si hace falta.
-- Añadir a la referencia la medida de escribir (issue #99) con los valores de la CI, cuando se fusione.

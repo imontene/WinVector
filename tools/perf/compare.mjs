@@ -42,6 +42,7 @@ function engineMetrics(results) {
     for (const [key, name] of [
       ["drag", "Arrastrar"],
       ["type", "Escribir"],
+      ["gradient", "Mover un degradado"],
       ["zoom", "Zoom"],
       ["pan", "Desplazar"],
     ]) {
