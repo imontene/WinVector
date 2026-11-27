@@ -1,29 +1,95 @@
 {
-  "measuredIn": "CI de GitHub Actions (ubuntu-latest para el motor, windows-latest para la aplicación), 2026-11-20",
-  "thresholds": { "warn": 0.25, "fail": 0.6 },
-  "targets": { "fps": 55, "fpsObjects": 2000, "coldStartMs": 2000 },
+  "measuredIn": "CI de GitHub Actions (ubuntu-latest para el motor, windows-latest para la aplicación), 2026-11-20; escribir y mover un degradado, 2026-11-27",
+  "thresholds": {
+    "warn": 0.25,
+    "fail": 0.6
+  },
+  "targets": {
+    "fps": 55,
+    "fpsObjects": 2000,
+    "coldStartMs": 2000
+  },
   "engine": {
     "500": {
       "loadMs": 44,
-      "drag": { "fps": 60, "p95": 16.8 },
-      "zoom": { "fps": 60, "p95": 16.7 },
-      "pan": { "fps": 60, "p95": 16.7 }
+      "drag": {
+        "fps": 60,
+        "p95": 16.8
+      },
+      "type": {
+        "fps": 60,
+        "p95": 16.7
+      },
+      "gradient": {
+        "fps": 60,
+        "p95": 16.8
+      },
+      "zoom": {
+        "fps": 60,
+        "p95": 16.7
+      },
+      "pan": {
+        "fps": 60,
+        "p95": 16.7
+      }
     },
     "2000": {
       "loadMs": 85,
-      "drag": { "fps": 60, "p95": 16.7 },
-      "zoom": { "fps": 59.5, "p95": 16.7 },
-      "pan": { "fps": 60, "p95": 16.8 }
+      "drag": {
+        "fps": 60,
+        "p95": 16.7
+      },
+      "type": {
+        "fps": 60,
+        "p95": 16.8
+      },
+      "gradient": {
+        "fps": 60,
+        "p95": 16.7
+      },
+      "zoom": {
+        "fps": 59.5,
+        "p95": 16.7
+      },
+      "pan": {
+        "fps": 60,
+        "p95": 16.8
+      }
     },
     "10000": {
       "loadMs": 362,
-      "drag": { "fps": 60, "p95": 16.8 },
-      "zoom": { "fps": 33.8, "p95": 66.7 },
-      "pan": { "fps": 48, "p95": 49.9 }
+      "drag": {
+        "fps": 60,
+        "p95": 16.8
+      },
+      "type": {
+        "fps": 60,
+        "p95": 16.7
+      },
+      "gradient": {
+        "fps": 60,
+        "p95": 16.7
+      },
+      "zoom": {
+        "fps": 33.8,
+        "p95": 66.7
+      },
+      "pan": {
+        "fps": 48,
+        "p95": 49.9
+      }
     }
   },
   "app": {
-    "cold": { "windowMs": 1733, "contentMs": 2444, "engineMs": 9126 },
-    "warm": { "windowMs": 369, "contentMs": 525, "engineMs": 1005 }
+    "cold": {
+      "windowMs": 1733,
+      "contentMs": 2444,
+      "engineMs": 9126
+    },
+    "warm": {
+      "windowMs": 369,
+      "contentMs": 525,
+      "engineMs": 1005
+    }
   }
 }

@@ -44,11 +44,13 @@ Medidos en la CI de GitHub Actions el 2026-11-20: el motor en `ubuntu-latest` co
 
 ### Motor
 
-| Objetos | Carga | Arrastrar | Zoom | Desplazar |
-| --- | --- | --- | --- | --- |
-| 500 | 44 ms | 60 fps | 60 fps | 60 fps |
-| **2.000** | **85 ms** | **60 fps** | **59,5 fps** | **60 fps** |
-| 10.000 | 362 ms | 60 fps | 34–40 fps | 48–55 fps |
+| Objetos | Carga | Arrastrar | Escribir | Mover un degradado | Zoom | Desplazar |
+| --- | --- | --- | --- | --- | --- | --- |
+| 500 | 44 ms | 60 fps | 60 fps | 60 fps | 60 fps | 60 fps |
+| **2.000** | **85 ms** | **60 fps** | **60 fps** | **60 fps** | **59,5 fps** | **60 fps** |
+| 10.000 | 362 ms | 60 fps | 60 fps | 60 fps | 34–40 fps | 48–55 fps |
+
+Escribir y mover un degradado se midieron después, el 2026-11-27, con los documentos y la máquina de la CI de siempre.
 
 **Con 2.000 objetos se cumple el objetivo de 60 fps.** Con 10.000, arrastrar sigue a 60 fps (solo cambia el objeto movido), pero el zoom y el desplazamiento bajan: cada fotograma vuelve a pintar el documento entero con la nueva vista. Si hace falta, se puede mejorar más adelante (por ejemplo, pintar una imagen del documento durante el gesto y redibujarlo al terminar), pero queda fuera del objetivo del MVP 1.
 
@@ -68,4 +70,3 @@ Medidos en la CI de GitHub Actions el 2026-11-20: el motor en `ubuntu-latest` co
 ## Pendiente
 
 - Medir el arranque en frío en un equipo de gama media real y ajustar el objetivo de 2 s si hace falta.
-- Añadir a la referencia la medida de escribir (issue #99) con los valores de la CI, cuando se fusione.

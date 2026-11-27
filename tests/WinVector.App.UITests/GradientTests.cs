@@ -289,14 +289,13 @@ public sealed partial class GradientTests
         WaitForStops(2);
         Keyboard.Type(VirtualKeyShort.ESCAPE);
 
-        // El sol sigue elegido; un clic en él (dentro de su grupo) da el teclado al lienzo.
-        Mouse.Click(Sun);
-        Keyboard.Type(VirtualKeyShort.KEY_D);
+        // Con el botón de la barra: el sol sigue seleccionado y no hace falta enfocar el lienzo.
+        Session.GetById("ToolGradient").Click();
         Assert.IsTrue(
             Retry.WhileFalse(
                 () => Session.FindById("ToolGradient")?.Patterns.Toggle.PatternOrDefault?.ToggleState.ValueOrDefault == FlaUI.Core.Definitions.ToggleState.On,
                 TimeSpan.FromSeconds(5)).Result,
-            "D no eligió la herramienta Degradado.");
+            "No se eligió la herramienta Degradado.");
 
         // Cubre el sol: centro (300, 96) y radio 52. El centro va a (290, 90) y el radio, a 40.
         Mouse.Drag(At(300, 96), At(290, 90));
