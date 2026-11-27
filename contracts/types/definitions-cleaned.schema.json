@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DefinitionsCleaned",
+  "description": "Resultado de limpiar las definiciones sin usar de un documento (issue #113).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "documentId",
+    "removed"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Identificador del documento, asignado por la aplicación."
+    },
+    "removed": {
+      "type": "integer",
+      "description": "Cuántas definiciones se han quitado (0 si no había ninguna sin usar)."
+    }
+  }
+}

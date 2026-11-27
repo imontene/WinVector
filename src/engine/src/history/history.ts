@@ -28,6 +28,11 @@ export interface HistoryHost {
    * revisión indicada.
    */
   applyHistory(apply: () => void, revision: number): void;
+  /**
+   * Últimos cambios de una acción antes de cerrarla, que van en su mismo paso (por ejemplo, borrar
+   * las definiciones que ha dejado sin uso, issue #113).
+   */
+  beforeCommit?(): void;
 }
 
 interface AttributeOperation {
@@ -125,6 +130,7 @@ export class History {
   /** Termina la acción empezada con `begin`. Si no cambió nada, no crea ningún paso. */
   commit(): void {
     if (this.#openDepth === 0) return;
+    if (this.#openDepth === 1) this.#host.beforeCommit?.();
     if (--this.#openDepth > 0) return;
     this.#host.flush();
     const step = this.#open;

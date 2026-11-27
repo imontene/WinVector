@@ -336,3 +336,50 @@ test("un degradado en coordenadas del documento se coloca sobre cada objeto y he
   await send(page, "history.undo", {});
   expect(await sol(page).getAttribute("fill")).toBe("#ffb547");
 });
+
+// ---------------------------------------------------------------------------------------------
+// Limpieza de definiciones (issue #113).
+// ---------------------------------------------------------------------------------------------
+
+test("volver a un color borra el degradado de WinVector en el mismo paso", async ({ page }) => {
+  await sol(page).dblclick();
+  await send(page, "selection.setGradient", { property: "fill", kind: "linear" });
+  await expect(page.locator("#workspace #degradado")).toHaveCount(1);
+  await send(page, "selection.setStyle", {
+    fill: "#123456",
+    stroke: null,
+    strokeWidth: null,
+    opacity: null,
+  });
+  await expect(page.locator("#workspace #degradado")).toHaveCount(0);
+  // Deshacer el color devuelve el degradado, que sigue en su sitio.
+  await send(page, "history.undo", {});
+  expect(await sol(page).getAttribute("fill")).toBe("url(#degradado)");
+  await expect(page.locator("#workspace #degradado")).toHaveCount(1);
+});
+
+test("un degradado de otro programa sin uso se queda hasta limpiar las definiciones", async ({
+  page,
+}) => {
+  await page.locator("#workspace #cielo-fondo").dblclick();
+  await send(page, "selection.setStyle", {
+    fill: "#eeeeee",
+    stroke: null,
+    strokeWidth: null,
+    opacity: null,
+  });
+  await expect(page.locator("#workspace #cielo")).toHaveCount(1);
+
+  const result = await send(page, "document.cleanDefinitions", {});
+  expect(result).toMatchObject({ ok: true, payload: { removed: 1 } });
+  await expect(page.locator("#workspace #cielo")).toHaveCount(0);
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "clean-definitions" });
+
+  // Sin nada que quitar, no hay paso nuevo.
+  expect(await send(page, "document.cleanDefinitions", {})).toMatchObject({
+    payload: { removed: 0 },
+  });
+  await expect.poll(() => lastHistory(page)).toMatchObject({ undoAction: "clean-definitions" });
+  await send(page, "history.undo", {});
+  await expect(page.locator("#workspace #cielo")).toHaveCount(1);
+});

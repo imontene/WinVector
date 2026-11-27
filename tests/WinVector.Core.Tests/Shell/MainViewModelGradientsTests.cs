@@ -228,6 +228,29 @@ public sealed class MainViewModelGradientsTests : IDisposable
     }
 
     [TestMethod]
+    public async Task LimpiarDefinicionesLoPideAlMotorYDiceCuantasQuito()
+    {
+        await ReadyAsync();
+        Assert.IsTrue(_viewModel.CleanDefinitionsCommand.CanExecute(null));
+        await _viewModel.CleanDefinitionsAsync();
+        Assert.IsTrue(_engine.Commands.Contains("document.cleanDefinitions d1"));
+        Assert.AreEqual("2 definiciones quitadas", _viewModel.CanvasNotice);
+
+        // El mismo resultado otra vez se vuelve a anunciar.
+        var notices = 0;
+        _viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.CanvasNotice) && _viewModel.CanvasNotice.Length > 0)
+            {
+                notices++;
+            }
+        };
+        await _viewModel.CleanDefinitionsAsync();
+        Assert.AreEqual(1, notices);
+        Assert.IsTrue(_viewModel.Commands.All.Any(c => c.Id == "clean-definitions"));
+    }
+
+    [TestMethod]
     public void LosPredefinidosTienenAlMenosDosParadasOrdenadas()
     {
         foreach (var preset in GradientPreset.All)

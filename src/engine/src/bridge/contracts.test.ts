@@ -410,6 +410,14 @@ const examples: readonly BridgeMessage[] = [
   },
   {
     ...base,
+    kind: "response",
+    id: "c30",
+    name: "document.cleanDefinitions",
+    ok: true,
+    payload: { documentId: "d1", removed: 3 },
+  },
+  {
+    ...base,
     kind: "command",
     id: "c27",
     name: "path.cornerRadius",
@@ -479,6 +487,8 @@ function summarize(message: BridgeMessage): string {
       case "selection.useGradient":
       case "selection.setShape":
         return `cambió: ${String(message.payload.changed)}`;
+      case "document.cleanDefinitions":
+        return `limpias: ${String(message.payload.removed)}`;
       case "clipboard.copy":
         return `copiado: ${String(message.payload.svg?.length)}`;
       case "clipboard.paste":
@@ -521,6 +531,8 @@ function summarize(message: BridgeMessage): string {
         return `degradado ${message.payload.property} ${String(message.payload.kind)} ${String(message.payload.stops?.length)}`;
       case "selection.useGradient":
         return `usar ${message.payload.id} en ${message.payload.property}`;
+      case "document.cleanDefinitions":
+        return `limpiar ${message.payload.documentId}`;
       case "path.cornerRadius":
         return `radio ${String(message.payload.radius)}`;
       case "selection.setText":
@@ -642,6 +654,7 @@ describe("contrato del puente", () => {
       "degradado fill radial 2",
       "usar cielo en stroke",
       "biblioteca: cielo",
+      "limpias: 3",
       "radio 4.5",
       "texto bloqueado: text-path",
       "2 nodos mixed",

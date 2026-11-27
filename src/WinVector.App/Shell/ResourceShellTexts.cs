@@ -46,6 +46,8 @@ internal sealed class ResourceShellTexts(ResourceLoader resources) : IShellTexts
 
     public string TextLocked(TextLock reason) => TryGetString($"TextLocked{reason}");
 
+    public string DefinitionsCleaned(int removed) => removed == 0 ? TryGetString("DefinitionsCleanedNone") : Format("DefinitionsCleaned", removed);
+
     public string MissingFonts(IReadOnlyList<(string Font, string? Replacement)> fonts)
     {
         ArgumentNullException.ThrowIfNull(fonts);

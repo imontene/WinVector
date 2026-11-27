@@ -1,4 +1,5 @@
 import { History, type HistoryState } from "../history";
+import { collectDefinitions } from "./collect";
 import { scanXml, type ScannedDocument, type SourceElement, type SourceNode } from "./scanner";
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
@@ -110,6 +111,9 @@ export class SvgDocument {
         },
         applyHistory: (apply, revision) => {
           this.#applyHistory(apply, revision);
+        },
+        beforeCommit: () => {
+          collectDefinitions(this.root);
         },
       },
       options.onHistoryChange,

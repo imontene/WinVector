@@ -199,6 +199,12 @@
                             AutomationProperties.AutomationId="MenuEditSelectAll"
                             Command="{x:Bind ViewModel.SelectAllCommand}"
                             KeyboardAcceleratorTextOverride="Ctrl+A" />
+                        <!-- Quita de defs lo que nada usa (issue #113). -->
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem
+                            x:Uid="MenuEditCleanDefinitions"
+                            AutomationProperties.AutomationId="MenuEditCleanDefinitions"
+                            Command="{x:Bind ViewModel.CleanDefinitionsCommand}" />
                     </MenuBarItem>
 
                     <MenuBarItem x:Name="ObjectMenu" x:Uid="MenuObject">

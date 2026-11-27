@@ -89,4 +89,7 @@ public interface IShellTexts
     /// lugar (null: la de por defecto).
     /// </summary>
     string MissingFonts(IReadOnlyList<(string Font, string? Replacement)> fonts);
+
+    /// <summary>Resultado de limpiar las definiciones sin usar ("Se han quitado 3 definiciones sin usar").</summary>
+    string DefinitionsCleaned(int removed);
 }

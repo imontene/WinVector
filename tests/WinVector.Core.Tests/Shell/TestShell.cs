@@ -63,6 +63,8 @@ internal sealed class TestTexts : IShellTexts
 
     public string TextLocked(TextLock reason) => $"Texto bloqueado: {reason}";
 
+    public string DefinitionsCleaned(int removed) => $"{removed} definiciones quitadas";
+
     public string MissingFonts(IReadOnlyList<(string Font, string? Replacement)> fonts) =>
         "Faltan: " + string.Join(", ", fonts.Select(f => $"{f.Font} → {f.Replacement ?? "?"}"));
 

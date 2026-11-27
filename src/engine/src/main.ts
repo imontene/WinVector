@@ -10,6 +10,7 @@ import {
   type ZoomAction,
 } from "./bridge";
 import {
+  cleanDefinitions,
   applyArtboard,
   DocumentManager,
   readArtboard,
@@ -333,6 +334,16 @@ bridge.handle("document.close", ({ documentId }) =>
     announcedGradients.delete(documentId);
     refreshOverlay();
     return { documentId };
+  }),
+);
+
+bridge.handle("document.cleanDefinitions", ({ documentId }) =>
+  withDocumentErrors(() => {
+    const target = documents.get(documentId);
+    const removed = target.history.transact("clean-definitions", () =>
+      cleanDefinitions(target.root),
+    );
+    return { documentId, removed };
   }),
 );
 
