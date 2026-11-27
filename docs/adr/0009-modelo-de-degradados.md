@@ -32,6 +32,14 @@ Cambiar un degradado para todos los objetos que lo usan es una acción explícit
 
 **Degradados nuevos:** en `userSpaceOnUse`, con la geometría en coordenadas del objeto. Es lo que hacen Inkscape e Illustrator, un radial sigue siendo circular en cualquier forma, y los manejadores del lienzo (#110) trabajan en las mismas coordenadas que el objeto. A cambio, al mover o escalar un objeto hay que actualizar su degradado (#111). Los degradados en `objectBoundingBox` de otros programas se respetan y se editan en sus unidades.
 
+**Al transformar** (#111). Un degradado en `userSpaceOnUse` está en las coordenadas del objeto que lo usa. Si al mover o escalar un objeto se le añade o cambia el `transform`, el degradado lo acompaña sin más. Pero los rectángulos, elipses, círculos, líneas e imágenes sin `transform` se mueven y escalan reescribiendo sus coordenadas, y entonces hay que aplicar al degradado la misma transformación:
+
+- Si no tiene `gradientTransform` y la transformación solo mueve y escala sin girar, se cambian sus coordenadas. Un radial solo se cambia así si la escala es la misma en los dos ejes. El foco solo se escribe si ya estaba escrito.
+- Si no, se compone su `gradientTransform`.
+- Siempre sobre su degradado propio: si lo comparte, se copia antes. En un arrastre, la copia se hace al empezar el gesto, dentro de su paso del historial. Un gesto que no mueve nada, o que se cancela, no deja ni el paso ni la copia.
+
+Los degradados en `objectBoundingBox` siguen a la caja del objeto sin tocarlos. Desagrupar pasa la transformación del grupo al `transform` de cada objeto, así que también se ven igual.
+
 **Contrato.** `selection-changed` describe el degradado común del relleno y del trazo (`fillGradient`, `strokeGradient`): id, tipo, repetición, paradas y cuántas pinturas de objetos lo usan directamente. La geometría no viaja por el puente, porque solo la usa el motor (manejadores del lienzo). El relleno y el trazo siguen valiendo `"url"` cuando son un degradado.
 
 ## Consecuencias
